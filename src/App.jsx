@@ -37,10 +37,8 @@ export default function App() {
   };
 
   const handleDelete = (id) => {
-    if (window.confirm('Xác nhận xóa dự án này?')) {
-      dispatch({ type: 'DELETE_PROJECT', payload: id });
-      if (viewProject?.id === id) setViewProject(null);
-    }
+    dispatch({ type: 'DELETE_PROJECT', payload: id });
+    if (viewProject?.id === id) setViewProject(null);
   };
 
   const handleEditFromDetail = (p) => {
