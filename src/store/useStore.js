@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { INITIAL_PROJECTS, MEMBERS } from '../data/initialData';
 
-const STORAGE_KEY = 'ppm_data_v1';
+const STORAGE_KEY = 'ppm_data_v2';
 
 function loadData() {
   try {

@@ -238,7 +238,7 @@ export default function ProjectList({ projects, members, onView, onEdit, onAdd, 
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filtered.map((p, index) => {
-                const budgetPct = calcBudgetPct(p.budget, p.spent);
+                const budgetPct = calcBudgetPct(p.budget?.approved, p.budget?.actual);
                 return (
                   <tr key={p.id} className="hover:bg-blue-50/30 transition-colors group">
                     {/* STT */}
@@ -285,9 +285,9 @@ export default function ProjectList({ projects, members, onView, onEdit, onAdd, 
                     </td>
                     {/* Budget */}
                     <td className="px-4 py-3">
-                      <div className="text-xs font-medium text-slate-700">{formatCurrency(p.budget)}</div>
+                      <div className="text-xs font-medium text-slate-700">{formatCurrency(p.budget?.approved)}</div>
                       <div className={`text-xs mt-0.5 ${budgetPct > 90 ? 'text-red-500 font-medium' : 'text-slate-400'}`}>
-                        Đã dùng {budgetPct}%
+                        Actual {budgetPct}%
                       </div>
                     </td>
                     {/* Team */}

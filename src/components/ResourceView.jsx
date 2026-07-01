@@ -22,7 +22,7 @@ export default function ResourceView({ projects, members }) {
       const assigned = projects.filter(p => p.team.includes(m.id));
       const active = assigned.filter(p => p.status !== 'Hoàn thành' && p.status !== 'Tạm dừng');
       const budgetManagedProjects = assigned.filter(p => p.owner === m.id);
-      const totalBudget = budgetManagedProjects.reduce((s, p) => s + p.budget, 0);
+      const totalBudget = budgetManagedProjects.reduce((s, p) => s + (p.budget?.approved || 0), 0);
       return {
         ...m,
         assignedCount: assigned.length,
@@ -50,8 +50,8 @@ export default function ResourceView({ projects, members }) {
     const map = {};
     projects.forEach(p => {
       if (!map[p.dept]) map[p.dept] = { budget: 0, spent: 0, count: 0 };
-      map[p.dept].budget += p.budget;
-      map[p.dept].spent += p.spent;
+      map[p.dept].budget += (p.budget?.approved || 0);
+      map[p.dept].spent += (p.budget?.actual || 0);
       map[p.dept].count++;
     });
     return Object.entries(map)
@@ -59,8 +59,8 @@ export default function ResourceView({ projects, members }) {
       .sort((a, b) => b.budget - a.budget);
   }, [projects]);
 
-  const totalBudget = projects.reduce((s, p) => s + p.budget, 0);
-  const totalSpent = projects.reduce((s, p) => s + p.spent, 0);
+  const totalBudget = projects.reduce((s, p) => s + (p.budget?.approved || 0), 0);
+  const totalSpent = projects.reduce((s, p) => s + (p.budget?.actual || 0), 0);
 
   return (
     <div className="p-6 space-y-6">

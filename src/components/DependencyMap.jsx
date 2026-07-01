@@ -15,7 +15,7 @@ const H_GAP = 60;
 const V_GAP = 30;
 
 function buildLevels(projects) {
-  const depMap = Object.fromEntries(projects.map(p => [p.id, p.dependencies]));
+  const depMap = Object.fromEntries(projects.map(p => [p.id, p.dependencies?.projects || []]));
   const levels = {};
   const visited = new Set();
 
@@ -70,7 +70,7 @@ export default function DependencyMap({ projects, onView }) {
 
     const edges = [];
     projects.forEach(p => {
-      (p.dependencies || []).forEach(depId => {
+      (p.dependencies?.projects || []).forEach(depId => {
         if (nodes[depId] && nodes[p.id]) {
           edges.push({ from: depId, to: p.id });
         }
@@ -88,8 +88,8 @@ export default function DependencyMap({ projects, onView }) {
     if (id === focus) return true;
     const p = projects.find(x => x.id === focus);
     if (!p) return false;
-    if ((p.dependencies || []).includes(id)) return true;
-    if (projects.find(x => x.id === id)?.dependencies?.includes(focus)) return true;
+    if ((p.dependencies?.projects || []).includes(id)) return true;
+    if ((projects.find(x => x.id === id)?.dependencies?.projects || []).includes(focus)) return true;
     return false;
   }
 

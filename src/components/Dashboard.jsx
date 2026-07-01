@@ -48,8 +48,8 @@ export default function Dashboard({ projects, members, onSelectProject }) {
     const late = projects.filter(p => p.status === 'Chậm tiến độ').length;
     const paused = projects.filter(p => p.status === 'Tạm dừng').length;
     const onTrack = projects.filter(p => p.status === 'Đúng tiến độ').length;
-    const totalBudget = projects.reduce((s, p) => s + p.budget, 0);
-    const totalSpent = projects.reduce((s, p) => s + p.spent, 0);
+    const totalBudget = projects.reduce((s, p) => s + (p.budget?.approved || 0), 0);
+    const totalSpent = projects.reduce((s, p) => s + (p.budget?.actual || 0), 0);
     const avgProgress = Math.round(projects.reduce((s, p) => s + p.progress, 0) / total);
     const totalRisks = projects.reduce((s, p) => s + p.risks.length, 0);
     const highRisks = projects.reduce((s, p) => s + p.risks.filter(r => r.level === 'Cao').length, 0);
