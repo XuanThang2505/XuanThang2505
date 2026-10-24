@@ -98,7 +98,8 @@ def write_blocklists():
     # 3) Pi-hole regex
     with open("samsung_block_pihole.txt", "w") as f:
         for d in SAMSUNG_BLOCK:
-            f.write(f"(\\.|^){d.replace('.', '\\\\.')}$\n")
+            escaped = d.replace(".", r"\.")
+            f.write(r"(\.|^)" + escaped + "$\n")
 
     print("\n[*] Đã tạo 3 file blocklist trong thư mục hiện tại:")
     print("    - samsung_block_hosts.txt     (AdGuard Home 'custom filtering rules' / /etc/hosts)")
