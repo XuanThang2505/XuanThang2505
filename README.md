@@ -1,5 +1,7 @@
 # React + Vite
 
+> Điều khiển trình duyệt bằng Claude Code (Playwright MCP): xem [docs/playwright-mcp.md](docs/playwright-mcp.md).
+
 This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
 
 Currently, two official plugins are available:
