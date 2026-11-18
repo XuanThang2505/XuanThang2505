@@ -116,6 +116,7 @@ export const PLANETS: PlanetData[] = [
   {
     id: 'mars',
     englishName: 'MARS',
+    textureUrl: './textures/mars.jpg',
     syllables: 'MARS',
     englishPhrase: 'Mars is the red planet!',
     vietnameseName: 'Sao Hỏa',
@@ -141,6 +142,7 @@ export const PLANETS: PlanetData[] = [
   {
     id: 'jupiter',
     englishName: 'JUPITER',
+    textureUrl: './textures/jupiter.jpg',
     syllables: 'JU - PI - TER',
     englishPhrase: 'Jupiter is very big!',
     vietnameseName: 'Sao Mộc',
@@ -167,6 +169,7 @@ export const PLANETS: PlanetData[] = [
   {
     id: 'saturn',
     englishName: 'SATURN',
+    textureUrl: './textures/saturn.jpg',
     syllables: 'SAT - URN',
     englishPhrase: 'Saturn has shiny rings!',
     vietnameseName: 'Sao Thổ',
@@ -192,6 +195,7 @@ export const PLANETS: PlanetData[] = [
   {
     id: 'neptune',
     englishName: 'NEPTUNE',
+    textureUrl: './textures/neptune.jpg',
     syllables: 'NEP - TUNE',
     englishPhrase: 'Neptune is blue and cold!',
     vietnameseName: 'Sao Hải Vương',

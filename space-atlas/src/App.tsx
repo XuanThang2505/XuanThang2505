@@ -5,6 +5,7 @@ import { WelcomeScreen } from './components/WelcomeScreen'
 import type { ActiveEffect } from './components/PlanetMesh'
 import { EFFECT_DURATION, PLANET_MAP, type PlanetId, type VocabWord } from './data/planetsData'
 import { hasVietnameseVoice, setSpeechRate, speakBilingual, stopSpeaking, unlockSpeech, type SpeechRate } from './utils/speech'
+import { preloadProceduralTextures } from './utils/textures'
 import { playArrive, playBoing, playPop, playSparkle, playWhoosh, startMusic, stopMusic, unlockAudio } from './utils/soundEffects'
 
 export interface Settings {
@@ -67,6 +68,7 @@ export default function App() {
       /* not supported – fine */
     }
     setStarted(true)
+    preloadProceduralTextures()
     setTimeout(() => setViVoice(hasVietnameseVoice()), 800)
   }, [])
 

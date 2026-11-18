@@ -338,7 +338,7 @@ export function StormMarker({ lat, lon, level }: { lat: number; lon: number; lev
 
   return (
     <group ref={group} matrixAutoUpdate={false} matrix={matrix}>
-      <group scale={[0.42, 0.2, 1]}>
+      <group scale={[0.36, 0.18, 0.18]}>
         {[0, 1, 2].map((i) => (
           <mesh
             key={i}

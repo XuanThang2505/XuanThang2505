@@ -46,18 +46,25 @@ src/
   data/planetsData.ts      Nội dung bài học (sửa chữ, thêm từ ở đây)
   utils/speech.ts          Giọng đọc: file mp3 trước, Web Speech API sau
   utils/soundEffects.ts    Âm thanh hiệu ứng + nhạc nền tạo bằng Web Audio (không cần file)
-  utils/textures.ts        Texture hành tinh vẽ bằng code (Sao Hỏa, Mộc, Thổ, Hải Vương, vành đai)
+  utils/proceduralPixels.ts Texture dự phòng vẽ bằng code (chạy trong Web Worker, không làm khựng hình)
+  utils/textureWorker.ts   Worker vẽ texture nền
+  utils/textures.ts        Vành đai Sao Thổ, sprite phát sáng, kho texture dự phòng
   components/SolarScene.tsx   Canvas, bầu trời, camera bay (GSAP), so sánh kích thước, Bloom
   components/PlanetMesh.tsx   Mặt Trời (shader), Trái Đất (ngày/đêm/đèn), các hành tinh khác
   components/SpaceEffects.tsx Hạt bụi/băng/gió/tuyết, tên lửa, mặt trăng, vòng bão
   components/Starfield.tsx    Sao lấp lánh + dải Ngân Hà + tinh vân
   components/IPadHUD.tsx      Giao diện: thẻ từ, dock hành tinh, khoá phụ huynh
-public/textures/           Ảnh thật (Trái Đất có sẵn). Xem README trong đó để thêm ảnh các hành tinh khác
+public/textures/           Ảnh thật: Trái Đất (three.js, MIT) + Sao Hỏa/Mộc/Thổ/Hải Vương (Solar System Scope, CC BY 4.0)
 public/audio/en/           (Tuỳ chọn) file mp3 thu âm sẵn: earth.mp3, ocean.mp3 ...
 ```
 
 ## Nâng cấp
 
-1. **Ảnh thật cho Sao Hỏa, Mộc, Thổ, Hải Vương**: tải bản 2K ở solarsystemscope.com/textures (CC BY 4.0), xem `public/textures/README.md`.
-2. **Giọng bố mẹ**: thu âm từng từ thành mp3, đặt vào `public/audio/en/`. App tự dùng.
-3. **Thêm hành tinh** (Mercury, Venus, Uranus, Moon): thêm 1 mục trong `planetsData.ts`, texture trong `textures.ts`.
+1. **Giọng bố mẹ**: thu âm từng từ thành mp3, đặt vào `public/audio/en/`. App tự dùng.
+2. **Thêm hành tinh** (Mercury, Venus, Uranus, Moon): thêm 1 mục trong `planetsData.ts`, texture trong `textures.ts`.
+
+## Kiểm thử
+
+Bộ test tự động (Playwright, giả lập iPad Pro 11 ngang) đã chạy qua: bay vào Trái Đất, chạm hành tinh,
+đổi hành tinh liên tục, 18 thẻ từ vựng, SIZE COMPARE cho 6 hành tinh, nút đọc câu, khoá phụ huynh
+(chạm ngắn không mở, giữ 2 giây mở), lưu cài đặt, không có lỗi JavaScript.

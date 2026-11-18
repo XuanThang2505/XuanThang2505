@@ -140,10 +140,17 @@ function speakWithSynth(text: string, lang: 'en' | 'vi'): Promise<void> {
 /** Speak an English word or short phrase. */
 export async function speak(text: string, opts: { lang?: 'en' | 'vi'; interrupt?: boolean } = {}) {
   const lang = opts.lang ?? 'en'
+  const busy = !!(synth?.speaking || synth?.pending || currentAudio)
   if (opts.interrupt !== false) stopSpeaking()
+  const myGeneration = generation
 
   const url = `./audio/${lang}/${slugify(text)}.mp3`
-  if (await recordedFileExists(url)) {
+  const hasFile = await recordedFileExists(url)
+  // iOS Safari drops an utterance queued right after cancel(): give it a breath.
+  if (busy) await new Promise((r) => setTimeout(r, 90))
+  // A newer tap already took over – stay quiet.
+  if (myGeneration !== generation) return
+  if (hasFile) {
     return new Promise<void>((resolve) => {
       const a = new Audio(url)
       currentAudio = a

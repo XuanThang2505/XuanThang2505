@@ -1,7 +1,7 @@
 /**
  * Photoreal-ish planet bodies + the 3D side of every vocabulary effect.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import * as THREE from 'three'
@@ -10,13 +10,14 @@ import {
   cached,
   JUPITER_SPOT,
   latLonToVec3,
+  getProcedural,
   makeEarthFallback,
-  makeMarsTextures,
   makeSaturnRingTexture,
-  makeStreakTexture,
-  proceduralMap,
+  preloadProceduralTextures,
   SATURN_RING,
+  subscribeProcedural,
 } from '../utils/textures'
+import type { ProceduralKey } from '../utils/proceduralPixels'
 import { GlowSprite, Moons, Rocket, StormMarker, Swarm, type Getter } from './SpaceEffects'
 
 /** Direction *towards* the Sun for lighting every planet. */
@@ -56,6 +57,12 @@ function useEffectClock(effect: ActiveEffect | null) {
     [time],
   )
   return { level, time }
+}
+
+// ---------------------------------------------------------------- procedural maps (painted in a worker)
+function useProcedural(key: ProceduralKey | null) {
+  useEffect(() => preloadProceduralTextures(), [])
+  return useSyncExternalStore(subscribeProcedural, () => (key ? getProcedural(key) : null))
 }
 
 // ---------------------------------------------------------------- textures from files
@@ -482,6 +489,9 @@ function SaturnRings({ level }: { level: (n: EffectName) => number }) {
   )
 }
 
+/** Great Red Spot position in the Solar System Scope photo map (measured from the image). */
+const PHOTO_JUPITER_SPOT = { lat: -0.353, lon: 2.3 }
+
 function GenericPlanet({
   planet,
   level,
@@ -497,10 +507,10 @@ function GenericPlanet({
 }) {
   const id = planet.id
   const file = useFileTexture(planet.textureUrl)
-  const procedural = useMemo(() => proceduralMap(id), [id])
+  const procedural = useProcedural(id === 'mars' || id === 'jupiter' || id === 'saturn' || id === 'neptune' ? id : null)
   const map = file.tex ?? procedural
-  const bump = useMemo(() => (id === 'mars' ? cached('mars', () => makeMarsTextures()).bump : null), [id])
-  const streaks = useMemo(() => (id === 'neptune' ? cached('streaks', () => makeStreakTexture()) : null), [id])
+  const bump = useProcedural(id === 'mars' && !file.tex ? 'marsBump' : null)
+  const streaks = useProcedural(id === 'neptune' ? 'streaks' : null)
 
   const body = useRef<THREE.Mesh>(null)
   const mat = useRef<THREE.MeshStandardMaterial>(null)
@@ -528,9 +538,22 @@ function GenericPlanet({
     const t = state.clock.elapsedTime
     let speed = spin()
     if (id === 'saturn') speed *= 1 + level('fastSpin') * 14
-    if (id === 'jupiter') speed *= 1 + level('redSpotStorm') * 3
     if (id === 'neptune') speed *= 1 + level('windStreaks') * 2
-    if (spinGroup.current) spinGroup.current.rotation.y += dt * speed
+    const storm = id === 'jupiter' ? level('redSpotStorm') : 0
+    if (spinGroup.current) {
+      const g = spinGroup.current
+      if (storm > 0.01) {
+        // STORM: turn the Great Red Spot to face the child
+        const spot = file.tex ? PHOTO_JUPITER_SPOT : JUPITER_SPOT
+        const v = latLonToVec3(spot.lat, spot.lon)
+        const camAz = Math.atan2(state.camera.position.x, state.camera.position.z)
+        let target = camAz - Math.atan2(v.x, v.z)
+        target += Math.round((g.rotation.y - target) / (Math.PI * 2)) * Math.PI * 2
+        g.rotation.y = THREE.MathUtils.damp(g.rotation.y, target, 3 * storm, dt)
+      } else {
+        g.rotation.y += dt * speed
+      }
+    }
 
     if (scaleGroup.current && id === 'jupiter') {
       const big = level('growBig')
@@ -567,7 +590,10 @@ function GenericPlanet({
           <mesh ref={body} onClick={onTap}>
             <sphereGeometry args={[1, 128, 64]} />
             <meshStandardMaterial
+              // re-create the material when a texture arrives so the shader gets USE_MAP
+              key={(map?.uuid ?? 'none') + (bump?.uuid ?? '')}
               ref={mat}
+              color={map ? '#ffffff' : planet.atmosphere}
               map={map ?? undefined}
               bumpMap={bump ?? undefined}
               bumpScale={bump ? 3 : 0}
@@ -576,7 +602,13 @@ function GenericPlanet({
               emissive="#000000"
             />
           </mesh>
-          {id === 'jupiter' && <StormMarker lat={JUPITER_SPOT.lat} lon={JUPITER_SPOT.lon} level={() => level('redSpotStorm')} />}
+          {id === 'jupiter' && (
+            <StormMarker
+              lat={(file.tex ? PHOTO_JUPITER_SPOT : JUPITER_SPOT).lat}
+              lon={(file.tex ? PHOTO_JUPITER_SPOT : JUPITER_SPOT).lon}
+              level={() => level('redSpotStorm')}
+            />
+          )}
         </group>
         {streaks && (
           <mesh ref={streakRef} scale={1.006} raycast={noRaycast}>
@@ -647,7 +679,7 @@ export function PlanetMesh({
 /** Small companion body used by SIZE COMPARE (Earth, or the Moon when viewing Earth). */
 export function CompanionBody({ kind }: { kind: 'EARTH' | 'MOON' }) {
   const day = useFileTexture(kind === 'EARTH' ? './textures/earth_atmos_2048.jpg' : undefined)
-  const moonBump = useMemo(() => (kind === 'MOON' ? cached('mars', () => makeMarsTextures()).bump : null), [kind])
+  const moonBump = useProcedural(kind === 'MOON' ? 'marsBump' : null)
   const ref = useRef<THREE.Mesh>(null)
   useFrame((_, dt) => {
     if (ref.current) ref.current.rotation.y += dt * 0.3
@@ -656,9 +688,9 @@ export function CompanionBody({ kind }: { kind: 'EARTH' | 'MOON' }) {
     <mesh ref={ref} raycast={noRaycast}>
       <sphereGeometry args={[1, 64, 32]} />
       {kind === 'EARTH' ? (
-        <meshStandardMaterial map={day.tex ?? undefined} color={day.tex ? '#ffffff' : '#3b7fe0'} roughness={0.7} emissiveMap={day.tex ?? undefined} emissive="#ffffff" emissiveIntensity={0.25} />
+        <meshStandardMaterial key={day.tex?.uuid ?? 'none'} map={day.tex ?? undefined} color={day.tex ? '#ffffff' : '#3b7fe0'} roughness={0.7} emissiveMap={day.tex ?? undefined} emissive="#ffffff" emissiveIntensity={0.45} />
       ) : (
-        <meshStandardMaterial color="#c9c6c0" bumpMap={moonBump ?? undefined} bumpScale={2} roughness={1} />
+        <meshStandardMaterial key={moonBump?.uuid ?? 'none'} color="#c9c6c0" bumpMap={moonBump ?? undefined} bumpScale={2} roughness={1} />
       )}
     </mesh>
   )

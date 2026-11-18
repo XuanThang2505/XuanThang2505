@@ -13,6 +13,24 @@ import gsap from 'gsap'
 import { PLANET_MAP, type PlanetId } from '../data/planetsData'
 import { CompanionBody, PlanetMesh, SUN_DIR, type ActiveEffect } from './PlanetMesh'
 import { Starfield } from './Starfield'
+import { allProcedural, subscribeProcedural } from '../utils/textures'
+
+/** Upload procedural textures to the GPU as soon as the worker delivers them (no hitch later). */
+function TextureWarmup() {
+  const gl = useThree((s) => s.gl)
+  useEffect(() => {
+    const done = new Set<string>()
+    const upload = () =>
+      allProcedural().forEach((t) => {
+        if (done.has(t.uuid)) return
+        done.add(t.uuid)
+        gl.initTexture(t)
+      })
+    upload()
+    return subscribeProcedural(upload)
+  }, [gl])
+  return null
+}
 
 export interface SolarSceneProps {
   planetId: PlanetId
@@ -163,6 +181,7 @@ function SceneContent({ planetId, started, effect, compareOn, autoRotate, onArri
 
   return (
     <>
+      <TextureWarmup />
       <Starfield warp={() => warp.current} />
       <ambientLight intensity={0.14} />
       <hemisphereLight args={['#9db8ff', '#1a0f2e', 0.12]} />
