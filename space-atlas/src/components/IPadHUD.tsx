@@ -3,12 +3,12 @@
  * parent lock (top-right).
  */
 import { useEffect, useRef, useState } from 'react'
-import { PLANETS, type PlanetData, type PlanetId, type VocabWord } from '../data/planetsData'
+import { PLANETS, type Lesson, type PlanetData, type ViewId, type VocabWord } from '../data/planetsData'
 import type { Settings } from '../App'
 
 interface Props {
-  planet: PlanetData
-  currentId: PlanetId
+  planet: Lesson
+  currentId: ViewId
   flying: boolean
   nameBounceKey: number
   activeWord: string | null
@@ -19,7 +19,7 @@ interface Props {
   onSpeakPhrase: () => void
   onVocab: (w: VocabWord) => void
   onToggleCompare: () => void
-  onSelectPlanet: (id: PlanetId) => void
+  onSelectPlanet: (id: ViewId) => void
   onSettingsChange: (s: Settings) => void
 }
 
@@ -99,6 +99,7 @@ function VocabCards({ planet, activeWord, compareOn, flying, onVocab, onToggleCo
           </button>
         )
       })}
+      {planet.id !== 'system' && (
       <button
         onClick={onToggleCompare}
         className={`flex h-16 min-w-[150px] items-center gap-3 rounded-2xl border px-4 text-left shadow-xl backdrop-blur-md transition-all active:scale-95 ${
@@ -111,16 +112,45 @@ function VocabCards({ planet, activeWord, compareOn, flying, onVocab, onToggleCo
           <span className="text-xs font-semibold text-slate-300">So sánh kích thước</span>
         </span>
       </button>
+      )}
     </div>
   )
 }
 
 // ---------------------------------------------------------------- planet dock
-function PlanetBall({ planet, size = 'w-20 h-20' }: { planet: PlanetData; size?: string }) {
+/** Dock icon for the Solar System overview: a little sun with orbit rings. */
+function SystemBall() {
+  return (
+    <span className="relative block h-14 w-14 lg:h-16 lg:w-16">
+      {[100, 72, 46].map((sz) => (
+        <span
+          key={sz}
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-sky-200/50"
+          style={{ width: `${sz}%`, height: `${sz * 0.55}%` }}
+        />
+      ))}
+      <span
+        className="absolute left-1/2 top-1/2 h-[30%] w-[30%] -translate-x-1/2 -translate-y-1/2 rounded-full"
+        style={{ background: 'radial-gradient(circle at 35% 35%, #fff7c2, #ffb02e 60%, #c23d00)', boxShadow: '0 0 12px 3px rgba(255,170,60,0.7)' }}
+      />
+      <span className="absolute left-[8%] top-[42%] h-[12%] w-[12%] rounded-full bg-sky-400" />
+      <span className="absolute right-[18%] top-[30%] h-[9%] w-[9%] rounded-full bg-orange-400" />
+    </span>
+  )
+}
+
+function PlanetBall({ planet, size = 'w-14 h-14 lg:w-16 lg:h-16' }: { planet: PlanetData; size?: string }) {
   return (
     <span className={`relative block ${size}`}>
-      {planet.id === 'saturn' && (
-        <span className="absolute left-1/2 top-1/2 h-[34%] w-[150%] -translate-x-1/2 -translate-y-1/2 -rotate-[18deg] rounded-[50%] border-[5px] border-amber-200/80" />
+      {(planet.id === 'saturn' || planet.id === 'uranus') && (
+        // back half of the ring, behind the planet
+        <span
+          className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-[50%] ${
+            planet.id === 'uranus'
+              ? 'h-[130%] w-[22%] border-[2px] border-cyan-100/60'
+              : 'h-[34%] w-[150%] -rotate-[18deg] border-[5px] border-amber-200/80'
+          }`}
+        />
       )}
       <span
         className="absolute inset-[12%] rounded-full shadow-[inset_-8px_-8px_16px_rgba(0,0,0,0.55)]"
@@ -132,10 +162,15 @@ function PlanetBall({ planet, size = 'w-20 h-20' }: { planet: PlanetData; size?:
               : 'inset -8px -8px 16px rgba(0,0,0,0.55), 0 0 12px rgba(120,170,255,0.25)',
         }}
       />
-      {planet.id === 'saturn' && (
+      {(planet.id === 'saturn' || planet.id === 'uranus') && (
+        // front half of the ring, drawn over the planet
         <span
-          className="absolute left-1/2 top-1/2 h-[34%] w-[150%] -translate-x-1/2 -translate-y-1/2 -rotate-[18deg] rounded-[50%] border-[5px] border-amber-200/90"
-          style={{ clipPath: 'inset(50% 0 0 0)' }}
+          className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-[50%] ${
+            planet.id === 'uranus'
+              ? 'h-[130%] w-[22%] border-[2px] border-cyan-100/70'
+              : 'h-[34%] w-[150%] -rotate-[18deg] border-[5px] border-amber-200/90'
+          }`}
+          style={{ clipPath: planet.id === 'uranus' ? 'inset(0 0 0 50%)' : 'inset(50% 0 0 0)' }}
         />
       )}
     </span>
@@ -144,7 +179,20 @@ function PlanetBall({ planet, size = 'w-20 h-20' }: { planet: PlanetData; size?:
 
 function PlanetDock({ currentId, onSelectPlanet }: Pick<Props, 'currentId' | 'onSelectPlanet'>) {
   return (
-    <div className="pointer-events-auto flex items-end gap-2 rounded-[2rem] border border-white/10 bg-slate-900/60 px-4 pb-2 pt-3 shadow-2xl backdrop-blur-md md:gap-4">
+    <div className="pointer-events-auto flex items-end gap-1 rounded-[2rem] border border-white/10 bg-slate-900/60 px-3 pb-2 pt-3 shadow-2xl backdrop-blur-md lg:gap-2">
+      <button
+        onClick={() => onSelectPlanet('system')}
+        className={`mr-1 flex flex-col items-center border-r border-white/10 pr-2 transition-transform duration-300 active:scale-90 ${currentId === 'system' ? '-translate-y-2 scale-110' : ''}`}
+      >
+        <SystemBall />
+        <span
+          className={`mt-1 rounded-full px-2 text-[11px] font-extrabold leading-tight tracking-wide ${
+            currentId === 'system' ? 'bg-amber-400 text-slate-900' : 'text-white/85'
+          }`}
+        >
+          SOLAR SYSTEM
+        </span>
+      </button>
       {PLANETS.map((p) => {
         const active = p.id === currentId
         return (
@@ -155,7 +203,7 @@ function PlanetDock({ currentId, onSelectPlanet }: Pick<Props, 'currentId' | 'on
           >
             <PlanetBall planet={p} />
             <span
-              className={`mt-1 rounded-full px-2 text-sm font-extrabold tracking-wide ${
+              className={`mt-1 rounded-full px-1.5 text-[11px] font-extrabold tracking-wide lg:text-xs ${
                 active ? 'bg-amber-400 text-slate-900' : 'text-white/85'
               }`}
             >
@@ -303,7 +351,7 @@ export function IPadHUD(props: Props) {
           />
         </div>
 
-        {compareOn && !flying && (
+        {compareOn && !flying && 'compare' in planet && (
           <div className="absolute bottom-32 left-1/2 -translate-x-1/2 animate-word-pop rounded-2xl bg-sky-600/85 px-5 py-2 text-center shadow-xl backdrop-blur">
             <div className="text-xl font-extrabold text-white">{planet.compare.en}</div>
             <div className="text-sm font-semibold text-sky-100">{planet.compare.vi}</div>

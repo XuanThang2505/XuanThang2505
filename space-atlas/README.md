@@ -13,15 +13,19 @@ npm run build      # bản build tĩnh trong dist/ (đưa lên Netlify / Vercel 
 
 Trên iPad: mở bằng Safari → nút Chia sẻ → **Thêm vào MH chính**. App sẽ chạy toàn màn hình như app thật.
 
-> ⚠️ Tắt công tắc im lặng / bật âm lượng. Giọng đọc dùng giọng có sẵn của iPad. Giọng hay nhất:
-> Cài đặt › Trợ năng › Nội dung được đọc › Giọng nói › English › **Samantha (Enhanced)** hoặc **Ava (Premium)**.
-> Muốn đọc thêm tiếng Việt thì tải giọng **Linh**.
+> ⚠️ Tắt công tắc im lặng / bật âm lượng.
+>
+> **Giọng đọc tiếng Anh** là giọng nam Mỹ thu sẵn (Kokoro `am_michael`, Apache-2.0) trong `public/audio/en/`,
+> nên mọi iPad đều đọc giống nhau. Chỉ khi thiếu file mới dùng giọng của iPad (ưu tiên giọng nam en-US).
+> Muốn đọc thêm tiếng Việt thì bật trong cài đặt phụ huynh và tải giọng **Linh** trên iPad.
 
 ## Bé dùng thế nào
 
 | Thao tác | Kết quả |
 |---|---|
-| Chạm hành tinh ở thanh dưới | Tên lửa "bay" tới hành tinh, đọc to tên tiếng Anh |
+| Màn hình đầu: **SOLAR SYSTEM** | Mặt Trời ở giữa, 8 hành tinh quay quanh trên quỹ đạo, có vành đai tiểu hành tinh |
+| Chạm hành tinh (hoặc nhãn tên) trong Hệ Mặt Trời | Bay vào xem cận cảnh hành tinh đó |
+| Chạm hành tinh ở thanh dưới | Tên lửa "bay" tới hành tinh, đọc to tên tiếng Anh. Nút đầu tiên quay về Hệ Mặt Trời |
 | Chạm vào hành tinh 3D hoặc tên lớn | Đọc lại tên, chữ nảy lên |
 | Chạm 3 thẻ từ bên phải | Đọc từ + hiệu ứng 3D minh hoạ nghĩa |
 | SIZE COMPARE | Trái Đất (hoặc Mặt Trăng) bay tới bên cạnh để so kích thước thật |
@@ -32,12 +36,20 @@ Trên iPad: mở bằng Safari → nút Chia sẻ → **Thêm vào MH chính**. 
 
 | Hành tinh | Từ 1 | Từ 2 | Từ 3 |
 |---|---|---|---|
+| SOLAR SYSTEM | ORBIT – quỹ đạo sáng lên | FAST – các hành tinh quay nhanh gấp 8 | PLANETS – đếm 8 hành tinh theo thứ tự, từng hành tinh sáng lên |
 | SUN | LIGHT – tia sáng bắn ra | HOT – bề mặt nóng trắng, sôi nhanh | STAR – lấp lánh hình ngôi sao |
+| MERCURY | SMALL – co nhỏ lại | FAST – quay tít, vệt tốc độ | ROCK – đá bay quanh |
+| VENUS | HOT – phát sáng cam nóng | CLOUD – mây vàng cuộn nhanh | BRIGHT – lấp lánh như sao Hôm |
 | EARTH | OCEAN – biển sáng gợn sóng | CLOUD – mây dày, xoay nhanh | NIGHT – trời tối, đèn thành phố bật sáng |
 | MARS | RED – phát sáng đỏ | ROCKET – tên lửa bay vòng quanh | DUST – bão cát xoáy |
 | JUPITER | BIG – phình to nảy nảy | STORM – Vết Đỏ Lớn có vòng sóng + quay nhanh | MOON – 4 mặt trăng Galileo hiện ra |
 | SATURN | RING – vành nghiêng về phía bé, sáng rực | ICE – hạt băng lấp lánh | SPIN – quay tít |
+| URANUS | SIDE – lăn tròn trên trục nằm nghiêng | RING – vành mảnh sáng lên | ICE – tuyết băng |
 | NEPTUNE | BLUE – phát sáng xanh | WIND – vệt gió bay quanh | COLD – tuyết, sương giá |
+
+**Mô phỏng Hệ Mặt Trời:** đúng thứ tự hành tinh, tất cả quay cùng chiều (ngược chiều kim đồng hồ nhìn từ trên xuống),
+hành tinh càng xa quay càng chậm (dùng chu kỳ thật, phát ở tốc độ căn bậc hai để Sao Hải Vương vẫn thấy chuyển động),
+mặt sáng của từng hành tinh luôn hướng về Mặt Trời. Kích thước và khoảng cách được thu gọn cho vừa màn hình iPad.
 
 ## Cấu trúc
 
@@ -53,18 +65,23 @@ src/
   components/PlanetMesh.tsx   Mặt Trời (shader), Trái Đất (ngày/đêm/đèn), các hành tinh khác
   components/SpaceEffects.tsx Hạt bụi/băng/gió/tuyết, tên lửa, mặt trăng, vòng bão
   components/Starfield.tsx    Sao lấp lánh + dải Ngân Hà + tinh vân
+  components/SolarSystem.tsx  Hệ Mặt Trời: quỹ đạo, vành đai tiểu hành tinh, 8 hành tinh quay quanh
   components/IPadHUD.tsx      Giao diện: thẻ từ, dock hành tinh, khoá phụ huynh
-public/textures/           Ảnh thật: Trái Đất (three.js, MIT) + Sao Hỏa/Mộc/Thổ/Hải Vương (Solar System Scope, CC BY 4.0)
-public/audio/en/           (Tuỳ chọn) file mp3 thu âm sẵn: earth.mp3, ocean.mp3 ...
+scripts/phrases.ts         In ra mọi câu tiếng Anh app sẽ đọc
+scripts/make_voice.py      Thu giọng nam Mỹ (Kokoro) thành mp3 + manifest.json
+public/textures/           Ảnh thật: Trái Đất (three.js, MIT) + các hành tinh khác và Mặt Trăng (Solar System Scope, CC BY 4.0)
+public/audio/en/           54 file giọng đọc mp3 + manifest.json
 ```
 
 ## Nâng cấp
 
-1. **Giọng bố mẹ**: thu âm từng từ thành mp3, đặt vào `public/audio/en/`. App tự dùng.
-2. **Thêm hành tinh** (Mercury, Venus, Uranus, Moon): thêm 1 mục trong `planetsData.ts`, texture trong `textures.ts`.
+1. **Đổi chữ / thêm từ**: sửa `src/data/planetsData.ts`, rồi thu lại giọng:
+   `npx tsx scripts/phrases.ts > phrases.json && python scripts/make_voice.py phrases.json public/audio/en --model kokoro-v1.0.int8.onnx --voices voices-v1.0.bin`
+2. **Giọng bố mẹ**: ghi đè file mp3 cùng tên trong `public/audio/en/`.
+3. **Thêm thiên thể** (Mặt Trăng, Sao Diêm Vương…): thêm 1 mục trong `planetsData.ts` (+ `ORBITS` nếu muốn nó quay trong Hệ Mặt Trời).
 
 ## Kiểm thử
 
-Bộ test tự động (Playwright, giả lập iPad Pro 11 ngang) đã chạy qua: bay vào Trái Đất, chạm hành tinh,
-đổi hành tinh liên tục, 18 thẻ từ vựng, SIZE COMPARE cho 6 hành tinh, nút đọc câu, khoá phụ huynh
-(chạm ngắn không mở, giữ 2 giây mở), lưu cài đặt, không có lỗi JavaScript.
+Bộ test tự động (Playwright, giả lập iPad Pro 11 ngang) chạy qua: Hệ Mặt Trời (ORBIT, FAST, đếm PLANETS đúng thứ tự,
+chạm nhãn để bay vào hành tinh), đổi hành tinh liên tục, 27 thẻ từ vựng của 9 thiên thể, SIZE COMPARE, nút đọc câu,
+khoá phụ huynh, lưu cài đặt, mọi câu tiếng Anh phát bằng giọng thu sẵn, không có lỗi JavaScript.

@@ -1,55 +1,146 @@
 /**
- * Speech system for little learners.
- * 1. Plays a recorded file /audio/en/<slug>.mp3 if one exists (e.g. a parent's voice).
- * 2. Otherwise falls back to the Web Speech API with the nicest en-US voice available.
+ * Speech for little learners.
+ *
+ * 1. Pre-recorded clips in /audio/en (natural American male voice, made with
+ *    scripts/make_voice.py). They are decoded once and played through the Web Audio
+ *    context, which iOS lets us use at any time after the first tap.
+ * 2. Fallback: Web Speech API, forced to an en-US voice (male voices preferred),
+ *    so the iPad never reads English with a Vietnamese voice.
  */
+import { getAudioContext } from './soundEffects'
+import { slugify } from './slug'
 
+export { slugify }
 export type SpeechRate = 'slow' | 'normal'
 
 const RATE: Record<SpeechRate, number> = { slow: 0.7, normal: 0.85 }
-const PITCH = 1.05
+/** Clip playback speed: recordings are already child-paced; Slow makes them a bit slower. */
+const CLIP_RATE: Record<SpeechRate, number> = { slow: 0.88, normal: 1 }
 
+// Natural male US voices first (iOS/macOS "Enhanced" voices, then Edge/Chrome), then any en-US.
 const PREFERRED_EN = [
-  'Samantha',
-  'Ava',
-  'Allison',
-  'Nicky',
-  'Google US English',
-  'Microsoft Aria',
-  'Microsoft Jenny',
+  'Evan',
+  'Nathan',
+  'Tom',
+  'Aaron',
   'Alex',
-  'Karen',
+  'Microsoft Andrew',
+  'Microsoft Guy',
+  'Microsoft Christopher',
+  'Microsoft Eric',
+  'Microsoft Brian',
+  'Fred',
+  'Google US English',
+  'Samantha',
 ]
 const PREFERRED_VI = ['Linh', 'Google Tiếng Việt', 'Microsoft HoaiMy', 'Microsoft An']
 
 let currentRate: SpeechRate = 'normal'
 let enVoice: SpeechSynthesisVoice | null = null
 let viVoice: SpeechSynthesisVoice | null = null
-let currentAudio: HTMLAudioElement | null = null
+let currentSource: AudioBufferSourceNode | null = null
 /** Bumped every time speech is interrupted, so queued follow-ups can bail out. */
 let generation = 0
-const audioFileCache = new Map<string, boolean>()
 
 const synth = typeof window !== 'undefined' ? window.speechSynthesis : undefined
 
+/** Optional debug log (used by the automated tests): set window.__speechLog = [] to record. */
+function log(text: string, via: 'clip' | 'synth') {
+  ;(window as unknown as { __speechLog?: { text: string; via: string }[] }).__speechLog?.push({ text, via })
+}
+
+// ---------------------------------------------------------------- recorded clips
+let manifest: Record<string, string> | null = null
+let manifestPromise: Promise<void> | null = null
+const buffers = new Map<string, AudioBuffer>()
+const loading = new Map<string, Promise<AudioBuffer | null>>()
+
+function loadManifest() {
+  if (!manifestPromise) {
+    manifestPromise = fetch('./audio/en/manifest.json')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j: { clips?: Record<string, string> } | null) => {
+        manifest = j?.clips ?? {}
+      })
+      .catch(() => {
+        manifest = {}
+      })
+  }
+  return manifestPromise
+}
+
+function loadClip(slug: string): Promise<AudioBuffer | null> {
+  if (buffers.has(slug)) return Promise.resolve(buffers.get(slug)!)
+  if (loading.has(slug)) return loading.get(slug)!
+  const ctx = getAudioContext()
+  const file = manifest?.[slug]
+  if (!ctx || !file) return Promise.resolve(null)
+  const p = fetch(`./audio/en/${file}`)
+    .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error('missing'))))
+    // callback form: older iOS Safari has no promise-based decodeAudioData
+    .then((data) => new Promise<AudioBuffer>((res, rej) => ctx.decodeAudioData(data, res, rej)))
+    .then((buf) => {
+      buffers.set(slug, buf)
+      return buf
+    })
+    .catch(() => null)
+  loading.set(slug, p)
+  return p
+}
+
+/** Decode every clip in the background right after the first tap. */
+export async function preloadVoiceClips() {
+  await loadManifest()
+  for (const slug of Object.keys(manifest ?? {})) await loadClip(slug)
+}
+
+function playBuffer(buf: AudioBuffer): Promise<void> {
+  const ctx = getAudioContext()
+  if (!ctx) return Promise.resolve()
+  if (ctx.state === 'suspended') void ctx.resume()
+  return new Promise((resolve) => {
+    const src = ctx.createBufferSource()
+    src.buffer = buf
+    src.playbackRate.value = CLIP_RATE[currentRate]
+    const g = ctx.createGain()
+    g.gain.value = 1
+    src.connect(g).connect(ctx.destination)
+    src.onended = () => {
+      if (currentSource === src) currentSource = null
+      resolve()
+    }
+    currentSource = src
+    src.start()
+  })
+}
+
+// ---------------------------------------------------------------- Web Speech fallback
 function pickVoices() {
   if (!synth) return
   const voices = synth.getVoices()
   if (!voices.length) return
+  const norm = (l: string) => l.replace('_', '-').toLowerCase()
   const byName = (names: string[], lang: string) => {
     for (const n of names) {
-      const v = voices.find((x) => x.name.startsWith(n) && x.lang.replace('_', '-').startsWith(lang))
+      const v = voices.find((x) => x.name.startsWith(n) && norm(x.lang).startsWith(lang))
       if (v) return v
     }
     return null
   }
   enVoice =
+    byName(PREFERRED_EN, 'en-us') ??
+    voices.find((v) => norm(v.lang) === 'en-us') ??
     byName(PREFERRED_EN, 'en') ??
-    voices.find((v) => v.lang.replace('_', '-') === 'en-US' && v.localService) ??
-    voices.find((v) => v.lang.replace('_', '-') === 'en-US') ??
-    voices.find((v) => v.lang.startsWith('en')) ??
+    voices.find((v) => norm(v.lang).startsWith('en')) ??
     null
-  viVoice = byName(PREFERRED_VI, 'vi') ?? voices.find((v) => v.lang.startsWith('vi')) ?? null
+  viVoice = byName(PREFERRED_VI, 'vi') ?? voices.find((v) => norm(v.lang).startsWith('vi')) ?? null
+}
+
+/** iOS fills the voice list late; wait for it (max ~1.5 s) so we never fall back to the system voice. */
+async function ensureVoices() {
+  if (!synth) return
+  for (let i = 0; i < 15 && !synth.getVoices().length; i++) await new Promise((r) => setTimeout(r, 100))
+  pickVoices()
 }
 
 if (synth) {
@@ -57,6 +148,31 @@ if (synth) {
   synth.addEventListener?.('voiceschanged', pickVoices)
 }
 
+function speakWithSynth(text: string, lang: 'en' | 'vi'): Promise<void> {
+  return new Promise((resolve) => {
+    if (!synth) return resolve()
+    const u = new SpeechSynthesisUtterance(lang === 'en' ? text.charAt(0) + text.slice(1).toLowerCase() : text)
+    const voice = lang === 'en' ? enVoice : viVoice
+    if (voice) u.voice = voice
+    u.lang = voice?.lang ?? (lang === 'en' ? 'en-US' : 'vi-VN')
+    u.rate = lang === 'en' ? RATE[currentRate] : RATE[currentRate] + 0.1
+    u.pitch = 1
+    u.volume = 1
+    let done = false
+    const finish = () => {
+      if (!done) {
+        done = true
+        resolve()
+      }
+    }
+    u.onend = finish
+    u.onerror = finish
+    setTimeout(finish, 1500 + text.length * 180)
+    synth.speak(u)
+  })
+}
+
+// ---------------------------------------------------------------- public API
 export function setSpeechRate(rate: SpeechRate) {
   currentRate = rate
 }
@@ -68,6 +184,7 @@ export function hasVietnameseVoice() {
 
 /** Must be called inside a user gesture (iOS Safari policy). */
 export function unlockSpeech() {
+  void loadManifest()
   if (!synth) return
   pickVoices()
   try {
@@ -79,86 +196,40 @@ export function unlockSpeech() {
   }
 }
 
-export function slugify(text: string) {
-  return text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-}
-
-async function recordedFileExists(url: string): Promise<boolean> {
-  if (audioFileCache.has(url)) return audioFileCache.get(url)!
-  try {
-    const res = await fetch(url, { method: 'HEAD' })
-    // Dev servers answer missing files with index.html, so check the content type too.
-    const ok = res.ok && (res.headers.get('content-type') ?? '').includes('audio')
-    audioFileCache.set(url, ok)
-    return ok
-  } catch {
-    audioFileCache.set(url, false)
-    return false
-  }
-}
-
 export function stopSpeaking() {
   generation++
   synth?.cancel()
-  if (currentAudio) {
-    currentAudio.pause()
-    currentAudio = null
+  if (currentSource) {
+    try {
+      currentSource.stop()
+    } catch {
+      /* already stopped */
+    }
+    currentSource = null
   }
 }
 
-function speakWithSynth(text: string, lang: 'en' | 'vi'): Promise<void> {
-  return new Promise((resolve) => {
-    if (!synth) return resolve()
-    pickVoices()
-    const u = new SpeechSynthesisUtterance(text)
-    const voice = lang === 'en' ? enVoice : viVoice
-    if (voice) u.voice = voice
-    u.lang = voice?.lang ?? (lang === 'en' ? 'en-US' : 'vi-VN')
-    u.rate = lang === 'en' ? RATE[currentRate] : RATE[currentRate] + 0.1
-    u.pitch = PITCH
-    u.volume = 1
-    let done = false
-    const finish = () => {
-      if (!done) {
-        done = true
-        resolve()
-      }
-    }
-    u.onend = finish
-    u.onerror = finish
-    // Safety net: some browsers never fire onend.
-    setTimeout(finish, 1500 + text.length * 180)
-    synth.speak(u)
-  })
-}
-
-/** Speak an English word or short phrase. */
+/** Speak an English word or short phrase (or Vietnamese with lang 'vi'). */
 export async function speak(text: string, opts: { lang?: 'en' | 'vi'; interrupt?: boolean } = {}) {
   const lang = opts.lang ?? 'en'
-  const busy = !!(synth?.speaking || synth?.pending || currentAudio)
+  const synthBusy = !!(synth?.speaking || synth?.pending)
   if (opts.interrupt !== false) stopSpeaking()
   const myGeneration = generation
 
-  const url = `./audio/${lang}/${slugify(text)}.mp3`
-  const hasFile = await recordedFileExists(url)
-  // iOS Safari drops an utterance queued right after cancel(): give it a breath.
-  if (busy) await new Promise((r) => setTimeout(r, 90))
-  // A newer tap already took over – stay quiet.
-  if (myGeneration !== generation) return
-  if (hasFile) {
-    return new Promise<void>((resolve) => {
-      const a = new Audio(url)
-      currentAudio = a
-      a.onended = () => resolve()
-      a.onerror = () => resolve()
-      a.play().catch(() => speakWithSynth(text, lang).then(resolve))
-    })
+  if (lang === 'en') {
+    await loadManifest()
+    const buf = await loadClip(slugify(text))
+    if (myGeneration !== generation) return
+    if (buf) {
+      log(text, 'clip')
+      return playBuffer(buf)
+    }
+    await ensureVoices()
   }
+  // iOS Safari drops an utterance queued right after cancel(): give it a breath.
+  if (synthBusy) await new Promise((r) => setTimeout(r, 90))
+  if (myGeneration !== generation) return
+  log(text, 'synth')
   return speakWithSynth(text, lang)
 }
 
@@ -171,4 +242,17 @@ export async function speakBilingual(en: string, vi: string | undefined, withVie
   await new Promise((r) => setTimeout(r, 250))
   if (myGeneration !== generation) return
   await speak(vi, { lang: 'vi', interrupt: false })
+}
+
+/** Say a list of English words one after another, `gap` seconds apart (PLANETS counting). */
+export async function speakSequence(words: string[], gap: number) {
+  stopSpeaking()
+  const myGeneration = generation
+  const start = performance.now()
+  for (let i = 0; i < words.length; i++) {
+    const wait = start + i * gap * 1000 - performance.now()
+    if (wait > 0) await new Promise((r) => setTimeout(r, wait))
+    if (myGeneration !== generation) return
+    void speak(words[i], { interrupt: false })
+  }
 }

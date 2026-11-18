@@ -1,6 +1,5 @@
-# Recorded audio (optional)
+# Voice clips
 
-Đặt file mp3 tên chữ thường theo từ: `earth.mp3`, `ocean.mp3`, `saturn-has-shiny-rings.mp3` ...
-(tên = chữ thường, khoảng trắng → dấu gạch ngang, bỏ dấu câu).
-App ưu tiên phát file này; nếu không có sẽ dùng giọng đọc của iPad.
-Gợi ý: bố/mẹ tự thu âm giọng mình – bé rất thích!
+Giọng nam Mỹ thu sẵn bằng Kokoro (`am_michael`, Apache-2.0), tạo bởi `scripts/make_voice.py`.
+`manifest.json` liệt kê các file. Tên file = câu viết thường, khoảng trắng thành `-` (vd. `saturn-has-shiny-rings.mp3`).
+Muốn dùng giọng bố mẹ: ghi đè file mp3 cùng tên.

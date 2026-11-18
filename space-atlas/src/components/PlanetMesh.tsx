@@ -1,11 +1,11 @@
 /**
  * Photoreal-ish planet bodies + the 3D side of every vocabulary effect.
  */
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import * as THREE from 'three'
-import { EFFECT_DURATION, type EffectName, type PlanetData } from '../data/planetsData'
+import { effectDuration, type EffectName, type PlanetData } from '../data/planetsData'
 import {
   cached,
   JUPITER_SPOT,
@@ -23,6 +23,14 @@ import { GlowSprite, Moons, Rocket, StormMarker, Swarm, type Getter } from './Sp
 /** Direction *towards* the Sun for lighting every planet. */
 export const SUN_DIR = new THREE.Vector3(-4, 1.2, 3).normalize()
 
+/**
+ * Direction towards the Sun for the planet being drawn. The close-up view uses the fixed
+ * SUN_DIR; the Solar System overview gives each planet its own vector, updated every frame.
+ */
+export const SunDirContext = createContext<THREE.Vector3>(SUN_DIR)
+/** True inside the Solar System overview: lighter effects, no labels or pins. */
+export const OverviewContext = createContext(false)
+
 export interface ActiveEffect {
   name: EffectName
   key: number
@@ -35,7 +43,7 @@ const smoothstep = (e0: number, e1: number, x: number) => {
 }
 
 /** Returns getters: level(name) = 0..1 envelope, time(name) = seconds since start. */
-function useEffectClock(effect: ActiveEffect | null) {
+export function useEffectClock(effect: ActiveEffect | null) {
   const clock = useThree((s) => s.clock)
   const start = useRef(-1000)
   const name = useRef<EffectName | null>(null)
@@ -51,8 +59,9 @@ function useEffectClock(effect: ActiveEffect | null) {
   const level = useCallback(
     (n: EffectName) => {
       const t = time(n)
-      if (t < 0 || t > EFFECT_DURATION) return 0
-      return smoothstep(0, 0.5, t) * (1 - smoothstep(EFFECT_DURATION - 1.2, EFFECT_DURATION, t))
+      const d = effectDuration(n)
+      if (t < 0 || t > d) return 0
+      return smoothstep(0, 0.5, t) * (1 - smoothstep(d - 1.2, d, t))
     },
     [time],
   )
@@ -132,13 +141,14 @@ const haloFragment = /* glsl */ `
 `
 
 function Atmosphere({ color, glow, base = 1, size = 1 }: { color: string; glow: Getter; base?: number; size?: number }) {
+  const sunDir = useContext(SunDirContext)
   const uniforms = useMemo(
     () => ({
       uColor: { value: new THREE.Color(color) },
       uIntensity: { value: base },
-      uSunDir: { value: SUN_DIR },
+      uSunDir: { value: sunDir },
     }),
-    [color, base],
+    [color, base, sunDir],
   )
   useFrame(() => {
     uniforms.uIntensity.value = base * (1 + glow() * 2.2)
@@ -234,6 +244,7 @@ const sunFragment = /* glsl */ `
 `
 
 function SunBody({ level, onTap, spin }: { level: (n: EffectName) => number; onTap: (e: ThreeEvent<MouseEvent>) => void; spin: Getter }) {
+  const overview = useContext(OverviewContext)
   const body = useRef<THREE.Mesh>(null)
   const corona = useRef<THREE.Sprite>(null)
   const outer = useRef<THREE.Sprite>(null)
@@ -275,7 +286,7 @@ function SunBody({ level, onTap, spin }: { level: (n: EffectName) => number; onT
         <GlowSprite spriteRef={outer} color="#ff6a10" scale={4.6} opacity={0.22} />
       </group>
       <GlowSprite spriteRef={spikes} color="#fff4d0" scale={4} spikes opacity={0} />
-      <Swarm kind="rays" level={() => level('sunRays')} baseline={0.12} />
+      {!overview && <Swarm kind="rays" level={() => level('sunRays')} baseline={0.12} />}
     </group>
   )
 }
@@ -310,7 +321,7 @@ const earthFragment = /* glsl */ `
 `
 
 // Vietnam ≈ 16°N, 106°E. Texture u=0 is longitude -180°.
-const VIETNAM = { lat: THREE.MathUtils.degToRad(16), lon: ((106 + 180) / 360) * Math.PI * 2 }
+const VIETNAM = { lat: THREE.MathUtils.degToRad(15), lon: ((108.5 + 180) / 360) * Math.PI * 2 }
 const VIETNAM_START_ROT = Math.PI / 2 - VIETNAM.lon - 0.3
 
 /** "Bé ở đây!" – a little glowing pin on Vietnam that fades out on the far side. */
@@ -360,17 +371,19 @@ function EarthBody({ level, onTap, spin }: { level: (n: EffectName) => number; o
   }
   const ready = !!(maps.day && maps.night && maps.spec)
 
+  const sunDir = useContext(SunDirContext)
+  const overview = useContext(OverviewContext)
   const uniforms = useMemo(
     () => ({
       dayMap: { value: null as THREE.Texture | null },
       nightMap: { value: null as THREE.Texture | null },
       specMap: { value: null as THREE.Texture | null },
-      uSunDir: { value: SUN_DIR },
+      uSunDir: { value: sunDir },
       uOcean: { value: 0 },
       uNight: { value: 0 },
       uTime: { value: 0 },
     }),
-    [],
+    [sunDir],
   )
   uniforms.dayMap.value = maps.day
   uniforms.nightMap.value = maps.night
@@ -401,7 +414,7 @@ function EarthBody({ level, onTap, spin }: { level: (n: EffectName) => number; o
     <group>
       <mesh ref={body} onClick={onTap} rotation={[0, VIETNAM_START_ROT, 0]}>
         <sphereGeometry args={[1, 128, 64]} />
-        <VietnamPin />
+        {!overview && <VietnamPin />}
         {ready ? (
           <shaderMaterial vertexShader={earthVertex} fragmentShader={earthFragment} uniforms={uniforms} />
         ) : (
@@ -492,6 +505,40 @@ function SaturnRings({ level }: { level: (n: EffectName) => number }) {
 /** Great Red Spot position in the Solar System Scope photo map (measured from the image). */
 const PHOTO_JUPITER_SPOT = { lat: -0.353, lon: 2.3 }
 
+/** Uranus's thin, dark rings: faint all the time, glowing for RING. */
+function UranusRings({ level }: { level: Getter }) {
+  const mats = useRef<(THREE.MeshBasicMaterial | null)[]>([])
+  const radii = [1.62, 1.68, 1.74, 1.86, 2.0]
+  useFrame((state) => {
+    const L = level()
+    const t = state.clock.elapsedTime
+    mats.current.forEach((m, i) => {
+      if (!m) return
+      m.opacity = 0.18 + L * (0.7 + Math.sin(t * 6 + i) * 0.2)
+      m.color.setRGB(0.75 + L * 0.25, 0.85 + L * 0.15, 0.9 + L * 0.1)
+    })
+  })
+  return (
+    <group rotation={[-Math.PI / 2, 0, 0]}>
+      {radii.map((r, i) => (
+        <mesh key={r} raycast={noRaycast}>
+          <ringGeometry args={[r, r + (i === 4 ? 0.035 : 0.015), 160]} />
+          <meshBasicMaterial
+            ref={(el) => {
+              mats.current[i] = el
+            }}
+            transparent
+            opacity={0.18}
+            side={THREE.DoubleSide}
+            depthWrite={false}
+            toneMapped={false}
+          />
+        </mesh>
+      ))}
+    </group>
+  )
+}
+
 function GenericPlanet({
   planet,
   level,
@@ -506,11 +553,12 @@ function GenericPlanet({
   spin: Getter
 }) {
   const id = planet.id
+  const overview = useContext(OverviewContext)
   const file = useFileTexture(planet.textureUrl)
   const procedural = useProcedural(id === 'mars' || id === 'jupiter' || id === 'saturn' || id === 'neptune' ? id : null)
   const map = file.tex ?? procedural
   const bump = useProcedural(id === 'mars' && !file.tex ? 'marsBump' : null)
-  const streaks = useProcedural(id === 'neptune' ? 'streaks' : null)
+  const streaks = useProcedural(id === 'neptune' || id === 'venus' ? 'streaks' : null)
 
   const body = useRef<THREE.Mesh>(null)
   const mat = useRef<THREE.MeshStandardMaterial>(null)
@@ -518,6 +566,7 @@ function GenericPlanet({
   const scaleGroup = useRef<THREE.Group>(null)
   const streakRef = useRef<THREE.Mesh>(null)
   const streakMat = useRef<THREE.MeshStandardMaterial>(null)
+  const spikes = useRef<THREE.Sprite>(null)
 
   const glow = useCallback(() => {
     switch (id) {
@@ -529,6 +578,12 @@ function GenericPlanet({
         return level('ringShine') * 0.3
       case 'jupiter':
         return level('redSpotStorm') * 0.3
+      case 'venus':
+        return level('venusHeat') + level('venusBright') * 1.2
+      case 'mercury':
+        return level('mercuryFast') * 0.5
+      case 'uranus':
+        return level('uranusIce') * 0.6 + level('uranusRings') * 0.3
       default:
         return 0
     }
@@ -539,6 +594,9 @@ function GenericPlanet({
     let speed = spin()
     if (id === 'saturn') speed *= 1 + level('fastSpin') * 14
     if (id === 'neptune') speed *= 1 + level('windStreaks') * 2
+    if (id === 'mercury') speed *= 1 + level('mercuryFast') * 40
+    if (id === 'uranus') speed *= 1 + level('uranusRoll') * 12
+    if (id === 'venus') speed *= 1 + level('venusClouds') * 6
     const storm = id === 'jupiter' ? level('redSpotStorm') : 0
     if (spinGroup.current) {
       const g = spinGroup.current
@@ -560,6 +618,18 @@ function GenericPlanet({
       const wobble = Math.sin(time('growBig') * 9) * 0.04 * big
       scaleGroup.current.scale.setScalar(1 + big * 0.3 + wobble)
     }
+    if (scaleGroup.current && id === 'mercury') {
+      const small = level('smallShrink')
+      const wobble = Math.sin(time('smallShrink') * 9) * 0.04 * small
+      scaleGroup.current.scale.setScalar(1 - small * 0.45 + wobble)
+    }
+    if (spikes.current) {
+      const b = level('venusBright')
+      spikes.current.visible = b > 0.01
+      spikes.current.scale.setScalar(2.4 + b * 3 + Math.sin(t * 5) * 0.3 * b)
+      spikes.current.material.rotation = t * 0.25
+      spikes.current.material.opacity = b
+    }
 
     const m = mat.current
     if (m) {
@@ -574,12 +644,18 @@ function GenericPlanet({
       } else if (id === 'jupiter') {
         m.emissive.set('#ff7a3c')
         m.emissiveIntensity = level('redSpotStorm') * 0.12
+      } else if (id === 'venus') {
+        m.emissive.set('#ff8a1a')
+        m.emissiveIntensity = level('venusHeat') * (0.5 + Math.sin(t * 5) * 0.12) + level('venusBright') * 0.35
+      } else if (id === 'uranus') {
+        m.emissive.set('#bff8ff')
+        m.emissiveIntensity = level('uranusIce') * 0.35
       }
     }
     if (streakRef.current && streakMat.current) {
-      const w = level('windStreaks')
+      const w = id === 'venus' ? level('venusClouds') : level('windStreaks')
       streakRef.current.rotation.y += dt * (0.12 + w * 1.6)
-      streakMat.current.opacity = 0.22 + w * 0.7
+      streakMat.current.opacity = (id === 'venus' ? 0.15 : 0.22) + w * 0.7
     }
   })
 
@@ -613,16 +689,28 @@ function GenericPlanet({
         {streaks && (
           <mesh ref={streakRef} scale={1.006} raycast={noRaycast}>
             <sphereGeometry args={[1, 96, 48]} />
-            <meshStandardMaterial ref={streakMat} map={streaks} transparent opacity={0.22} depthWrite={false} roughness={1} />
+            <meshStandardMaterial
+              ref={streakMat}
+              map={streaks}
+              color={id === 'venus' ? '#ffe7b0' : '#ffffff'}
+              transparent
+              opacity={0.22}
+              depthWrite={false}
+              roughness={1}
+            />
           </mesh>
         )}
-        <Atmosphere color={planet.atmosphere} glow={glow} base={id === 'mars' ? 0.7 : id === 'neptune' ? 0.9 : 0.5} />
+        <Atmosphere
+          color={planet.atmosphere}
+          glow={glow}
+          base={id === 'mars' ? 0.7 : id === 'neptune' || id === 'uranus' || id === 'venus' ? 0.9 : id === 'mercury' ? 0.15 : 0.5}
+        />
       </group>
 
       {id === 'saturn' && (
         <>
           <SaturnRings level={level} />
-          <Swarm kind="ice" level={() => level('iceSparkle')} baseline={0.18} />
+          {!overview && <Swarm kind="ice" level={() => level('iceSparkle')} baseline={0.18} />}
         </>
       )}
       {id === 'mars' && (
@@ -632,6 +720,19 @@ function GenericPlanet({
         </>
       )}
       {id === 'jupiter' && <Moons level={() => level('showMoons')} />}
+      {id === 'mercury' && (
+        <>
+          <Swarm kind="wind" level={() => level('mercuryFast')} />
+          <Swarm kind="rocks" level={() => level('rockOrbit')} />
+        </>
+      )}
+      {id === 'venus' && <GlowSprite spriteRef={spikes} color="#fff6d8" scale={3} spikes opacity={0} />}
+      {id === 'uranus' && (
+        <>
+          <UranusRings level={() => level('uranusRings')} />
+          <Swarm kind="snow" level={() => level('uranusIce')} />
+        </>
+      )}
       {id === 'neptune' && (
         <>
           <Swarm kind="wind" level={() => level('windStreaks')} />
@@ -679,7 +780,8 @@ export function PlanetMesh({
 /** Small companion body used by SIZE COMPARE (Earth, or the Moon when viewing Earth). */
 export function CompanionBody({ kind }: { kind: 'EARTH' | 'MOON' }) {
   const day = useFileTexture(kind === 'EARTH' ? './textures/earth_atmos_2048.jpg' : undefined)
-  const moonBump = useProcedural(kind === 'MOON' ? 'marsBump' : null)
+  const moon = useFileTexture(kind === 'MOON' ? './textures/moon.jpg' : undefined)
+  const moonBump = useProcedural(kind === 'MOON' && moon.failed ? 'marsBump' : null)
   const ref = useRef<THREE.Mesh>(null)
   useFrame((_, dt) => {
     if (ref.current) ref.current.rotation.y += dt * 0.3
@@ -690,7 +792,17 @@ export function CompanionBody({ kind }: { kind: 'EARTH' | 'MOON' }) {
       {kind === 'EARTH' ? (
         <meshStandardMaterial key={day.tex?.uuid ?? 'none'} map={day.tex ?? undefined} color={day.tex ? '#ffffff' : '#3b7fe0'} roughness={0.7} emissiveMap={day.tex ?? undefined} emissive="#ffffff" emissiveIntensity={0.45} />
       ) : (
-        <meshStandardMaterial key={moonBump?.uuid ?? 'none'} color="#c9c6c0" bumpMap={moonBump ?? undefined} bumpScale={2} roughness={1} />
+        <meshStandardMaterial
+          key={(moon.tex?.uuid ?? 'none') + (moonBump?.uuid ?? '')}
+          map={moon.tex ?? undefined}
+          color={moon.tex ? '#ffffff' : '#c9c6c0'}
+          bumpMap={moonBump ?? undefined}
+          bumpScale={2}
+          roughness={1}
+          emissiveMap={moon.tex ?? undefined}
+          emissive="#ffffff"
+          emissiveIntensity={0.25}
+        />
       )}
     </mesh>
   )

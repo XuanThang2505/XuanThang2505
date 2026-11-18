@@ -21,6 +21,11 @@ function ac(): AudioContext | null {
   return ctx
 }
 
+/** Shared AudioContext (created on first use). Voice clips play through it too. */
+export function getAudioContext() {
+  return ac()
+}
+
 /** Call inside the first user gesture (iOS Safari policy). */
 export async function unlockAudio() {
   const c = ac()

@@ -10,8 +10,9 @@ import { ToneMappingMode } from 'postprocessing'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import * as THREE from 'three'
 import gsap from 'gsap'
-import { PLANET_MAP, type PlanetId } from '../data/planetsData'
+import { PLANET_MAP, SYSTEM_LESSON, type PlanetId, type ViewId } from '../data/planetsData'
 import { CompanionBody, PlanetMesh, SUN_DIR, type ActiveEffect } from './PlanetMesh'
+import { SolarSystem } from './SolarSystem'
 import { Starfield } from './Starfield'
 import { allProcedural, subscribeProcedural } from '../utils/textures'
 
@@ -33,18 +34,27 @@ function TextureWarmup() {
 }
 
 export interface SolarSceneProps {
-  planetId: PlanetId
+  viewId: ViewId
   started: boolean
   effect: ActiveEffect | null
   compareOn: boolean
   autoRotate: boolean
-  onArrive: (id: PlanetId) => void
+  onArrive: (id: ViewId) => void
   onPlanetTap: () => void
+  /** A planet was tapped in the Solar System overview */
+  onSelectPlanet: (id: PlanetId) => void
 }
 
 const FRONT = new THREE.Vector3(0, 0.22, 1).normalize()
+/** Overview camera looks down at the orbits from above and in front. */
+const OVERVIEW_DIR = new THREE.Vector3(0, 0.78, 1).normalize()
 
-function SceneContent({ planetId, started, effect, compareOn, autoRotate, onArrive, onPlanetTap }: SolarSceneProps) {
+function cameraFor(view: ViewId) {
+  return view === 'system' ? { ...SYSTEM_LESSON.camera, dir: OVERVIEW_DIR } : { ...PLANET_MAP[view].camera, dir: FRONT }
+}
+
+function SceneContent({ viewId, started, effect, compareOn, autoRotate, onArrive, onPlanetTap, onSelectPlanet }: SolarSceneProps) {
+  const planetId = viewId
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera
   const controls = useRef<OrbitControlsImpl>(null)
   const stage = useRef<THREE.Group>(null)
@@ -54,37 +64,39 @@ function SceneContent({ planetId, started, effect, compareOn, autoRotate, onArri
   const warp = useRef(0)
   const tl = useRef<gsap.core.Timeline | null>(null)
   const introDone = useRef(false)
-  const shownRef = useRef<PlanetId>(planetId)
-  const targetRef = useRef<PlanetId>(planetId)
+  const shownRef = useRef<ViewId>(planetId)
+  const targetRef = useRef<ViewId>(planetId)
   const onArriveRef = useRef(onArrive)
   onArriveRef.current = onArrive
-  const [shownId, setShownId] = useState<PlanetId>(planetId)
+  const [shownId, setShownId] = useState<ViewId>(planetId)
   const [flying, setFlying] = useState(true)
-  const planet = PLANET_MAP[shownId]
+  const isSystem = shownId === 'system'
+  const planet = PLANET_MAP[isSystem ? 'earth' : shownId]
+  const cam = cameraFor(shownId)
 
   const setCamDistance = useCallback(
-    (d: number) => {
-      camera.position.copy(FRONT).multiplyScalar(d)
+    (d: number, dir: THREE.Vector3) => {
+      camera.position.copy(dir).multiplyScalar(d)
       camera.lookAt(0, 0, 0)
     },
     [camera],
   )
 
   const arrive = useCallback(
-    (id: PlanetId, timeline: gsap.core.Timeline) => {
-      const p = PLANET_MAP[id]
-      const proxy = { d: p.camera.distance * 7 }
+    (id: ViewId, timeline: gsap.core.Timeline) => {
+      const c = cameraFor(id)
+      const proxy = { d: c.distance * (id === 'system' ? 3 : 7) }
       timeline.call(() => {
         shownRef.current = id
         setShownId(id)
-        setCamDistance(proxy.d)
+        setCamDistance(proxy.d, c.dir)
         controls.current?.target.set(0, 0, 0)
       })
       timeline.to(proxy, {
-        d: p.camera.distance,
+        d: c.distance,
         duration: 1.7,
         ease: 'power3.out',
-        onUpdate: () => setCamDistance(proxy.d),
+        onUpdate: () => setCamDistance(proxy.d, c.dir),
       })
       if (stage.current) {
         timeline.fromTo(stage.current.scale, { x: 0.001, y: 0.001, z: 0.001 }, { x: 1, y: 1, z: 1, duration: 1.2, ease: 'back.out(1.5)' }, '<0.15')
@@ -132,7 +144,7 @@ function SceneContent({ planetId, started, effect, compareOn, autoRotate, onArri
   useEffect(() => {
     if (!compareOn || flying) return
     const start = camera.position.clone()
-    const end = FRONT.clone().multiplyScalar(PLANET_MAP[shownRef.current].camera.distance)
+    const end = FRONT.clone().multiplyScalar(cameraFor(shownRef.current).distance)
     const p = { t: 0 }
     const tween = gsap.to(p, {
       t: 1,
@@ -163,7 +175,7 @@ function SceneContent({ planetId, started, effect, compareOn, autoRotate, onArri
   }, [planet])
 
   useFrame((_, dt) => {
-    const on = compareOn && !flying
+    const on = compareOn && !flying && !isSystem
     const damp = THREE.MathUtils.damp
     if (layout.current) {
       layout.current.scale.setScalar(damp(layout.current.scale.x, on ? compare.scale : 1, 4, dt))
@@ -183,11 +195,19 @@ function SceneContent({ planetId, started, effect, compareOn, autoRotate, onArri
     <>
       <TextureWarmup />
       <Starfield warp={() => warp.current} />
-      <ambientLight intensity={0.14} />
+      <ambientLight intensity={isSystem ? 0.2 : 0.14} />
       <hemisphereLight args={['#9db8ff', '#1a0f2e', 0.12]} />
-      <directionalLight position={SUN_DIR.clone().multiplyScalar(10)} intensity={2.8} color="#fff6ea" />
+      {isSystem ? (
+        // the Sun itself is the light in the overview
+        <pointLight position={[0, 0, 0]} intensity={3.2} decay={0} color="#fff6ea" />
+      ) : (
+        <directionalLight position={SUN_DIR.clone().multiplyScalar(10)} intensity={2.8} color="#fff6ea" />
+      )}
 
       <group ref={stage} scale={0.001}>
+        {isSystem ? (
+          <SolarSystem effect={effect} autoRotate={autoRotate} labelsOn={!flying} onSelect={onSelectPlanet} />
+        ) : (
         <group ref={layout}>
           <group ref={planetSlot}>
             <PlanetMesh key={shownId} planet={planet} effect={effect} autoRotate={autoRotate} onTap={onPlanetTap} />
@@ -203,6 +223,7 @@ function SceneContent({ planetId, started, effect, compareOn, autoRotate, onArri
             )}
           </group>
         </group>
+        )}
       </group>
 
       <OrbitControls
@@ -213,10 +234,11 @@ function SceneContent({ planetId, started, effect, compareOn, autoRotate, onArri
         dampingFactor={0.08}
         rotateSpeed={0.55}
         zoomSpeed={0.6}
-        minDistance={flying ? 0.1 : planet.camera.min}
-        maxDistance={flying ? 1000 : planet.camera.max}
+        minDistance={flying ? 0.1 : cam.min}
+        maxDistance={flying ? 1000 : cam.max}
+        maxPolarAngle={isSystem ? Math.PI * 0.47 : Math.PI}
         enabled={!flying}
-        autoRotate={autoRotate && !flying && !compareOn}
+        autoRotate={autoRotate && !flying && !compareOn && !isSystem}
         autoRotateSpeed={0.35}
       />
     </>

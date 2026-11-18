@@ -3,8 +3,17 @@ import { SolarScene } from './components/SolarScene'
 import { IPadHUD } from './components/IPadHUD'
 import { WelcomeScreen } from './components/WelcomeScreen'
 import type { ActiveEffect } from './components/PlanetMesh'
-import { EFFECT_DURATION, PLANET_MAP, type PlanetId, type VocabWord } from './data/planetsData'
-import { hasVietnameseVoice, setSpeechRate, speakBilingual, stopSpeaking, unlockSpeech, type SpeechRate } from './utils/speech'
+import { COUNT_STEP, effectDuration, lessonFor, PLANET_MAP, PLANET_ORDER, type ViewId, type VocabWord } from './data/planetsData'
+import {
+  hasVietnameseVoice,
+  preloadVoiceClips,
+  setSpeechRate,
+  speakBilingual,
+  speakSequence,
+  stopSpeaking,
+  unlockSpeech,
+  type SpeechRate,
+} from './utils/speech'
 import { preloadProceduralTextures } from './utils/textures'
 import { playArrive, playBoing, playPop, playSparkle, playWhoosh, startMusic, stopMusic, unlockAudio } from './utils/soundEffects'
 
@@ -28,7 +37,7 @@ function loadSettings(): Settings {
 
 export default function App() {
   const [started, setStarted] = useState(false)
-  const [planetId, setPlanetId] = useState<PlanetId>('earth')
+  const [planetId, setPlanetId] = useState<ViewId>('system')
   const [flying, setFlying] = useState(true)
   const [effect, setEffect] = useState<ActiveEffect | null>(null)
   const [activeWord, setActiveWord] = useState<string | null>(null)
@@ -37,7 +46,7 @@ export default function App() {
   const [settings, setSettings] = useState<Settings>(loadSettings)
   const [viVoice, setViVoice] = useState(false)
   const wordTimer = useRef<number | null>(null)
-  const planet = PLANET_MAP[planetId]
+  const planet = lessonFor(planetId)
   const settingsRef = useRef(settings)
   settingsRef.current = settings
 
@@ -69,22 +78,23 @@ export default function App() {
     }
     setStarted(true)
     preloadProceduralTextures()
+    void preloadVoiceClips()
     setTimeout(() => setViVoice(hasVietnameseVoice()), 800)
   }, [])
 
   const handleArrive = useCallback(
-    (id: PlanetId) => {
+    (id: ViewId) => {
       setFlying(false)
       playArrive()
       setBounce((b) => b + 1)
-      const p = PLANET_MAP[id]
+      const p = lessonFor(id)
       setTimeout(() => say(p.englishName + '!', p.vietnameseName), 150)
     },
     [say],
   )
 
   const handleSelectPlanet = useCallback(
-    (id: PlanetId) => {
+    (id: ViewId) => {
       if (id === planetId) {
         playPop()
         setBounce((b) => b + 1)
@@ -123,15 +133,23 @@ export default function App() {
       playSparkle()
       setEffect({ name: w.effect, key: Date.now() })
       setActiveWord(w.word)
-      say(w.word + '!', w.vi)
+      if (w.effect === 'countPlanets') {
+        // "Mercury, Venus, Earth…" in step with the planets lighting up
+        void speakSequence(
+          PLANET_ORDER.map((id) => PLANET_MAP[id].englishName + '!'),
+          COUNT_STEP,
+        )
+      } else {
+        say(w.word + '!', w.vi)
+      }
       if (wordTimer.current) window.clearTimeout(wordTimer.current)
-      wordTimer.current = window.setTimeout(() => setActiveWord(null), EFFECT_DURATION * 1000)
+      wordTimer.current = window.setTimeout(() => setActiveWord(null), effectDuration(w.effect) * 1000)
     },
     [flying, say],
   )
 
   const handleToggleCompare = useCallback(() => {
-    if (flying) return
+    if (flying || !('compare' in planet)) return
     playPop()
     if (!compareOn) say(planet.compare.en, planet.compare.vi)
     setCompareOn(!compareOn)
@@ -140,13 +158,14 @@ export default function App() {
   return (
     <div className="relative h-[100dvh] w-screen touch-none select-none overflow-hidden bg-[#050818] font-nunito">
       <SolarScene
-        planetId={planetId}
+        viewId={planetId}
         started={started}
         effect={effect}
         compareOn={compareOn}
         autoRotate={settings.autoRotate}
         onArrive={handleArrive}
         onPlanetTap={handlePlanetTap}
+        onSelectPlanet={handleSelectPlanet}
       />
 
       {started && (

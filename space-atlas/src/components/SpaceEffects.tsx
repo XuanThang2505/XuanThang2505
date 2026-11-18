@@ -14,7 +14,7 @@ export const glowTex = () => cached('glow', () => makeGlowTexture())
 export const spikeTex = () => cached('spike', () => makeStarSpikeTexture())
 
 // ---------------------------------------------------------------- particles
-export type SwarmKind = 'dust' | 'rays' | 'ice' | 'wind' | 'snow'
+export type SwarmKind = 'dust' | 'rays' | 'ice' | 'wind' | 'snow' | 'rocks'
 
 interface SwarmConfig {
   count: number
@@ -29,6 +29,7 @@ const SWARM: Record<SwarmKind, SwarmConfig> = {
   ice: { count: 900, size: 0.07, color: '#e6f4ff', blending: THREE.AdditiveBlending },
   wind: { count: 140 * 8, size: 0.05, color: '#dff0ff', blending: THREE.AdditiveBlending },
   snow: { count: 700, size: 0.07, color: '#cfe8ff', blending: THREE.AdditiveBlending },
+  rocks: { count: 260, size: 0.11, color: '#d8cfc4', blending: THREE.NormalBlending },
 }
 
 /**
@@ -53,6 +54,11 @@ export function Swarm({ kind, level, baseline = 0 }: { kind: SwarmKind; level: G
       ph[i] = Math.random() * Math.PI * 2
       a[i] = Math.random() * Math.PI * 2
       switch (kind) {
+        case 'rocks':
+          r[i] = 1.35 + Math.random() * 0.5
+          b[i] = (Math.random() - 0.5) * 0.5
+          s[i] = 0.3 + Math.random() * 0.5
+          break
         case 'dust':
           r[i] = 1.02 + Math.random() * 0.22
           b[i] = (Math.random() - 0.5) * 1.6
@@ -114,6 +120,16 @@ export function Swarm({ kind, level, baseline = 0 }: { kind: SwarmKind; level: G
           y = Math.sin(lat) * rr
           z = Math.sin(a[i]) * cl * rr
           bright *= 0.5 + 0.5 * Math.sin(ph[i] + t)
+          break
+        }
+        case 'rocks': {
+          a[i] += s[i] * dt
+          const cl = Math.cos(b[i])
+          const rr = r[i] * (0.8 + 0.2 * L)
+          x = Math.cos(a[i]) * cl * rr
+          y = Math.sin(b[i]) * rr
+          z = Math.sin(a[i]) * cl * rr
+          bright = Math.min(1, L * 1.2) * (0.7 + 0.3 * Math.sin(ph[i]))
           break
         }
         case 'rays': {
