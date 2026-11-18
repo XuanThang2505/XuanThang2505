@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: #050818;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  font-family: 'Nunito', system-ui, sans-serif;
+}
+
+button {
+  touch-action: manipulation;
+}
+
+@layer utilities {
+  @keyframes word-pop {
+    0% { transform: scale(0.6); opacity: 0; }
+    55% { transform: scale(1.18); opacity: 1; }
+    75% { transform: scale(0.95); }
+    100% { transform: scale(1); }
+  }
+  .animate-word-pop { animation: word-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+  @keyframes wiggle {
+    0%, 100% { transform: rotate(0) scale(1); }
+    25% { transform: rotate(-14deg) scale(1.2); }
+    75% { transform: rotate(14deg) scale(1.2); }
+  }
+  .animate-wiggle { animation: wiggle 0.6s ease-in-out 3; }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+  }
+  .animate-float { animation: float 2.4s ease-in-out infinite; }
+
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.06); }
+  }
+  .animate-breathe { animation: breathe 1.8s ease-in-out infinite; }
+}
+
+/* Gentle hint shown in portrait mode */
+.rotate-hint { display: none; }
+@media (orientation: portrait) and (max-width: 900px) {
+  .rotate-hint { display: flex; }
+}
