@@ -218,11 +218,6 @@ export default function App() {
       )}
 
       <WelcomeScreen onStart={handleStart} leaving={started} />
-
-      <div className="rotate-hint pointer-events-none absolute inset-x-0 top-1/3 z-50 flex-col items-center font-nunito text-white">
-        <div className="animate-wiggle text-6xl">📱↻</div>
-        <div className="mt-2 rounded-full bg-slate-900/80 px-4 py-2 text-lg font-bold">Xoay ngang iPad nhé! · Turn sideways</div>
-      </div>
     </div>
   )
 }

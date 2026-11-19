@@ -6,6 +6,7 @@ import { useEffect } from 'react'
 import { GAME_LINES, STARS_PER_STICKER, STICKERS } from '../data/planetsData'
 import { playPop, playSparkle } from '../utils/soundEffects'
 import { speak } from '../utils/speech'
+import { useLayout } from '../utils/useLayout'
 import { Screen, TopBar, type Say } from './ui'
 
 export function stickersUnlocked(stars: number) {
@@ -13,6 +14,9 @@ export function stickersUnlocked(stars: number) {
 }
 
 export function StickerBook({ stars, onBack, onSay }: { stars: number; onBack: () => void; onSay: Say }) {
+  const L = useLayout()
+  const c = L.compact
+  const cols = c ? (L.portrait ? 3 : 6) : L.portrait ? 4 : 6
   const unlocked = stickersUnlocked(stars)
   const toNext = unlocked < STICKERS.length ? STARS_PER_STICKER - (stars % STARS_PER_STICKER) : 0
   useEffect(() => {
@@ -21,9 +25,9 @@ export function StickerBook({ stars, onBack, onSay }: { stars: number; onBack: (
   }, [onSay])
   return (
     <Screen>
-      <TopBar onBack={onBack} stars={stars} middle={<div className="text-4xl font-black">My stickers 🌟</div>} />
-      <div className="flex flex-1 flex-col items-center justify-center gap-4 px-4 pb-4">
-        <div className="grid grid-cols-6 gap-4">
+      <TopBar onBack={onBack} stars={stars} middle={<div className={`font-black ${c ? 'text-2xl' : 'text-4xl'}`}>My stickers 🌟</div>} />
+      <div className={`flex flex-1 flex-col items-center justify-center overflow-y-auto px-3 pb-3 ${c ? 'gap-2' : 'gap-4'}`}>
+        <div className="grid w-full max-w-[760px]" style={{ gap: c ? 8 : 16, gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
           {STICKERS.map((st, i) => {
             const has = i < unlocked
             return (
@@ -35,18 +39,18 @@ export function StickerBook({ stars, onBack, onSay }: { stars: number; onBack: (
                   playPop()
                   void speak(st.en + '!')
                 }}
-                className={`flex h-32 w-32 flex-col items-center justify-center rounded-3xl border-4 shadow-xl transition active:scale-95 lg:h-36 lg:w-36 ${
+                className={`flex aspect-square w-full flex-col items-center justify-center rounded-3xl border-4 shadow-xl transition active:scale-95 ${
                   has ? 'border-amber-300/70 bg-gradient-to-br from-indigo-500/60 to-fuchsia-600/60' : 'border-dashed border-white/20 bg-slate-900/50'
                 }`}
               >
-                <span className={`text-6xl ${has ? '' : 'opacity-20 grayscale'}`}>{has ? st.emoji : '❔'}</span>
-                <span className="mt-1 text-sm font-extrabold tracking-wide">{has ? st.en : `${(i + 1) * STARS_PER_STICKER} ⭐`}</span>
-                {has && <span className="text-[11px] font-semibold text-white/75">{st.vi}</span>}
+                <span className={`${c ? 'text-4xl' : 'text-6xl'} ${has ? '' : 'opacity-20 grayscale'}`}>{has ? st.emoji : '❔'}</span>
+                <span className={`mt-0.5 font-extrabold tracking-wide ${c ? 'text-[11px]' : 'text-sm'}`}>{has ? st.en : `${(i + 1) * STARS_PER_STICKER} ⭐`}</span>
+                {has && !c && <span className="text-[11px] font-semibold text-white/75">{st.vi}</span>}
               </button>
             )
           })}
         </div>
-        <div className="rounded-full bg-slate-900/70 px-5 py-2 text-lg font-bold text-sky-100">
+        <div className={`rounded-full bg-slate-900/70 text-center font-bold text-sky-100 ${c ? 'px-3 py-1 text-sm' : 'px-5 py-2 text-lg'}`}>
           {toNext > 0 ? `Thêm ${toNext} ⭐ nữa để có hình dán mới!` : 'Con đã có đủ hình dán! 🎉'}
         </div>
       </div>

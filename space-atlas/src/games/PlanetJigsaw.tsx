@@ -7,11 +7,12 @@
  * Finished planet → its name and a fun fact are spoken.
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useLayout } from '../utils/useLayout'
 import { FACTS, GAME_LINES, PLANET_MAP, PUZZLE_LINES, type PlanetId } from '../data/planetsData'
 import { playBoing, playPop, playSparkle } from '../utils/soundEffects'
 import { speak, stopSpeaking } from '../utils/speech'
 import { TEXTURE_2D } from './PlanetBall2D'
-import { QuestionButton, Screen, shuffle, TopBar, type Say } from './ui'
+import { QuestionButton, Screen, shuffle, TopBar, topBarHeight, type Say } from './ui'
 
 const LEVELS = [
   { cols: 2, rows: 1 },
@@ -112,16 +113,6 @@ function paintPlanet(id: PlanetId, size = 640): Promise<string> {
   })
 }
 
-function useViewport() {
-  const [vp, setVp] = useState(() => ({ w: window.innerWidth, h: window.innerHeight }))
-  useEffect(() => {
-    const on = () => setVp({ w: window.innerWidth, h: window.innerHeight })
-    window.addEventListener('resize', on)
-    return () => window.removeEventListener('resize', on)
-  }, [])
-  return vp
-}
-
 interface Drag {
   i: number
   pointerId: number
@@ -133,7 +124,7 @@ interface Drag {
 }
 
 export function PlanetJigsaw({ stars, onBack, onStar, onSay }: { stars: number; onBack: () => void; onStar: () => void; onSay: Say }) {
-  const { w, h } = useViewport()
+  const { w, h, compact, portrait } = useLayout()
   const [level, setLevel] = useState(0)
   const [round, setRound] = useState(0)
   const order = useMemo(() => shuffle(BODIES), [])
@@ -187,15 +178,37 @@ export function PlanetJigsaw({ stars, onBack, onStar, onSay }: { stars: number; 
   }, [done]) // eslint-disable-line react-hooks/exhaustive-deps -- once per finished puzzle
 
   // ---------------------------------------------------------------- layout
-  const top = 96
-  const B = Math.min((h - top) * 0.82, w * 0.44)
-  const board = { x: w * 0.05, y: top + (h - top - B) / 2 }
+  // landscape: board on the left, pieces on the right.  portrait: board on top, pieces below.
+  const top = topBarHeight(compact)
+  const margin = compact ? 10 : 16
+  let B: number
+  let board: { x: number; y: number }
+  let tray: { x: number; y: number; w: number; h: number }
+  if (portrait) {
+    B = Math.min(w - 2 * margin, (h - top) * 0.52)
+    board = { x: (w - B) / 2, y: top + 6 }
+    const ty = board.y + B + margin
+    tray = { x: margin, y: ty, w: w - 2 * margin, h: h - ty - margin }
+  } else {
+    B = Math.min((h - top) * (compact ? 0.92 : 0.82), w * 0.44)
+    board = { x: w * 0.05, y: top + (h - top - B) / 2 }
+    const tx = board.x + B + w * 0.05
+    tray = { x: tx, y: top + 10, w: w - tx - margin, h: h - top - 26 }
+  }
   const cw = B / cols
   const ch = B / rows
-  const tray = { x: board.x + B + w * 0.05, y: top + 10, w: w - (board.x + B + w * 0.05) - 16, h: h - top - 26 }
-  const tCols = Math.min(n, cols === 3 ? 2 : 2)
+  // how many tray columns make the pieces biggest (never bigger than on the board)
+  let tCols = 1
+  let trayScale = 0
+  for (let k = 1; k <= n; k++) {
+    const rowsK = Math.ceil(n / k)
+    const sc = Math.min(1, ((tray.w / k) * 0.88) / cw, ((tray.h / rowsK) * 0.88) / ch)
+    if (sc > trayScale) {
+      trayScale = sc
+      tCols = k
+    }
+  }
   const tRows = Math.ceil(n / tCols)
-  const trayScale = Math.min(1, (tray.w / tCols) * 0.86 / cw, (tray.h / tRows) * 0.86 / ch)
   const cellCenter = (i: number) => ({ x: board.x + (i % cols) * cw + cw / 2, y: board.y + Math.floor(i / cols) * ch + ch / 2 })
   const trayCenter = (i: number) => {
     const k = trayOrder.indexOf(i)

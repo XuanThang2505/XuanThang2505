@@ -12,6 +12,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { GAME_LINES, PLANET_MAP, PLANET_ORDER, PUZZLE_LINES, QUIZ, type PlanetId } from '../data/planetsData'
 import { playBoing, playPop, playSparkle } from '../utils/soundEffects'
 import { speak, stopSpeaking } from '../utils/speech'
+import { useLayout } from '../utils/useLayout'
 import { PlanetBall2D } from './PlanetBall2D'
 import { MemoryPairs } from './MemoryPairs'
 import { PlanetJigsaw } from './PlanetJigsaw'
@@ -40,6 +41,8 @@ export function saveStars(n: number) {
 
 // ---------------------------------------------------------------- menu
 function Menu({ stars, onPick, onClose, onSay }: { stars: number; onPick: (g: Game) => void; onClose: () => void; onSay: Say }) {
+  const L = useLayout()
+  const c0 = L.compact
   useEffect(() => {
     const t = setTimeout(() => onSay(GAME_LINES.letsPlay.en, GAME_LINES.letsPlay.vi), 400)
     return () => clearTimeout(t)
@@ -57,34 +60,41 @@ function Menu({ stars, onPick, onClose, onSay }: { stars: number; onPick: (g: Ga
         onBack={onClose}
         stars={stars}
         middle={
-          <div className="flex items-center gap-4">
-            <div className="text-4xl font-black">Let's play!</div>
+          <div className={`flex items-center ${c0 && L.portrait ? 'flex-col gap-1' : c0 ? 'gap-3' : 'gap-4'}`}>
+            <div className={`font-black ${c0 ? 'text-2xl' : 'text-4xl'}`}>Let's play!</div>
             <button
+              data-testid="stickers-button"
               onClick={() => {
                 playPop()
                 onPick('stickers')
               }}
-              className="flex items-center gap-2 rounded-full border-2 border-amber-300/70 bg-gradient-to-r from-indigo-500 to-fuchsia-600 px-4 py-2 text-lg font-black shadow-lg active:scale-95"
+              style={c0 ? { minHeight: 44 } : undefined}
+              className={`flex items-center gap-2 rounded-full border-2 border-amber-300/70 bg-gradient-to-r from-indigo-500 to-fuchsia-600 font-black shadow-lg active:scale-95 ${
+                c0 ? 'px-3 text-sm' : 'px-4 py-2 text-lg'
+              }`}
             >
               🌟 MY STICKERS <span className="rounded-full bg-black/25 px-2 text-base">{stickersUnlocked(stars)}</span>
             </button>
           </div>
         }
       />
-      <div className="flex flex-1 flex-wrap content-center items-center justify-center gap-4 p-3">
+      <div className={`flex flex-1 flex-wrap content-center items-center justify-center overflow-y-auto ${c0 ? 'gap-3 p-2' : 'gap-4 p-3'}`}>
         {cards.map((c) => (
           <button
+            data-testid={`game-${c.g}`}
             key={c.g}
             onClick={() => {
               playPop()
               onPick(c.g)
             }}
-            className={`relative flex h-44 w-56 flex-col items-center justify-center gap-1 rounded-[2rem] bg-gradient-to-br ${c.cls} p-3 text-center shadow-2xl active:scale-95 lg:h-56 lg:w-72`}
+            className={`relative flex flex-col items-center justify-center rounded-[2rem] bg-gradient-to-br ${c.cls} text-center shadow-2xl active:scale-95 ${
+              c0 ? (L.portrait ? 'h-[124px] w-[170px] gap-0 p-2' : 'h-[108px] w-[152px] gap-0 p-2') : 'h-44 w-56 gap-1 p-3 lg:h-56 lg:w-72'
+            }`}
           >
-            <span className="absolute right-4 top-3 rounded-full bg-black/25 px-2 text-sm font-extrabold">{c.age}</span>
-            <span className="text-6xl lg:text-7xl">{c.icon}</span>
-            <b className="text-2xl font-black leading-tight">{c.en}</b>
-            <small className="text-base font-semibold text-white/85">{c.vi}</small>
+            <span className={`absolute rounded-full bg-black/25 font-extrabold ${c0 ? 'right-2.5 top-2 px-1.5 text-[10px]' : 'right-4 top-3 px-2 text-sm'}`}>{c.age}</span>
+            <span className={c0 ? 'text-4xl' : 'text-6xl lg:text-7xl'}>{c.icon}</span>
+            <b className={`font-black leading-tight ${c0 ? 'text-[15px]' : 'text-2xl'}`}>{c.en}</b>
+            <small className={`font-semibold text-white/85 ${c0 ? 'text-[11px] leading-tight' : 'text-base'}`}>{c.vi}</small>
           </button>
         ))}
       </div>
@@ -94,6 +104,7 @@ function Menu({ stars, onPick, onClose, onSay }: { stars: number; onPick: (g: Ga
 
 // ---------------------------------------------------------------- quiz
 function Quiz({ stars, onBack, onStar, onSay }: { stars: number; onBack: () => void; onStar: () => void; onSay: Say }) {
+  const L = useLayout()
   const [round, setRound] = useState(0)
   const questions = useMemo(() => shuffle(QUIZ).slice(0, 5), [round])
   const [qi, setQi] = useState(0)
@@ -181,9 +192,9 @@ function Quiz({ stars, onBack, onStar, onSay }: { stars: number; onBack: () => v
       {done ? (
         <Done title="You did it!" sub={`Giỏi quá! Con được ${earned} ngôi sao`} stars={earned} onAgain={again} onBack={onBack} />
       ) : (
-        <div className="flex flex-1 flex-col items-center justify-center gap-8 px-4 pb-6">
+        <div className={`flex flex-1 flex-col items-center justify-center px-3 ${L.compact ? 'gap-4 pb-2' : 'gap-8 pb-6'}`}>
           <QuestionButton icon={q[0]} en={q[1]} vi={q[2]} onSay={onSay} />
-          <div className="flex flex-wrap justify-center gap-6">
+          <div className={`flex flex-wrap justify-center ${L.compact ? 'gap-3' : 'gap-6'}`}>
             {options.map((p) => {
               const bad = wrong.includes(p)
               const good = right === p
@@ -192,13 +203,17 @@ function Quiz({ stars, onBack, onStar, onSay }: { stars: number; onBack: () => v
               return (
                 <button
                   key={p + qi + round}
+                  data-testid="quiz-option"
+                  data-planet={p}
                   onClick={() => void pick(p)}
-                  className={`relative flex w-52 flex-col items-center gap-3 rounded-[2rem] border-4 bg-slate-900/60 p-5 shadow-xl transition active:scale-95 lg:w-60 ${
+                  className={`relative flex flex-col items-center rounded-[2rem] border-4 bg-slate-900/60 shadow-xl transition active:scale-95 ${
+                    L.compact ? (L.portrait ? 'w-[112px] gap-1 p-2' : 'w-[132px] gap-1 p-2') : 'w-52 gap-3 p-5 lg:w-60'
+                  } ${
                     good ? 'scale-110 border-amber-300 bg-amber-400/25' : bad ? 'border-transparent opacity-40' : hint ? 'animate-pulse border-amber-300' : 'border-white/10'
                   } ${bad ? 'animate-wiggle' : ''}`}
                 >
-                  <PlanetBall2D id={p} size={120} />
-                  <span className="text-xl font-extrabold tracking-wide">{PLANET_MAP[p].englishName}</span>
+                  <PlanetBall2D id={p} size={L.compact ? (L.portrait ? 80 : 88) : 120} />
+                  <span className={`font-extrabold tracking-wide ${L.compact ? 'text-[13px]' : 'text-xl'}`}>{PLANET_MAP[p].englishName}</span>
                   {good && <span className="animate-word-pop absolute -right-3 -top-3 text-5xl">⭐</span>}
                 </button>
               )
@@ -212,6 +227,8 @@ function Quiz({ stars, onBack, onStar, onSay }: { stars: number; onBack: () => v
 
 // ---------------------------------------------------------------- line up
 function LineUp({ stars, onBack, onStar, onSay }: { stars: number; onBack: () => void; onStar: () => void; onSay: Say }) {
+  const L = useLayout()
+  const c = L.compact
   const order = PLANET_ORDER
   const [round, setRound] = useState(0)
   const [pool, setPool] = useState(() => shuffle(order))
@@ -274,8 +291,8 @@ function LineUp({ stars, onBack, onStar, onSay }: { stars: number; onBack: () =>
     <Screen>
       <TopBar onBack={onBack} stars={stars} middle={<QuestionButton icon="🔢" en={GAME_LINES.lineUp.en} vi="Chạm theo thứ tự từ Mặt Trời ra xa" onSay={onSay} />} />
       {/* the line: Sun + 8 numbered seats */}
-      <div className="mx-3 flex items-center gap-1 rounded-[2rem] border border-white/10 bg-slate-900/50 p-3 md:gap-2">
-        <PlanetBall2D id="sun" size={64} />
+      <div className={`mx-3 flex items-center rounded-[2rem] border border-white/10 bg-slate-900/50 ${c ? 'gap-1 p-1.5' : 'gap-1 p-3 md:gap-2'}`}>
+        <PlanetBall2D id="sun" size={c ? 36 : 64} />
         {order.map((_, i) => (
           <div
             key={i}
@@ -285,10 +302,10 @@ function LineUp({ stars, onBack, onStar, onSay }: { stars: number; onBack: () =>
           >
             {placed[i] ? (
               <span className="animate-word-pop">
-                <PlanetBall2D id={placed[i]} size={52} />
+                <PlanetBall2D id={placed[i]} size={c ? (L.portrait ? 30 : 40) : 52} />
               </span>
             ) : (
-              <span className="text-2xl font-black text-white/50">{i + 1}</span>
+              <span className={`font-black text-white/50 ${c ? 'text-sm' : 'text-2xl'}`}>{i + 1}</span>
             )}
           </div>
         ))}
@@ -296,17 +313,21 @@ function LineUp({ stars, onBack, onStar, onSay }: { stars: number; onBack: () =>
       {done ? (
         <Done title="You did it!" sub="Giỏi quá! Tám hành tinh quay quanh Mặt Trời" stars={2} onAgain={again} onBack={onBack} />
       ) : (
-        <div className="flex flex-1 flex-wrap content-center items-center justify-center gap-4 p-4">
+        <div className={`flex flex-1 flex-wrap content-center items-center justify-center overflow-y-auto ${c ? 'gap-2 p-2' : 'gap-4 p-4'}`}>
           {pool.map((p) => (
             <button
               key={p + round}
+              data-testid="lineup-option"
+              data-planet={p}
               onClick={() => void pick(p)}
-              className={`flex w-36 flex-col items-center gap-2 rounded-3xl border-4 bg-slate-900/60 p-3 shadow-xl active:scale-95 lg:w-40 ${
+              className={`flex flex-col items-center rounded-3xl border-4 bg-slate-900/60 shadow-xl active:scale-95 ${
+                c ? (L.portrait ? 'w-[88px] gap-0.5 p-1.5' : 'w-[100px] gap-0.5 p-1.5') : 'w-36 gap-2 p-3 lg:w-40'
+              } ${
                 bad === p ? 'animate-wiggle border-rose-400' : misses >= 2 && p === next ? 'animate-pulse border-amber-300' : 'border-white/10'
               }`}
             >
-              <PlanetBall2D id={p} size={84} />
-              <span className="text-base font-extrabold tracking-wide">{PLANET_MAP[p].englishName}</span>
+              <PlanetBall2D id={p} size={c ? (L.portrait ? 54 : 56) : 84} />
+              <span className={`font-extrabold tracking-wide ${c ? 'text-[11px]' : 'text-base'}`}>{PLANET_MAP[p].englishName}</span>
             </button>
           ))}
         </div>
