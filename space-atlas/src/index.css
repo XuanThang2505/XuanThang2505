@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Everything in the app is sized in rem, so changing the root font size scales the whole UI:
+ * 16px on a 1024×768 iPad (the original design), a little smaller on a small tablet, up to
+ * 26px on a big desktop / TV. Phones never go below 12px.
+ */
+html {
+  font-size: clamp(12px, min(1.5625vw, 2.0833vh), 26px);
+}
+
 html,
 body,
 #root {
@@ -57,8 +66,6 @@ button {
   .animate-confetti { animation: confetti 3s ease-in forwards; }
 }
 
-/* Gentle hint shown in portrait mode */
-.rotate-hint { display: none; }
-@media (orientation: portrait) and (max-width: 900px) {
-  .rotate-hint { display: flex; }
-}
+/* hide scrollbars on the horizontally scrolling dock */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }

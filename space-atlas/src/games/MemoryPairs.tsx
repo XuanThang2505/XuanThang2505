@@ -4,27 +4,18 @@
  * Level 1 = 4 pairs, level 2 = 6 pairs. No losing: a mismatch just turns back over.
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useLayout } from '../utils/useLayout'
 import { GAME_LINES, PLANET_MAP, PLANET_ORDER, type PlanetId } from '../data/planetsData'
 import { playBoing, playPop, playSparkle } from '../utils/soundEffects'
 import { speak, stopSpeaking } from '../utils/speech'
 import { PlanetBall2D } from './PlanetBall2D'
-import { QuestionButton, Screen, shuffle, TopBar, type Say } from './ui'
+import { QuestionButton, Screen, shuffle, TopBar, topBarHeight, type Say } from './ui'
 
 const PAIRS = [4, 6]
 const ALL: PlanetId[] = ['sun', ...PLANET_ORDER]
 
-function useViewport() {
-  const [vp, setVp] = useState(() => ({ w: window.innerWidth, h: window.innerHeight }))
-  useEffect(() => {
-    const on = () => setVp({ w: window.innerWidth, h: window.innerHeight })
-    window.addEventListener('resize', on)
-    return () => window.removeEventListener('resize', on)
-  }, [])
-  return vp
-}
-
 export function MemoryPairs({ stars, onBack, onStar, onSay }: { stars: number; onBack: () => void; onStar: () => void; onSay: Say }) {
-  const { w, h } = useViewport()
+  const { w, h, compact } = useLayout()
   const [level, setLevel] = useState(0)
   const [round, setRound] = useState(0)
   const pairs = PAIRS[level]
@@ -99,11 +90,22 @@ export function MemoryPairs({ stars, onBack, onStar, onSay }: { stars: number; o
     setRound((r) => r + 1)
   }
 
-  // grid that fits the screen
-  const cols = 4
-  const rowsN = Math.ceil((pairs * 2) / cols)
-  const top = 110
-  const card = Math.min((w - 60) / cols - 16, (h - top - 30) / rowsN - 16, 190)
+  // the grid shape (columns × rows) that gives the biggest cards on this screen
+  const n = pairs * 2
+  const gap = compact ? 8 : 16
+  const availW = w - 24
+  const availH = h - topBarHeight(compact) - 24
+  let cols = 4
+  let card = 0
+  for (let k = 2; k <= 6; k++) {
+    const rowsK = Math.ceil(n / k)
+    const size = Math.min((availW - gap * (k - 1)) / k, (availH - gap * (rowsK - 1)) / rowsK, 190)
+    if (size > card) {
+      card = size
+      cols = k
+    }
+  }
+  card = Math.max(44, Math.floor(card))
 
   return (
     <Screen>
@@ -135,7 +137,7 @@ export function MemoryPairs({ stars, onBack, onStar, onSay }: { stars: number; o
         </div>
       ) : (
         <div className="flex flex-1 items-center justify-center">
-          <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${cols}, ${card}px)` }}>
+          <div className="grid" style={{ gap, gridTemplateColumns: `repeat(${cols}, ${card}px)` }}>
             {deck.map((id, i) => {
               const up = open.includes(i) || found.includes(id)
               const matched = found.includes(id)
@@ -164,7 +166,7 @@ export function MemoryPairs({ stars, onBack, onStar, onSay }: { stars: number; o
                       }`}
                     >
                       <PlanetBall2D id={id} size={card * 0.58} />
-                      <span className="text-sm font-extrabold tracking-wide text-white">{PLANET_MAP[id].englishName}</span>
+                      <span className={`font-extrabold tracking-wide text-white ${card < 90 ? 'text-[10px]' : 'text-sm'}`}>{PLANET_MAP[id].englishName}</span>
                     </div>
                   </div>
                 </button>

@@ -11,7 +11,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { PLANET_MAP, PLANET_ORDER, PUZZLE_LINES, type PlanetId } from '../data/planetsData'
 import { playBoing, playPop, playSparkle } from '../utils/soundEffects'
+import { useLayout } from '../utils/useLayout'
 import { PlanetBall2D } from './PlanetBall2D'
+import { topBarHeight } from './ui'
 
 type Pid = Exclude<PlanetId, 'sun'>
 
@@ -28,20 +30,6 @@ const SIZE: Record<Pid, number> = {
 }
 /** Vertical spread of the shadows along their orbits (-1 top … 1 bottom). */
 const SPREAD = [-0.55, 0.6, -0.85, 0.35, -0.6, 0.75, -0.35, 0.5]
-
-function useViewport() {
-  const [vp, setVp] = useState(() => ({ w: window.innerWidth, h: window.innerHeight }))
-  useEffect(() => {
-    const on = () => setVp({ w: window.innerWidth, h: window.innerHeight })
-    window.addEventListener('resize', on)
-    window.addEventListener('orientationchange', on)
-    return () => {
-      window.removeEventListener('resize', on)
-      window.removeEventListener('orientationchange', on)
-    }
-  }, [])
-  return vp
-}
 
 function shuffled<T>(a: T[]) {
   const b = [...a]
@@ -72,7 +60,12 @@ export function PlanetsHome({
   /** called once per finished round (the hub gives 3 stars) */
   onWin?: () => void
 }) {
-  const { w, h } = useViewport()
+  const { w, h, compact, portrait } = useLayout()
+  /** reference length for sizes: the screen height, or (upright) about the width */
+  const unit = portrait ? Math.min(w * 0.9, h * 0.55) : h
+  /** a piece is never smaller than a fingertip */
+  const minPiece = compact ? 48 : 40
+  const pieceSize = useCallback((id: Pid) => Math.max(SIZE[id] * unit, minPiece), [unit, minPiece])
   const [round, setRound] = useState(0)
   const [placed, setPlaced] = useState<Partial<Record<Pid, boolean>>>({})
   const [drag, setDrag] = useState<Drag | null>(null)
@@ -84,42 +77,74 @@ export function PlanetsHome({
   const done = ids.every((id) => placed[id])
 
   // ---------------------------------------------------------------- layout (pixels)
+  // Landscape: the Sun on the left, the orbits run to the right, the tray is a strip at the bottom.
+  // Portrait:  the Sun at the top, the orbits run downwards, the tray is a block at the bottom.
   const layout = useMemo(() => {
-    const trayTop = h * 0.8
-    const sunR = h * 0.36
-    const sun = { x: -sunR * 0.45, y: trayTop * 0.5 }
-    // distances from the Sun's centre: first orbit just outside the Sun, last one keeps
-    // Neptune's whole shadow on screen
-    const rMin = sunR + w * 0.07
-    const rMax = w - h * 0.09 - sun.x
-    const step = (rMax - rMin) / 7
-    const maxDy = trayTop * 0.36
+    const barH = topBarHeight(compact)
+    const trayH = portrait ? Math.min(Math.max(h * 0.22, 130), compact ? 220 : 300) : h * 0.2
+    const trayTop = h - trayH
     const slots = {} as Record<Pid, { x: number; y: number; r: number; size: number }>
-    ids.forEach((id, i) => {
-      const r = rMin + i * step
-      const dy = Math.max(-r * 0.9, Math.min(r * 0.9, SPREAD[i] * maxDy))
-      const x = sun.x + Math.sqrt(r * r - dy * dy)
-      slots[id] = { x: Math.min(x, w - (SIZE[id] * h) / 2 - 12), y: sun.y + dy, r, size: SIZE[id] * h }
-    })
-    return { trayTop, sunR, sun, slots }
-  }, [w, h, ids])
+    let sunR: number
+    let sun: { x: number; y: number }
+    if (portrait) {
+      sunR = w * 0.4
+      sun = { x: w / 2, y: barH * 0.1 - sunR * 0.35 }
+      const rMin = sunR + w * 0.1
+      const rMax = trayTop - sun.y - 40
+      const step = (rMax - rMin) / 7
+      const maxDx = w * 0.34
+      ids.forEach((id, i) => {
+        const r = rMin + i * step
+        const dx = Math.max(-r * 0.9, Math.min(r * 0.9, SPREAD[i] * maxDx))
+        const size = pieceSize(id)
+        const x = Math.max(size / 2 + 8, Math.min(w - size / 2 - 8, sun.x + dx))
+        slots[id] = { x, y: sun.y + Math.sqrt(r * r - dx * dx), r, size }
+      })
+    } else {
+      sunR = trayTop * 0.45
+      sun = { x: -sunR * 0.45, y: trayTop * 0.5 }
+      // distances from the Sun's centre: first orbit just outside the Sun, last one keeps
+      // Neptune's whole shadow on screen
+      const rMin = sunR + w * 0.07
+      const rMax = w - (compact ? 40 : h * 0.09) - sun.x
+      const step = (rMax - rMin) / 7
+      const maxDy = trayTop * 0.36
+      ids.forEach((id, i) => {
+        const r = rMin + i * step
+        const dy = Math.max(-r * 0.9, Math.min(r * 0.9, SPREAD[i] * maxDy))
+        const size = pieceSize(id)
+        const x = sun.x + Math.sqrt(r * r - dy * dy)
+        slots[id] = { x: Math.min(x, w - size / 2 - 12), y: sun.y + dy, r, size }
+      })
+    }
+    return { trayTop, trayH, sunR, sun, slots }
+  }, [w, h, ids, portrait, compact, pieceSize])
 
   // a new shuffle every round
   const trayOrder = useMemo(() => shuffled(ids), [round, ids])
-  /** Tray size of a piece, and how wide it really is (Saturn's ring is twice the ball). */
-  const traySize = useCallback((id: Pid) => Math.min(SIZE[id] * h, (h - layout.trayTop) * 0.7), [h, layout.trayTop])
+  // one row if it fits, otherwise two (phones held upright)
+  const trayRows = useMemo(() => {
+    const need = trayOrder.reduce((a, id) => a + pieceSize(id) * (id === 'saturn' ? 2.15 : 1), 0) + 8 * (trayOrder.length + 1)
+    return need > w - 24 ? 2 : 1
+  }, [trayOrder, pieceSize, w])
+  /** Size of a piece while it sits in the tray (Saturn's ring makes it twice as wide as the ball). */
+  const traySize = useCallback((id: Pid) => Math.min(pieceSize(id), (layout.trayH / trayRows) * 0.8), [pieceSize, layout.trayH, trayRows])
   const trayPos = useMemo(() => {
-    const widths = trayOrder.map((id) => traySize(id) * (id === 'saturn' ? 2.15 : 1))
-    const free = w - 48
-    const gap = Math.max(8, (free - widths.reduce((a, b) => a + b, 0)) / (trayOrder.length + 1))
     const pos = {} as Record<Pid, { x: number; y: number }>
-    let x = 24 + gap
-    trayOrder.forEach((id, i) => {
-      pos[id] = { x: x + widths[i] / 2, y: layout.trayTop + (h - layout.trayTop) * 0.5 }
-      x += widths[i] + gap
-    })
+    const perRow = Math.ceil(trayOrder.length / trayRows)
+    for (let r = 0; r < trayRows; r++) {
+      const rowIds = trayOrder.slice(r * perRow, (r + 1) * perRow)
+      const widths = rowIds.map((id) => traySize(id) * (id === 'saturn' ? 2.15 : 1))
+      const gap = Math.max(6, (w - 24 - widths.reduce((a, b) => a + b, 0)) / (rowIds.length + 1))
+      const y = layout.trayTop + (layout.trayH / trayRows) * (r + 0.5)
+      let x = 12 + gap
+      rowIds.forEach((id, i) => {
+        pos[id] = { x: x + widths[i] / 2, y }
+        x += widths[i] + gap
+      })
+    }
     return pos
-  }, [trayOrder, w, h, layout.trayTop, traySize])
+  }, [trayOrder, trayRows, w, layout.trayTop, layout.trayH, traySize])
 
   // ---------------------------------------------------------------- voice
   useEffect(() => {
@@ -150,8 +175,9 @@ export function PlanetsHome({
   }, [done, drag, placed, ids])
 
   // ---------------------------------------------------------------- dragging
-  const clampX = (x: number) => Math.max(h * 0.05, Math.min(w - h * 0.05, x))
-  const clampY = (y: number) => Math.max(h * 0.05, Math.min(h - h * 0.05, y))
+  const edge = 28
+  const clampX = (x: number) => Math.max(edge, Math.min(w - edge, x))
+  const clampY = (y: number) => Math.max(edge, Math.min(h - edge, y))
 
   const onDown = (id: Pid) => (e: React.PointerEvent) => {
     if (placed[id] || drag) return
@@ -178,7 +204,7 @@ export function PlanetsHome({
       lastAction.current = performance.now()
       if (!drag.moved) return
       const slot = layout.slots[id]
-      const snap = Math.max(h * 0.11, slot.size * 0.9)
+      const snap = Math.max(unit * 0.11, slot.size * 0.9, 40)
       if (Math.hypot(x - slot.x, y - slot.y) < snap) {
         setPlaced((p) => ({ ...p, [id]: true }))
         playSparkle()
@@ -198,7 +224,7 @@ export function PlanetsHome({
         onSay(PUZZLE_LINES.tryAgain.en, PUZZLE_LINES.tryAgain.vi)
       }
     },
-    [drag, layout, h, ids, placed, onSay],
+    [drag, layout, unit, ids, placed, onSay],
   )
 
   const restart = () => {
@@ -208,7 +234,7 @@ export function PlanetsHome({
   }
 
   // ---------------------------------------------------------------- render
-  const { sun, sunR, slots, trayTop } = layout
+  const { sun, sunR, slots, trayTop, trayH } = layout
   const draggingId = drag?.moved ? drag.id : null
 
   return (
@@ -319,23 +345,29 @@ export function PlanetsHome({
       <style>
         {ids
           .map((id) => {
-            const deg = (slots[id].y < sun.y ? 1 : -1) * Math.min(7, (h * 0.12 * 180) / (Math.PI * slots[id].r))
+            // swing towards the middle line of the screen (above/below the Sun's row, or left/right of its column)
+            const side = portrait ? (slots[id].x < sun.x ? -1 : 1) : slots[id].y < sun.y ? 1 : -1
+            const deg = side * Math.min(7, (unit * 0.12 * 180) / (Math.PI * slots[id].r))
             return `@keyframes orbit-${id} { from { transform: rotate(0deg) } to { transform: rotate(${deg.toFixed(2)}deg) } }`
           })
           .join('\n')}
       </style>
 
       {/* top bar */}
-      <div className="absolute left-3 top-3 flex items-center gap-3 rounded-3xl border border-white/10 bg-slate-900/75 px-4 py-2 backdrop-blur-md" style={{ marginTop: 'env(safe-area-inset-top)' }}>
-        <span className="text-3xl">🧩</span>
+      <div
+        className={`absolute flex items-center rounded-3xl border border-white/10 bg-slate-900/75 backdrop-blur-md ${compact ? 'gap-2 px-2.5 py-1' : 'gap-3 px-4 py-2'}`}
+        style={{ left: 'max(12px, env(safe-area-inset-left))', top: 'max(8px, env(safe-area-inset-top))' }}
+      >
+        <span className={compact ? 'text-2xl' : 'text-3xl'}>🧩</span>
         <div className="leading-tight">
-          <div className="text-xl font-extrabold tracking-wide text-white">PUT PLANETS HOME</div>
-          <div className="text-sm font-semibold text-slate-300">{PUZZLE_LINES.start.vi}</div>
+          <div className={`font-extrabold tracking-wide text-white ${compact ? 'text-sm' : 'text-xl'}`}>PUT PLANETS HOME</div>
+          {!(compact && portrait) && <div className={`font-semibold text-slate-300 ${compact ? 'text-[11px]' : 'text-sm'}`}>{PUZZLE_LINES.start.vi}</div>}
         </div>
         <button
           onClick={() => onSay(PUZZLE_LINES.start.en, PUZZLE_LINES.start.vi)}
           aria-label="Listen"
-          className="ml-1 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-amber-300 to-orange-500 text-2xl shadow-lg active:scale-90"
+          style={{ width: compact ? 44 : 48, height: compact ? 44 : 48 }}
+          className="flex items-center justify-center rounded-full bg-gradient-to-br from-amber-300 to-orange-500 text-xl shadow-lg active:scale-90"
         >
           🔊
         </button>
@@ -343,23 +375,23 @@ export function PlanetsHome({
       <button
         onClick={() => onExit(false)}
         aria-label="Close puzzle"
-        className="absolute right-3 top-3 flex h-14 w-14 items-center justify-center rounded-full border border-white/15 bg-slate-900/80 text-2xl font-black text-white shadow-lg active:scale-90"
-        style={{ marginTop: 'env(safe-area-inset-top)' }}
+        style={{ width: compact ? 44 : 56, height: compact ? 44 : 56, right: 'max(12px, env(safe-area-inset-right))', top: 'max(8px, env(safe-area-inset-top))' }}
+        className="absolute flex items-center justify-center rounded-full border border-white/15 bg-slate-900/80 text-2xl font-black text-white shadow-lg active:scale-90"
       >
         ✕
       </button>
 
       {done && (
-        <div className="absolute inset-x-0 flex justify-center gap-4" style={{ top: trayTop + (h - trayTop) * 0.18 }}>
+        <div className="absolute inset-x-0 flex items-center justify-center gap-3" style={{ top: trayTop, height: trayH }}>
           <button
             onClick={restart}
-            className="animate-word-pop rounded-full bg-gradient-to-r from-emerald-400 to-sky-500 px-8 py-4 text-2xl font-black text-white shadow-xl active:scale-95"
+            className={`animate-word-pop rounded-full bg-gradient-to-r from-emerald-400 to-sky-500 font-black text-white shadow-xl active:scale-95 ${compact ? 'px-5 py-2.5 text-lg' : 'px-8 py-4 text-2xl'}`}
           >
             🔄 AGAIN
           </button>
           <button
             onClick={() => onExit(true)}
-            className="animate-word-pop rounded-full bg-gradient-to-r from-amber-300 via-orange-400 to-pink-500 px-8 py-4 text-2xl font-black text-white shadow-xl active:scale-95"
+            className={`animate-word-pop rounded-full bg-gradient-to-r from-amber-300 via-orange-400 to-pink-500 font-black text-white shadow-xl active:scale-95 ${compact ? 'px-5 py-2.5 text-lg' : 'px-8 py-4 text-2xl'}`}
           >
             🪐 SEE IN 3D
           </button>

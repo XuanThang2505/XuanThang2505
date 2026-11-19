@@ -71,6 +71,26 @@ Trên iPad: mở bằng Safari → nút Chia sẻ → **Thêm vào MH chính**. 
 hành tinh càng xa quay càng chậm (dùng chu kỳ thật, phát ở tốc độ căn bậc hai để Sao Hải Vương vẫn thấy chuyển động),
 mặt sáng của từng hành tinh luôn hướng về Mặt Trời. Kích thước và khoảng cách được thu gọn cho vừa màn hình iPad.
 
+## Tương thích thiết bị
+
+App tự co giãn theo mọi màn hình, nằm ngang hay dọc, không cần cài đặt gì:
+
+| Kiểu màn hình | Ví dụ | Bố cục |
+|---|---|---|
+| **Nằm ngang, rộng** | iPad, iPad Pro, Mac, máy tính, TV | Thẻ tên góc trái, thẻ từ vựng bên phải, thanh hành tinh ở dưới |
+| **Nằm ngang, gọn** (cạnh ngắn < 520px) | iPhone 12 Pro Max / 17 / 17 Pro nằm ngang, Android nhỏ | Như trên nhưng thu gọn; FUN FACTS mở thành khung giữa màn hình |
+| **Dọc** | iPhone dọc, iPad dọc | Thẻ tên ở trên, hàng thẻ từ vựng + thanh hành tinh (cuộn ngang) xếp ở dưới |
+
+- **Cỡ chữ và nút tự tỉ lệ:** cả giao diện dùng đơn vị rem, cỡ gốc co theo màn hình (16px trên iPad 1024×768, 12–26px tuỳ máy).
+- **Nút chạm không nhỏ hơn 44px** trên điện thoại (theo khuyến nghị của Apple).
+- **Tránh tai thỏ / Dynamic Island / thanh Home** ở cả 4 cạnh (`env(safe-area-inset-*)`).
+- **Camera 3D tự lùi** để hành tinh luôn lọt khung ở mọi tỉ lệ màn hình; xoay máy thì tự căn lại.
+- **Hệ Mặt Trời trên màn hình dọc:** nhìn từ trên xuống, hành tinh to hơn và quỹ đạo gần lại một chút để không quá bé.
+- **Các trò chơi** tự đổi bố cục: kéo thả dọc quỹ đạo xuống dưới, ghép hình xếp bảng trên – mảnh dưới, lật thẻ chọn số cột cho thẻ to nhất.
+- Điện thoại bắt đầu ở chất lượng đồ hoạ thấp hơn một nấc; app tự hạ/nâng độ nét theo tốc độ khung hình.
+
+Mã nguồn: `src/utils/useLayout.ts` (nhận diện kiểu màn hình), `src/index.css` (cỡ gốc), `IPadHUD.tsx`, `src/games/*`.
+
 ## Trò chơi (nút PLAY 🎮)
 
 Quy tắc chung cho bé: không thua, không đếm giờ, mọi hướng dẫn bằng giọng nói, chọn sai chỉ nghe "Try again!",
@@ -136,7 +156,7 @@ public/audio/en/           130 file giọng đọc mp3 + manifest.json
 
 ## Kiểm thử
 
-Bộ test tự động (Playwright, giả lập iPad Pro 11 ngang) chạy qua: Hệ Mặt Trời (ORBIT, FAST, đếm PLANETS đúng thứ tự,
+Bộ test tự động (Playwright; chạy ở nhiều cỡ màn hình: iPhone, iPad, Android nhỏ, laptop, màn 1080p — ngang và dọc) chạy qua: Hệ Mặt Trời (ORBIT, FAST, đếm PLANETS đúng thứ tự,
 chạm nhãn để bay vào hành tinh), đổi hành tinh liên tục, 27 thẻ từ vựng của 9 thiên thể, SIZE COMPARE, nút đọc câu,
 khoá phụ huynh, lưu cài đặt, mọi câu tiếng Anh phát bằng giọng thu sẵn, không có lỗi JavaScript.
 Test trò chơi (iPad 1024×768, 1180×820, 1366×1024): nhấc lên đọc tên, thả nhầm "Try again!" và bay về khay,
