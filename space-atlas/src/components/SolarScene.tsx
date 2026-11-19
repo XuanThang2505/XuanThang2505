@@ -4,7 +4,7 @@
  */
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Html, OrbitControls } from '@react-three/drei'
+import { Html, OrbitControls, PerformanceMonitor } from '@react-three/drei'
 import { Bloom, EffectComposer, ToneMapping } from '@react-three/postprocessing'
 import { ToneMappingMode } from 'postprocessing'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
@@ -247,20 +247,36 @@ function SceneContent({ viewId, started, effect, compareOn, autoRotate, onArrive
   )
 }
 
+/** Quality steps, best first. Older iPads step down automatically if frames get slow. */
+const QUALITY = [
+  { dpr: 2, msaa: 4 },
+  { dpr: 1.5, msaa: 2 },
+  { dpr: 1, msaa: 0 },
+]
+
 export function SolarScene(props: SolarSceneProps) {
+  const [q, setQ] = useState(0)
+  const quality = QUALITY[q]
   return (
     <Canvas
       frameloop={props.paused ? 'never' : 'always'}
       className="!absolute inset-0"
-      dpr={[1, 2]}
+      dpr={Math.min(quality.dpr, typeof window !== 'undefined' ? window.devicePixelRatio : 2)}
       camera={{ fov: 62, near: 0.05, far: 2000, position: [0, 6, 30] }}
       gl={{ antialias: true, powerPreference: 'high-performance' }}
     >
+      {/* measures the frame rate: below ~40 fps → step down, back up when it is smooth again */}
+      <PerformanceMonitor
+        bounds={() => [40, 58]}
+        flipflops={4}
+        onDecline={() => setQ((x) => Math.min(x + 1, QUALITY.length - 1))}
+        onIncline={() => setQ((x) => Math.max(x - 1, 0))}
+      />
       <color attach="background" args={['#050818']} />
       <Suspense fallback={null}>
         <SceneContent {...props} />
       </Suspense>
-      <EffectComposer multisampling={4}>
+      <EffectComposer key={quality.msaa} multisampling={quality.msaa}>
         <Bloom mipmapBlur intensity={0.85} luminanceThreshold={0.82} luminanceSmoothing={0.2} radius={0.75} />
         <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
       </EffectComposer>

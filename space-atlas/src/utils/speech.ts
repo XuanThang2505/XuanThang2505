@@ -246,6 +246,11 @@ export async function speakBilingual(en: string, vi: string | undefined, withVie
 export async function speakSequence(words: string[], gap: number) {
   stopSpeaking()
   const myGeneration = generation
+  // Load every clip first: otherwise a clip that decodes faster could jump the queue
+  // and the planets would be counted out of order.
+  await loadManifest()
+  await Promise.all(words.map((w) => loadClip(slugify(w))))
+  if (myGeneration !== generation) return
   const start = performance.now()
   for (let i = 0; i < words.length; i++) {
     const wait = start + i * gap * 1000 - performance.now()
