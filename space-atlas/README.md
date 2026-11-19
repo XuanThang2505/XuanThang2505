@@ -48,7 +48,8 @@ Trên iPad: mở bằng Safari → nút Chia sẻ → **Thêm vào MH chính**. 
 | Chạm 3 thẻ từ bên phải | Đọc từ + hiệu ứng 3D minh hoạ nghĩa |
 | SIZE COMPARE | Trái Đất (hoặc Mặt Trăng) bay tới bên cạnh để so kích thước thật |
 | Vuốt 1 ngón / chụm 2 ngón | Xoay / phóng to (đã khoá kéo lệch, không thể làm mất hành tinh) |
-| **PUZZLE 🧩** (thanh dưới) | Trò *Put planets home*: kéo 8 hành tinh vào đúng "nhà" trên quỹ đạo |
+| **FUN FACTS 🔍** (dưới thẻ tên) | 4 câu fact của thiên thể đang xem; chạm từng câu để nghe, hoặc **READ ALL** |
+| **PLAY 🎮** (thanh dưới) | Menu 3 trò chơi, có đếm sao ⭐ (lưu trên máy) |
 | Giữ 🔒 2 giây | Cài đặt phụ huynh: tốc độ đọc, tự xoay, nhạc nền, đọc thêm tiếng Việt |
 
 ## Từ vựng và hiệu ứng
@@ -70,20 +71,31 @@ Trên iPad: mở bằng Safari → nút Chia sẻ → **Thêm vào MH chính**. 
 hành tinh càng xa quay càng chậm (dùng chu kỳ thật, phát ở tốc độ căn bậc hai để Sao Hải Vương vẫn thấy chuyển động),
 mặt sáng của từng hành tinh luôn hướng về Mặt Trời. Kích thước và khoảng cách được thu gọn cho vừa màn hình iPad.
 
-## Trò chơi: Put planets home (3+ tuổi)
+## Trò chơi (nút PLAY 🎮)
+
+Quy tắc chung cho bé: không thua, không đếm giờ, mọi hướng dẫn bằng giọng nói, chọn sai chỉ nghe "Try again!",
+sai 2 lần thì đáp án đúng tự sáng lên để bé không bị kẹt.
+
+| Trò | Tuổi | Cách chơi | Sao |
+|---|---|---|---|
+| **Put planets home** 🧩 | 3+ | Kéo 8 hành tinh vào đúng "nhà" trên quỹ đạo | 3 khi xong |
+| **Which planet?** 🎯 | 4+ | Nghe câu hỏi ("Which planet is red?"), chạm 1 trong 3 hành tinh. 13 câu, mỗi lượt 5 câu | 1 mỗi câu đúng ngay lần đầu |
+| **Line up!** 🔢 | 4+ | Chạm 8 hành tinh theo thứ tự từ Mặt Trời ra xa | 2 khi xong |
+
+### Put planets home
 
 - Mặt Trời bên trái, 8 quỹ đạo, mỗi quỹ đạo có "bóng" (nhà) của một hành tinh. Bé kéo hành tinh từ khay dưới vào đúng bóng.
 - Nhấc hành tinh lên → app đọc tên ("Mars!") và bóng đúng sáng lên gợi ý.
 - Thả gần đúng chỗ → tự hút vào, khen "Great job!". Thả nhầm bóng → "Try again!" và hành tinh tự bay về khay. Không có thua, không đếm giờ.
 - Ngồi yên 8 giây → một hành tinh nhún nhảy và bóng của nó sáng lên để gợi ý.
 - Xong cả 8 → "You did it! All the planets are home!", pháo giấy, các hành tinh đung đưa trên quỹ đạo; nút **AGAIN** (xáo lại) và **SEE IN 3D**.
-- Cấp tiếp theo dự kiến: *Planet jigsaw* (2 → 4 → 6 mảnh, 4–5 tuổi), *Big jigsaw / Memory pairs* (5–6 tuổi).
+- Dự kiến thêm: *Planet jigsaw* (2 → 4 → 6 mảnh, 4–5 tuổi), *Memory pairs* (5–6 tuổi).
 
 ## Cấu trúc
 
 ```
 src/
-  data/planetsData.ts      Nội dung bài học (sửa chữ, thêm từ ở đây)
+  data/planetsData.ts      Nội dung: bài học, từ vựng, FUN FACTS, câu đố, câu nói trong trò chơi
   utils/speech.ts          Giọng đọc: file mp3 trước, Web Speech API sau
   utils/soundEffects.ts    Âm thanh hiệu ứng + nhạc nền tạo bằng Web Audio (không cần file)
   utils/proceduralPixels.ts Texture dự phòng vẽ bằng code (chạy trong Web Worker, không làm khựng hình)
@@ -95,12 +107,14 @@ src/
   components/Starfield.tsx    Sao lấp lánh + dải Ngân Hà + tinh vân
   components/SolarSystem.tsx  Hệ Mặt Trời: quỹ đạo, vành đai tiểu hành tinh, 8 hành tinh quay quanh
   components/IPadHUD.tsx      Giao diện: thẻ từ, dock hành tinh, khoá phụ huynh
-  puzzle/PlanetsHome.tsx      Trò chơi kéo thả "Put planets home"
+  games/GamesHub.tsx          Menu PLAY + trò "Which planet?" và "Line up!", đếm sao
+  games/PlanetsHome.tsx       Trò kéo thả "Put planets home"
+  games/PlanetBall2D.tsx      Hành tinh 2D vẽ từ ảnh thật (dùng chung cho các trò)
 public/sw.js               Service worker: chạy offline sau lần dùng đầu tiên
 scripts/phrases.ts         In ra mọi câu tiếng Anh app sẽ đọc
 scripts/make_voice.py      Thu giọng Mỹ (Kokoro af_heart) thành mp3 + manifest.json
 public/textures/           Ảnh thật: Trái Đất (three.js, MIT) + các hành tinh khác và Mặt Trăng (Solar System Scope, CC BY 4.0)
-public/audio/en/           60 file giọng đọc mp3 + manifest.json
+public/audio/en/           117 file giọng đọc mp3 + manifest.json
 ```
 
 ## Nâng cấp

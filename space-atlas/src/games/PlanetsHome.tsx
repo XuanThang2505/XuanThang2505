@@ -11,6 +11,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { PLANET_MAP, PLANET_ORDER, PUZZLE_LINES, type PlanetId } from '../data/planetsData'
 import { playBoing, playPop, playSparkle } from '../utils/soundEffects'
+import { PlanetBall2D } from './PlanetBall2D'
 
 type Pid = Exclude<PlanetId, 'sun'>
 
@@ -24,16 +25,6 @@ const SIZE: Record<Pid, number> = {
   saturn: 0.13,
   uranus: 0.11,
   neptune: 0.105,
-}
-const TEXTURE: Record<Pid, string> = {
-  mercury: './textures/mercury.jpg',
-  venus: './textures/venus.jpg',
-  earth: './textures/earth_atmos_2048.jpg',
-  mars: './textures/mars.jpg',
-  jupiter: './textures/jupiter.jpg',
-  saturn: './textures/saturn.jpg',
-  uranus: './textures/uranus.jpg',
-  neptune: './textures/neptune.jpg',
 }
 /** Vertical spread of the shadows along their orbits (-1 top … 1 bottom). */
 const SPREAD = [-0.55, 0.6, -0.85, 0.35, -0.6, 0.75, -0.35, 0.5]
@@ -61,42 +52,6 @@ function shuffled<T>(a: T[]) {
   return b
 }
 
-/** A planet drawn with its real photo, shaded like a ball. */
-function PlanetPiece({ id, size }: { id: Pid; size: number }) {
-  const ring = id === 'saturn' || id === 'uranus'
-  return (
-    <div className="relative" style={{ width: size, height: size }}>
-      {ring && <Ring id={id} size={size} half="back" />}
-      <div
-        className="absolute inset-0 rounded-full"
-        style={{
-          backgroundImage: `radial-gradient(circle at 32% 30%, rgba(255,255,255,0.28), rgba(255,255,255,0) 45%), radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.55) 100%), url(${TEXTURE[id]})`,
-          backgroundSize: '100% 100%, 100% 100%, 200% 100%',
-          backgroundPosition: 'center, center, 30% 50%',
-          boxShadow: `0 0 ${size * 0.25}px ${PLANET_MAP[id].atmosphere}66`,
-        }}
-      />
-      {ring && <Ring id={id} size={size} half="front" />}
-    </div>
-  )
-}
-
-function Ring({ id, size, half }: { id: Pid; size: number; half: 'front' | 'back' }) {
-  const uranus = id === 'uranus'
-  return (
-    <div
-      className="pointer-events-none absolute left-1/2 top-1/2 rounded-[50%]"
-      style={{
-        width: uranus ? size * 0.32 : size * 2.1,
-        height: uranus ? size * 1.7 : size * 0.6,
-        transform: `translate(-50%, -50%) rotate(${uranus ? 0 : -16}deg)`,
-        border: `${Math.max(2, size * (uranus ? 0.025 : 0.07))}px solid ${uranus ? 'rgba(200,250,255,0.6)' : 'rgba(232,211,160,0.9)'}`,
-        clipPath: half === 'back' ? (uranus ? 'inset(0 50% 0 0)' : 'inset(0 0 50% 0)') : uranus ? 'inset(0 0 0 50%)' : 'inset(50% 0 0 0)',
-      }}
-    />
-  )
-}
-
 interface Drag {
   id: Pid
   pointerId: number
@@ -110,9 +65,12 @@ interface Drag {
 export function PlanetsHome({
   onExit,
   onSay,
+  onWin,
 }: {
   onExit: (to3D: boolean) => void
   onSay: (en: string, vi?: string) => void
+  /** called once per finished round (the hub gives 3 stars) */
+  onWin?: () => void
 }) {
   const { w, h } = useViewport()
   const [round, setRound] = useState(0)
@@ -172,9 +130,10 @@ export function PlanetsHome({
   useEffect(() => {
     if (!done) return
     playSparkle()
+    onWin?.()
     const t = setTimeout(() => onSay(PUZZLE_LINES.done.en, PUZZLE_LINES.done.vi), 600)
     return () => clearTimeout(t)
-  }, [done, onSay])
+  }, [done, onSay]) // eslint-disable-line react-hooks/exhaustive-deps -- onWin once per round
 
   // Gentle hint after 8 s without success: one planet hops, its shadow glows.
   useEffect(() => {
@@ -346,7 +305,7 @@ export function PlanetsHome({
               animation: orbiting ? `orbit-${id} ${1.2 + PLANET_ORDER.indexOf(id) * 0.35}s ease-in-out infinite alternate` : undefined,
             }}
           >
-            <PlanetPiece id={id} size={size} />
+            <PlanetBall2D id={id} size={size} />
             {placed[id] && !done && (
               <span className="pointer-events-none absolute left-1/2 top-full mt-1 -translate-x-1/2 whitespace-nowrap rounded-full bg-slate-900/70 px-2 text-xs font-extrabold text-white">
                 {PLANET_MAP[id].englishName}

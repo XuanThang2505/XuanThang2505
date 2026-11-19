@@ -3,7 +3,9 @@
  * parent lock (top-right).
  */
 import { useEffect, useRef, useState } from 'react'
-import { PLANETS, type Lesson, type PlanetData, type ViewId, type VocabWord } from '../data/planetsData'
+import { FACTS, PLANETS, type Lesson, type PlanetData, type ViewId, type VocabWord } from '../data/planetsData'
+import { speak, stopSpeaking } from '../utils/speech'
+import { playPop } from '../utils/soundEffects'
 import type { Settings } from '../App'
 
 interface Props {
@@ -20,7 +22,11 @@ interface Props {
   onVocab: (w: VocabWord) => void
   onToggleCompare: () => void
   onSelectPlanet: (id: ViewId) => void
-  onOpenPuzzle: () => void
+  onOpenGames: () => void
+  /** stars earned in the games */
+  stars: number
+  /** speak one fun fact (English, + Vietnamese if enabled) */
+  onFact: (en: string, vi?: string) => void
   onSettingsChange: (s: Settings) => void
 }
 
@@ -72,6 +78,93 @@ function WordCard({ planet, bounceKey, flying, onSpeakName, onSpeakPhrase }: Pic
         <span className="mx-2 text-white/30">·</span>
         {planet.vietnameseSub}
       </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------- fun facts
+function FactsPanel({ planet, flying, onFact }: Pick<Props, 'planet' | 'flying' | 'onFact'>) {
+  const [open, setOpen] = useState(false)
+  const [current, setCurrent] = useState(-1)
+  const run = useRef(0)
+  const facts = FACTS[planet.id]
+
+  useEffect(() => {
+    setOpen(false)
+    setCurrent(-1)
+    run.current++
+  }, [planet.id])
+
+  const readAll = async () => {
+    playPop()
+    const me = ++run.current
+    for (let i = 0; i < facts.length; i++) {
+      if (me !== run.current) return
+      setCurrent(i)
+      await speak(facts[i][1], { interrupt: i === 0 })
+      if (me !== run.current) return
+      await new Promise((r) => setTimeout(r, 350))
+    }
+    if (me === run.current) setCurrent(-1)
+  }
+
+  return (
+    <div className={`pointer-events-auto mt-3 max-w-[44vw] transition-all duration-500 ${flying ? 'opacity-0' : 'opacity-100'}`}>
+      <div className="flex gap-2">
+        <button
+          onClick={() => {
+            playPop()
+            run.current++
+            stopSpeaking()
+            setCurrent(-1)
+            setOpen(!open)
+          }}
+          className={`flex items-center gap-2 rounded-2xl border px-3 py-2 shadow-lg backdrop-blur-md active:scale-95 ${
+            open ? 'border-sky-300 bg-sky-500/40' : 'border-white/10 bg-slate-900/75'
+          }`}
+        >
+          <span className="text-2xl">🔍</span>
+          <span className="text-left leading-tight">
+            <b className="block text-base font-extrabold text-white">FUN FACTS</b>
+            <small className="block text-xs font-semibold text-slate-300">Điều thú vị</small>
+          </span>
+        </button>
+        {open && (
+          <button
+            onClick={() => void readAll()}
+            className="flex items-center gap-2 rounded-2xl border border-white/10 bg-slate-900/75 px-3 py-2 shadow-lg backdrop-blur-md active:scale-95"
+          >
+            <span className="text-2xl">▶️</span>
+            <span className="text-left leading-tight">
+              <b className="block text-base font-extrabold text-white">READ ALL</b>
+              <small className="block text-xs font-semibold text-slate-300">Đọc hết</small>
+            </span>
+          </button>
+        )}
+      </div>
+      {open && (
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          {facts.map(([icon, en, vi], i) => (
+            <button
+              key={planet.id + i}
+              onClick={() => {
+                run.current++
+                setCurrent(i)
+                onFact(en, vi)
+              }}
+              className={`animate-word-pop flex items-center gap-2 rounded-2xl border px-2.5 py-2 text-left shadow-lg backdrop-blur-md active:scale-95 ${
+                current === i ? 'border-amber-300 bg-amber-400/30 ring-2 ring-amber-300/60' : 'border-white/10 bg-slate-900/75'
+              }`}
+            >
+              <span className="text-2xl">{icon}</span>
+              <span className="min-w-0 leading-tight">
+                <b className="block text-sm font-extrabold text-white">{en}</b>
+                <small className="block text-[11px] font-semibold text-slate-300">{vi}</small>
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -178,7 +271,7 @@ function PlanetBall({ planet, size = 'w-14 h-14 lg:w-16 lg:h-16' }: { planet: Pl
   )
 }
 
-function PlanetDock({ currentId, onSelectPlanet, onOpenPuzzle }: Pick<Props, 'currentId' | 'onSelectPlanet' | 'onOpenPuzzle'>) {
+function PlanetDock({ currentId, onSelectPlanet, onOpenGames, stars }: Pick<Props, 'currentId' | 'onSelectPlanet' | 'onOpenGames' | 'stars'>) {
   return (
     <div className="pointer-events-auto flex items-end gap-1 rounded-[2rem] border border-white/10 bg-slate-900/60 px-3 pb-2 pt-3 shadow-2xl backdrop-blur-md lg:gap-2">
       <button
@@ -195,13 +288,17 @@ function PlanetDock({ currentId, onSelectPlanet, onOpenPuzzle }: Pick<Props, 'cu
         </span>
       </button>
       <button
-        onClick={onOpenPuzzle}
-        className="mr-1 flex flex-col items-center border-r border-white/10 pr-2 transition-transform duration-300 active:scale-90"
+        onClick={onOpenGames}
+        aria-label="Play games"
+        className="relative mr-1 flex flex-col items-center border-r border-white/10 pr-2 transition-transform duration-300 active:scale-90"
       >
         <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500 to-indigo-600 text-3xl shadow-lg shadow-fuchsia-500/30 lg:h-16 lg:w-16">
-          🧩
+          🎮
         </span>
-        <span className="mt-1 rounded-full px-2 text-[11px] font-extrabold leading-tight tracking-wide text-white/85">PUZZLE</span>
+        {stars > 0 && (
+          <span className="absolute -right-0.5 -top-1.5 rounded-full bg-amber-400 px-1.5 text-[11px] font-black text-slate-900 shadow">⭐{stars}</span>
+        )}
+        <span className="mt-1 rounded-full px-2 text-[11px] font-extrabold leading-tight tracking-wide text-white/85">PLAY</span>
       </button>
       {PLANETS.map((p) => {
         const active = p.id === currentId
@@ -344,6 +441,7 @@ export function IPadHUD(props: Props) {
             onSpeakName={props.onSpeakName}
             onSpeakPhrase={props.onSpeakPhrase}
           />
+          <FactsPanel planet={planet} flying={flying} onFact={props.onFact} />
         </div>
 
         <div className="absolute right-0 top-0">
@@ -369,7 +467,7 @@ export function IPadHUD(props: Props) {
         )}
 
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2">
-          <PlanetDock currentId={props.currentId} onSelectPlanet={props.onSelectPlanet} onOpenPuzzle={props.onOpenPuzzle} />
+          <PlanetDock currentId={props.currentId} onSelectPlanet={props.onSelectPlanet} onOpenGames={props.onOpenGames} stars={props.stars} />
         </div>
       </div>
 

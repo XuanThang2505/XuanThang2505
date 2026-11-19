@@ -382,3 +382,92 @@ export const PUZZLE_LINES = {
   ],
   done: { en: 'You did it! All the planets are home!', vi: 'Con làm được rồi! Các hành tinh đã về nhà!' },
 }
+
+/** FUN FACTS: four short, true facts per view – [icon, English, Vietnamese]. */
+export const FACTS: Record<ViewId, [string, string, string][]> = {
+  system: [
+    ['☀️', 'The Sun is in the middle!', 'Mặt Trời ở chính giữa'],
+    ['🔢', 'There are eight planets!', 'Có tám hành tinh'],
+    ['⭕', 'Planets go around the Sun!', 'Các hành tinh quay quanh Mặt Trời'],
+    ['🌍', 'Earth is the third planet!', 'Trái Đất là hành tinh thứ ba'],
+  ],
+  sun: [
+    ['🔥', 'The Sun is very hot!', 'Mặt Trời rất nóng'],
+    ['🌍', 'Many Earths fit inside the Sun!', 'Rất nhiều Trái Đất nằm vừa trong Mặt Trời'],
+    ['🌱', 'Plants need the Sun to grow!', 'Cây cần Mặt Trời để lớn lên'],
+    ['⭐', 'The Sun is our nearest star!', 'Mặt Trời là ngôi sao gần ta nhất'],
+  ],
+  mercury: [
+    ['🌙', 'Mercury has no moons!', 'Sao Thủy không có mặt trăng'],
+    ['⚡', 'Mercury goes around the Sun fast!', 'Sao Thủy quay quanh Mặt Trời rất nhanh'],
+    ['🪨', 'Mercury is gray like a rock!', 'Sao Thủy màu xám như hòn đá'],
+    ['🌡️', 'Mercury is hot by day and cold at night!', 'Ban ngày nóng, ban đêm lạnh'],
+  ],
+  venus: [
+    ['🔄', 'Venus spins backward!', 'Sao Kim quay ngược chiều'],
+    ['🌙', 'Venus has no moons!', 'Sao Kim không có mặt trăng'],
+    ['🔥', 'Venus is the hottest planet!', 'Sao Kim là hành tinh nóng nhất'],
+    ['✨', 'Venus shines bright in the sky!', 'Sao Kim sáng lấp lánh trên bầu trời'],
+  ],
+  earth: [
+    ['🌙', 'Earth has one moon!', 'Trái Đất có một mặt trăng'],
+    ['💧', 'Earth has water and air!', 'Trái Đất có nước và không khí'],
+    ['🐘', 'Animals and people live on Earth!', 'Con người và động vật sống trên Trái Đất'],
+    ['🌗', 'Earth spins to make day and night!', 'Trái Đất quay tạo ra ngày và đêm'],
+  ],
+  mars: [
+    ['🌙', 'Mars has two small moons!', 'Sao Hỏa có hai mặt trăng nhỏ'],
+    ['🌋', 'Mars has a giant volcano!', 'Sao Hỏa có ngọn núi lửa khổng lồ'],
+    ['🤖', 'Robots drive on Mars!', 'Robot chạy trên Sao Hỏa'],
+    ['🧱', 'Rusty dust makes Mars red!', 'Bụi gỉ sắt làm Sao Hỏa màu đỏ'],
+  ],
+  jupiter: [
+    ['👑', 'Jupiter is the biggest planet!', 'Sao Mộc là hành tinh lớn nhất'],
+    ['🌙', 'Jupiter has many moons!', 'Sao Mộc có rất nhiều mặt trăng'],
+    ['🌀', 'The red spot is a giant storm!', 'Vệt đỏ là một cơn bão khổng lồ'],
+    ['💨', 'Jupiter spins very fast!', 'Sao Mộc quay rất nhanh'],
+  ],
+  saturn: [
+    ['🧊', 'The rings are made of ice and rock!', 'Vòng của Sao Thổ làm từ băng và đá'],
+    ['🌙', 'Saturn has many moons!', 'Sao Thổ có rất nhiều mặt trăng'],
+    ['🎈', 'Saturn is made of gas!', 'Sao Thổ được tạo thành từ khí'],
+    ['🥈', 'Saturn is the second biggest planet!', 'Sao Thổ là hành tinh lớn thứ hai'],
+  ],
+  uranus: [
+    ['↪️', 'Uranus rolls on its side!', 'Sao Thiên Vương lăn nghiêng'],
+    ['🥶', 'Uranus is cold and icy!', 'Sao Thiên Vương lạnh và đầy băng'],
+    ['🌙', 'Uranus has many moons!', 'Sao Thiên Vương có nhiều mặt trăng'],
+    ['💍', 'Uranus has thin rings!', 'Sao Thiên Vương có những vòng mỏng'],
+  ],
+  neptune: [
+    ['🏁', 'Neptune is the farthest planet!', 'Sao Hải Vương là hành tinh xa nhất'],
+    ['💨', 'Neptune has super strong winds!', 'Sao Hải Vương có gió rất mạnh'],
+    ['💙', 'Neptune is deep blue!', 'Sao Hải Vương màu xanh thẫm'],
+    ['🌙', 'Neptune has many moons!', 'Sao Hải Vương có nhiều mặt trăng'],
+  ],
+}
+
+/** "Which planet?" quiz – [icon, question, Vietnamese, answer]. Five are picked each round. */
+export const QUIZ: [string, string, string, PlanetId][] = [
+  ['🔴', 'Which planet is red?', 'Hành tinh nào màu đỏ?', 'mars'],
+  ['🐘', 'Which planet is the biggest?', 'Hành tinh nào lớn nhất?', 'jupiter'],
+  ['☀️', 'Which planet is closest to the Sun?', 'Hành tinh nào gần Mặt Trời nhất?', 'mercury'],
+  ['🏡', 'Which planet is our home?', 'Hành tinh nào là nhà của chúng ta?', 'earth'],
+  ['🔥', 'Which planet is the hottest?', 'Hành tinh nào nóng nhất?', 'venus'],
+  ['💍', 'Which planet has big shiny rings?', 'Hành tinh nào có vòng lấp lánh?', 'saturn'],
+  ['💙', 'Which planet is blue and cold?', 'Hành tinh nào xanh và lạnh?', 'neptune'],
+  ['↪️', 'Which planet spins on its side?', 'Hành tinh nào quay nằm nghiêng?', 'uranus'],
+  ['🌙', 'Which planet has two small moons?', 'Hành tinh nào có hai mặt trăng nhỏ?', 'mars'],
+  ['🌀', 'Which planet has the red storm?', 'Hành tinh nào có cơn bão đỏ?', 'jupiter'],
+  ['🏁', 'Which planet is the farthest?', 'Hành tinh nào xa nhất?', 'neptune'],
+  ['🌊', 'Which planet has oceans?', 'Hành tinh nào có đại dương?', 'earth'],
+  ['⭐', 'Which one is a star?', 'Cái nào là ngôi sao?', 'sun'],
+]
+
+/** Other spoken lines used by the games. */
+export const GAME_LINES = {
+  letsPlay: { en: "Let's play!", vi: 'Cùng chơi nhé!' },
+  lineUp: { en: 'Tap the planets in order!', vi: 'Chạm các hành tinh theo thứ tự từ Mặt Trời ra xa' },
+  youDidIt: { en: 'You did it!', vi: 'Con làm được rồi!' },
+  super: { en: 'Super!', vi: 'Tuyệt quá!' },
+}
