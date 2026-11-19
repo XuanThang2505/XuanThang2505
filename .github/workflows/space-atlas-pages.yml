@@ -1,6 +1,7 @@
 # Builds space-atlas/ and publishes it to GitHub Pages:
 #   https://xuanthang2505.github.io/XuanThang2505/
-# One-time setup: repo Settings → Pages → Source: "GitHub Actions".
+# Pages is switched on by the configure-pages step below (enablement: true). If GitHub refuses
+# (the token may lack admin rights), do it by hand once: Settings → Pages → Source: "GitHub Actions".
 name: Deploy Space Atlas to GitHub Pages
 
 on:
@@ -26,6 +27,9 @@ jobs:
         working-directory: space-atlas
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - uses: actions/setup-node@v4
         with:
           node-version: 22
