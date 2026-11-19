@@ -470,4 +470,29 @@ export const GAME_LINES = {
   lineUp: { en: 'Tap the planets in order!', vi: 'Chạm các hành tinh theo thứ tự từ Mặt Trời ra xa' },
   youDidIt: { en: 'You did it!', vi: 'Con làm được rồi!' },
   super: { en: 'Super!', vi: 'Tuyệt quá!' },
+  buildPlanet: { en: 'Build the planet!', vi: 'Ghép hành tinh nào!' },
+  findPairs: { en: 'Find the pairs!', vi: 'Tìm các cặp giống nhau!' },
+  match: { en: "It's a match!", vi: 'Giống nhau rồi!' },
+  newSticker: { en: 'New sticker!', vi: 'Con có hình dán mới!' },
+  myStickers: { en: 'My stickers!', vi: 'Hình dán của con' },
 }
+
+/**
+ * Sticker Book: one space sticker for every STARS_PER_STICKER stars.
+ * Tapping a sticker says its English name – more space words to learn.
+ */
+export const STARS_PER_STICKER = 3
+export const STICKERS: { emoji: string; en: string; vi: string }[] = [
+  { emoji: '🚀', en: 'ROCKET', vi: 'Tên lửa' },
+  { emoji: '👩‍🚀', en: 'ASTRONAUT', vi: 'Phi hành gia' },
+  { emoji: '🌙', en: 'MOON', vi: 'Mặt Trăng' },
+  { emoji: '⭐', en: 'STAR', vi: 'Ngôi sao' },
+  { emoji: '☄️', en: 'COMET', vi: 'Sao chổi' },
+  { emoji: '🛰️', en: 'SATELLITE', vi: 'Vệ tinh' },
+  { emoji: '🔭', en: 'TELESCOPE', vi: 'Kính thiên văn' },
+  { emoji: '👽', en: 'ALIEN', vi: 'Người ngoài hành tinh' },
+  { emoji: '🛸', en: 'UFO', vi: 'Đĩa bay' },
+  { emoji: '🪐', en: 'PLANET', vi: 'Hành tinh' },
+  { emoji: '🌌', en: 'GALAXY', vi: 'Dải ngân hà' },
+  { emoji: '🌍', en: 'EARTH', vi: 'Trái Đất' },
+]

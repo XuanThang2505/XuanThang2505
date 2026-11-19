@@ -13,10 +13,14 @@ import { GAME_LINES, PLANET_MAP, PLANET_ORDER, PUZZLE_LINES, QUIZ, type PlanetId
 import { playBoing, playPop, playSparkle } from '../utils/soundEffects'
 import { speak, stopSpeaking } from '../utils/speech'
 import { PlanetBall2D } from './PlanetBall2D'
+import { MemoryPairs } from './MemoryPairs'
+import { PlanetJigsaw } from './PlanetJigsaw'
 import { PlanetsHome } from './PlanetsHome'
+import { NewStickerPopup, StickerBook, stickersUnlocked } from './StickerBook'
+import { Done, QuestionButton, Screen, shuffle, TopBar, wait } from './ui'
 
-type Say = (en: string, vi?: string) => void
-type Game = 'menu' | 'home' | 'quiz' | 'order'
+import type { Say } from './ui'
+type Game = 'menu' | 'home' | 'quiz' | 'order' | 'jigsaw' | 'memory' | 'stickers'
 
 const STARS_KEY = 'space-atlas-stars'
 export function loadStars() {
@@ -34,75 +38,6 @@ export function saveStars(n: number) {
   }
 }
 
-function shuffle<T>(a: T[]) {
-  const b = [...a]
-  for (let i = b.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[b[i], b[j]] = [b[j], b[i]]
-  }
-  return b
-}
-const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
-
-// ---------------------------------------------------------------- shared bits
-function Screen({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="absolute inset-0 z-30 flex flex-col overflow-hidden bg-[radial-gradient(ellipse_at_30%_30%,#24185e_0%,#0a0d2c_55%,#03040f_100%)] font-nunito text-white">
-      {children}
-    </div>
-  )
-}
-
-function TopBar({ onBack, middle, stars }: { onBack: () => void; middle: React.ReactNode; stars: number }) {
-  return (
-    <div className="flex items-center gap-3 p-3" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
-      <button
-        onClick={onBack}
-        aria-label="Back"
-        className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-white/15 bg-slate-900/80 text-2xl font-black shadow-lg active:scale-90"
-      >
-        ✕
-      </button>
-      <div className="flex min-w-0 flex-1 justify-center">{middle}</div>
-      <div className="shrink-0 rounded-full bg-amber-400/90 px-4 py-2 text-xl font-black text-slate-900 shadow-lg">⭐ {stars}</div>
-    </div>
-  )
-}
-
-function QuestionButton({ icon, en, vi, onSay }: { icon: string; en: string; vi: string; onSay: Say }) {
-  return (
-    <button
-      onClick={() => onSay(en, vi)}
-      className="flex max-w-full items-center gap-3 rounded-3xl border border-white/10 bg-slate-900/75 px-5 py-3 text-left shadow-xl backdrop-blur active:scale-95"
-    >
-      <span className="text-4xl">{icon}</span>
-      <span className="min-w-0">
-        <b className="block text-2xl font-extrabold leading-tight md:text-3xl">{en}</b>
-        <small className="block text-base font-semibold text-slate-300">{vi}</small>
-      </span>
-      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-300 to-orange-500 text-xl">🔊</span>
-    </button>
-  )
-}
-
-function Done({ title, sub, stars, onAgain, onBack }: { title: string; sub: string; stars: number; onAgain: () => void; onBack: () => void }) {
-  return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
-      <div className="animate-word-pop text-6xl">{'⭐'.repeat(Math.max(1, Math.min(stars, 5)))}</div>
-      <div className="text-5xl font-black drop-shadow-[0_0_20px_rgba(251,191,36,0.6)]">{title}</div>
-      <div className="text-xl font-semibold text-sky-200">{sub}</div>
-      <div className="mt-4 flex gap-4">
-        <button onClick={onAgain} className="rounded-full bg-gradient-to-r from-emerald-400 to-sky-500 px-8 py-4 text-2xl font-black shadow-xl active:scale-95">
-          ▶ AGAIN
-        </button>
-        <button onClick={onBack} className="rounded-full border border-white/20 bg-slate-800/80 px-8 py-4 text-2xl font-black shadow-xl active:scale-95">
-          BACK
-        </button>
-      </div>
-    </div>
-  )
-}
-
 // ---------------------------------------------------------------- menu
 function Menu({ stars, onPick, onClose, onSay }: { stars: number; onPick: (g: Game) => void; onClose: () => void; onSay: Say }) {
   useEffect(() => {
@@ -113,11 +48,30 @@ function Menu({ stars, onPick, onClose, onSay }: { stars: number; onPick: (g: Ga
     { g: 'home', icon: '🧩', en: 'Put planets home', vi: 'Kéo hành tinh về nhà', age: '3+', cls: 'from-fuchsia-500 to-indigo-600' },
     { g: 'quiz', icon: '🎯', en: 'Which planet?', vi: 'Nghe câu hỏi và chọn', age: '4+', cls: 'from-amber-400 to-orange-600' },
     { g: 'order', icon: '🔢', en: 'Line up!', vi: 'Xếp 8 hành tinh theo thứ tự', age: '4+', cls: 'from-emerald-400 to-teal-600' },
+    { g: 'jigsaw', icon: '🖼️', en: 'Planet jigsaw', vi: 'Ghép ảnh hành tinh', age: '4+', cls: 'from-sky-400 to-blue-700' },
+    { g: 'memory', icon: '🃏', en: 'Memory pairs', vi: 'Lật thẻ tìm cặp', age: '5+', cls: 'from-rose-400 to-pink-700' },
   ]
   return (
     <Screen>
-      <TopBar onBack={onClose} stars={stars} middle={<div className="text-4xl font-black">Let's play!</div>} />
-      <div className="flex flex-1 flex-wrap items-center justify-center gap-5 p-4">
+      <TopBar
+        onBack={onClose}
+        stars={stars}
+        middle={
+          <div className="flex items-center gap-4">
+            <div className="text-4xl font-black">Let's play!</div>
+            <button
+              onClick={() => {
+                playPop()
+                onPick('stickers')
+              }}
+              className="flex items-center gap-2 rounded-full border-2 border-amber-300/70 bg-gradient-to-r from-indigo-500 to-fuchsia-600 px-4 py-2 text-lg font-black shadow-lg active:scale-95"
+            >
+              🌟 MY STICKERS <span className="rounded-full bg-black/25 px-2 text-base">{stickersUnlocked(stars)}</span>
+            </button>
+          </div>
+        }
+      />
+      <div className="flex flex-1 flex-wrap content-center items-center justify-center gap-4 p-3">
         {cards.map((c) => (
           <button
             key={c.g}
@@ -125,10 +79,10 @@ function Menu({ stars, onPick, onClose, onSay }: { stars: number; onPick: (g: Ga
               playPop()
               onPick(c.g)
             }}
-            className={`relative flex h-56 w-60 flex-col items-center justify-center gap-2 rounded-[2rem] bg-gradient-to-br ${c.cls} p-4 text-center shadow-2xl active:scale-95 lg:h-64 lg:w-72`}
+            className={`relative flex h-44 w-56 flex-col items-center justify-center gap-1 rounded-[2rem] bg-gradient-to-br ${c.cls} p-3 text-center shadow-2xl active:scale-95 lg:h-56 lg:w-72`}
           >
             <span className="absolute right-4 top-3 rounded-full bg-black/25 px-2 text-sm font-extrabold">{c.age}</span>
-            <span className="text-7xl">{c.icon}</span>
+            <span className="text-6xl lg:text-7xl">{c.icon}</span>
             <b className="text-2xl font-black leading-tight">{c.en}</b>
             <small className="text-base font-semibold text-white/85">{c.vi}</small>
           </button>
@@ -374,13 +328,36 @@ export function GamesHub({
   onSay: Say
 }) {
   const [game, setGame] = useState<Game>('menu')
+  const [popup, setPopup] = useState<number | null>(null)
+  const seen = useRef(stickersUnlocked(stars))
+  // a new sticker earned while playing → celebrate it (after the game's own voice line)
+  useEffect(() => {
+    const now = stickersUnlocked(stars)
+    if (now > seen.current) {
+      const idx = now - 1
+      seen.current = now
+      // wait for the name + fun fact that the game is saying first
+      const t = setTimeout(() => setPopup(idx), 5200)
+      return () => clearTimeout(t)
+    }
+  }, [stars])
   const go = (g: Game) => {
     stopSpeaking()
     setGame(g)
   }
-  if (game === 'home')
-    return <PlanetsHome onExit={(to3D) => (to3D ? onClose(true) : go('menu'))} onSay={onSay} onWin={() => [0, 1, 2].forEach(onStar)} />
-  if (game === 'quiz') return <Quiz stars={stars} onBack={() => go('menu')} onStar={onStar} onSay={onSay} />
-  if (game === 'order') return <LineUp stars={stars} onBack={() => go('menu')} onStar={onStar} onSay={onSay} />
-  return <Menu stars={stars} onPick={go} onClose={() => onClose(false)} onSay={onSay} />
+  const back = () => go('menu')
+  let screen: React.ReactNode
+  if (game === 'home') screen = <PlanetsHome onExit={(to3D) => (to3D ? onClose(true) : back())} onSay={onSay} onWin={() => [0, 1, 2].forEach(onStar)} />
+  else if (game === 'quiz') screen = <Quiz stars={stars} onBack={back} onStar={onStar} onSay={onSay} />
+  else if (game === 'order') screen = <LineUp stars={stars} onBack={back} onStar={onStar} onSay={onSay} />
+  else if (game === 'jigsaw') screen = <PlanetJigsaw stars={stars} onBack={back} onStar={onStar} onSay={onSay} />
+  else if (game === 'memory') screen = <MemoryPairs stars={stars} onBack={back} onStar={onStar} onSay={onSay} />
+  else if (game === 'stickers') screen = <StickerBook stars={stars} onBack={back} onSay={onSay} />
+  else screen = <Menu stars={stars} onPick={go} onClose={() => onClose(false)} onSay={onSay} />
+  return (
+    <>
+      {screen}
+      {popup !== null && <NewStickerPopup index={popup} onClose={() => setPopup(null)} />}
+    </>
+  )
 }

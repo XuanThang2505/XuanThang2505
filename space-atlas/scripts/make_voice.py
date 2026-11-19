@@ -24,7 +24,13 @@ args = ap.parse_args()
 kokoro = Kokoro(args.model, args.voices)
 items = json.load(open(args.phrases))
 os.makedirs(args.out, exist_ok=True)
-manifest = {}
+# keep clips that are already there (lets you record only the new lines)
+manifest_path = os.path.join(args.out, "manifest.json")
+manifest = json.load(open(manifest_path)).get("clips", {}) if os.path.exists(manifest_path) else {}
+
+
+# Words the voice should spell out or say in a special way
+SAY_AS = {"UFO!": "U. F. O."}
 
 
 def tts_text(t: str) -> str:
@@ -34,6 +40,8 @@ def tts_text(t: str) -> str:
     so they are read as a calm short statement: "Earth."  ALL-CAPS is lower-cased so it is not
     spelled out letter by letter.
     """
+    if t in SAY_AS:
+        return SAY_AS[t]
     if t.upper() == t:
         t = t.capitalize()
         if len(t.split()) <= 2:
@@ -63,4 +71,4 @@ for it in items:
     manifest[it["slug"]] = it["slug"] + ".mp3"
     print("ok", it["slug"], ph, round(len(samples) / sr, 2), "s")
 
-json.dump({"voice": args.voice, "clips": manifest}, open(os.path.join(args.out, "manifest.json"), "w"), indent=1)
+json.dump({"voice": args.voice, "clips": dict(sorted(manifest.items()))}, open(manifest_path, "w"), indent=1)

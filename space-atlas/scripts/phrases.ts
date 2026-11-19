@@ -3,7 +3,7 @@
  * Used by scripts/make_voice.py to pre-record the voice clips.
  *   npx tsx scripts/phrases.ts > /tmp/phrases.json
  */
-import { FACTS, GAME_LINES, PLANETS, PUZZLE_LINES, QUIZ, SYSTEM_LESSON } from '../src/data/planetsData'
+import { FACTS, GAME_LINES, PLANETS, PUZZLE_LINES, QUIZ, STICKERS, SYSTEM_LESSON } from '../src/data/planetsData'
 import { slugify } from '../src/utils/slug'
 
 const texts = new Set<string>()
@@ -20,6 +20,7 @@ SYSTEM_LESSON.vocabWords.forEach((w) => texts.add(w.word + '!'))
 Object.values(GAME_LINES).forEach((l) => texts.add(l.en))
 Object.values(FACTS).forEach((list) => list.forEach(([, en]) => texts.add(en)))
 QUIZ.forEach(([, q]) => texts.add(q))
+STICKERS.forEach((st) => texts.add(st.en + '!'))
 
 const seen = new Map<string, string>()
 for (const t of texts) if (!seen.has(slugify(t))) seen.set(slugify(t), t)

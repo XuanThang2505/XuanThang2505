@@ -49,7 +49,7 @@ Trên iPad: mở bằng Safari → nút Chia sẻ → **Thêm vào MH chính**. 
 | SIZE COMPARE | Trái Đất (hoặc Mặt Trăng) bay tới bên cạnh để so kích thước thật |
 | Vuốt 1 ngón / chụm 2 ngón | Xoay / phóng to (đã khoá kéo lệch, không thể làm mất hành tinh) |
 | **FUN FACTS 🔍** (dưới thẻ tên) | 4 câu fact của thiên thể đang xem; chạm từng câu để nghe, hoặc **READ ALL** |
-| **PLAY 🎮** (thanh dưới) | Menu 3 trò chơi, có đếm sao ⭐ (lưu trên máy) |
+| **PLAY 🎮** (thanh dưới) | Menu 5 trò chơi + sổ hình dán, có đếm sao ⭐ (lưu trên máy) |
 | Giữ 🔒 2 giây | Cài đặt phụ huynh: tốc độ đọc, tự xoay, nhạc nền, đọc thêm tiếng Việt |
 
 ## Từ vựng và hiệu ứng
@@ -81,6 +81,12 @@ sai 2 lần thì đáp án đúng tự sáng lên để bé không bị kẹt.
 | **Put planets home** 🧩 | 3+ | Kéo 8 hành tinh vào đúng "nhà" trên quỹ đạo | 3 khi xong |
 | **Which planet?** 🎯 | 4+ | Nghe câu hỏi ("Which planet is red?"), chạm 1 trong 3 hành tinh. 13 câu, mỗi lượt 5 câu | 1 mỗi câu đúng ngay lần đầu |
 | **Line up!** 🔢 | 4+ | Chạm 8 hành tinh theo thứ tự từ Mặt Trời ra xa | 2 khi xong |
+| **Planet jigsaw** 🖼️ | 4+ | Ghép ảnh hành tinh: 2 → 4 → 6 mảnh (có hình mờ gợi ý trên bảng). Xong thì nghe tên + 1 câu fact | 1 / 2 / 3 theo cấp |
+| **Memory pairs** 🃏 | 5+ | Lật thẻ tìm cặp hành tinh giống nhau (4 cặp → 6 cặp). Mỗi lần lật đều nghe tên | 2 / 3 theo cấp |
+
+**Sổ hình dán (MY STICKERS 🌟):** cứ 3 ⭐ mở 1 hình dán vũ trụ (12 hình: rocket, astronaut, moon, star, comet,
+satellite, telescope, alien, UFO, planet, galaxy, Earth). Khi mở được hình mới có màn chúc mừng "New sticker!".
+Chạm vào hình dán để nghe tên tiếng Anh, nên phần thưởng cũng là thêm từ mới để học.
 
 ### Put planets home
 
@@ -89,7 +95,6 @@ sai 2 lần thì đáp án đúng tự sáng lên để bé không bị kẹt.
 - Thả gần đúng chỗ → tự hút vào, khen "Great job!". Thả nhầm bóng → "Try again!" và hành tinh tự bay về khay. Không có thua, không đếm giờ.
 - Ngồi yên 8 giây → một hành tinh nhún nhảy và bóng của nó sáng lên để gợi ý.
 - Xong cả 8 → "You did it! All the planets are home!", pháo giấy, các hành tinh đung đưa trên quỹ đạo; nút **AGAIN** (xáo lại) và **SEE IN 3D**.
-- Dự kiến thêm: *Planet jigsaw* (2 → 4 → 6 mảnh, 4–5 tuổi), *Memory pairs* (5–6 tuổi).
 
 ## Cấu trúc
 
@@ -107,20 +112,25 @@ src/
   components/Starfield.tsx    Sao lấp lánh + dải Ngân Hà + tinh vân
   components/SolarSystem.tsx  Hệ Mặt Trời: quỹ đạo, vành đai tiểu hành tinh, 8 hành tinh quay quanh
   components/IPadHUD.tsx      Giao diện: thẻ từ, dock hành tinh, khoá phụ huynh
-  games/GamesHub.tsx          Menu PLAY + trò "Which planet?" và "Line up!", đếm sao
+  games/GamesHub.tsx          Menu PLAY + trò "Which planet?" và "Line up!", đếm sao, chúc mừng hình dán mới
+  games/PlanetJigsaw.tsx      Trò ghép ảnh hành tinh 2 → 4 → 6 mảnh
+  games/MemoryPairs.tsx       Trò lật thẻ tìm cặp
+  games/StickerBook.tsx       Sổ hình dán + màn "New sticker!"
+  games/ui.tsx                Khung màn hình, thanh trên, nút câu hỏi dùng chung
   games/PlanetsHome.tsx       Trò kéo thả "Put planets home"
   games/PlanetBall2D.tsx      Hành tinh 2D vẽ từ ảnh thật (dùng chung cho các trò)
 public/sw.js               Service worker: chạy offline sau lần dùng đầu tiên
 scripts/phrases.ts         In ra mọi câu tiếng Anh app sẽ đọc
 scripts/make_voice.py      Thu giọng Mỹ (Kokoro af_heart) thành mp3 + manifest.json
 public/textures/           Ảnh thật: Trái Đất (three.js, MIT) + các hành tinh khác và Mặt Trăng (Solar System Scope, CC BY 4.0)
-public/audio/en/           117 file giọng đọc mp3 + manifest.json
+public/audio/en/           130 file giọng đọc mp3 + manifest.json
 ```
 
 ## Nâng cấp
 
 1. **Đổi chữ / thêm từ**: sửa `src/data/planetsData.ts`, rồi thu lại giọng:
    `npx tsx scripts/phrases.ts > phrases.json && python scripts/make_voice.py phrases.json public/audio/en --model kokoro-v1.0.int8.onnx --voices voices-v1.0.bin`
+   (script giữ lại các clip đã có trong manifest, nên có thể chỉ đưa vào những câu mới)
 2. **Giọng bố mẹ**: ghi đè file mp3 cùng tên trong `public/audio/en/`.
 3. **Thêm thiên thể** (Mặt Trăng, Sao Diêm Vương…): thêm 1 mục trong `planetsData.ts` (+ `ORBITS` nếu muốn nó quay trong Hệ Mặt Trời).
 
@@ -131,3 +141,6 @@ chạm nhãn để bay vào hành tinh), đổi hành tinh liên tục, 27 thẻ
 khoá phụ huynh, lưu cài đặt, mọi câu tiếng Anh phát bằng giọng thu sẵn, không có lỗi JavaScript.
 Test trò chơi (iPad 1024×768, 1180×820, 1366×1024): nhấc lên đọc tên, thả nhầm "Try again!" và bay về khay,
 thả ra chỗ trống tự về khay, cả 8 hành tinh tự hút vào nhà, "You did it!", nút AGAIN / SEE IN 3D. Chạy offline: ngắt mạng, tải lại vẫn đủ ảnh và giọng.
+Test các trò mới: Which planet? (đúng/sai, cộng sao), Line up!, Planet jigsaw cấp 1–3 (thả sai ô "Try again!",
+xong đọc tên + fact), Memory pairs cấp 1–2 (lật sai tự úp lại), hình dán mở khi đủ 3 ⭐ và chỉ chúc mừng sau khi
+đọc xong câu fact, chạm hình dán đọc tên, sao được lưu sau khi tải lại trang.
