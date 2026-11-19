@@ -1,11 +1,12 @@
 /*
  * Offline support for Space Atlas.
- * - Page (navigation): network first, so a new version shows up as soon as there is internet;
- *   falls back to the cached page offline.
+ * - Page (navigation) and the voice-clip list: network first, so a new version (and new
+ *   voice lines) shows up as soon as there is internet; falls back to the cache offline.
  * - Everything else from this site (JS, textures, voice clips) and Google Fonts:
  *   cache first, saved the first time it is used. After one full run the app works offline.
  */
-const CACHE = 'space-atlas-v3'
+// bump on every release so old caches are dropped
+const CACHE = 'space-atlas-v4'
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './audio/en/manifest.json']
 
 self.addEventListener('install', (e) => {
@@ -38,6 +39,19 @@ self.addEventListener('fetch', (e) => {
           return res
         })
         .catch(() => caches.match('./index.html')),
+    )
+    return
+  }
+
+  if (sameSite && url.pathname.endsWith('/audio/en/manifest.json')) {
+    e.respondWith(
+      fetch(req)
+        .then((res) => {
+          const copy = res.clone()
+          caches.open(CACHE).then((c) => c.put(req, copy))
+          return res
+        })
+        .catch(() => caches.match(req)),
     )
     return
   }
