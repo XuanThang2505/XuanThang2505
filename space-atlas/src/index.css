@@ -49,6 +49,12 @@ button {
     50% { transform: scale(1.06); }
   }
   .animate-breathe { animation: breathe 1.8s ease-in-out infinite; }
+
+  @keyframes confetti {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(540deg); opacity: 0.8; }
+  }
+  .animate-confetti { animation: confetti 3s ease-in forwards; }
 }
 
 /* Gentle hint shown in portrait mode */

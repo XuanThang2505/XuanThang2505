@@ -43,6 +43,8 @@ export interface SolarSceneProps {
   onPlanetTap: () => void
   /** A planet was tapped in the Solar System overview */
   onSelectPlanet: (id: PlanetId) => void
+  /** Stop rendering (e.g. while the 2D puzzle covers the screen) to save battery */
+  paused?: boolean
 }
 
 const FRONT = new THREE.Vector3(0, 0.22, 1).normalize()
@@ -248,6 +250,7 @@ function SceneContent({ viewId, started, effect, compareOn, autoRotate, onArrive
 export function SolarScene(props: SolarSceneProps) {
   return (
     <Canvas
+      frameloop={props.paused ? 'never' : 'always'}
       className="!absolute inset-0"
       dpr={[1, 2]}
       camera={{ fov: 62, near: 0.05, far: 2000, position: [0, 6, 30] }}

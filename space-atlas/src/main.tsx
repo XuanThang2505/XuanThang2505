@@ -12,3 +12,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <App />
   </React.StrictMode>,
 )
+
+// Offline + "Add to Home Screen" support. Skipped where service workers are not allowed
+// (e.g. inside the claude.ai preview frame) – the app still works, just online-only there.
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {})
+  })
+}

@@ -1,5 +1,5 @@
 {
- "voice": "am_michael",
+ "voice": "af_heart",
  "clips": {
   "sun": "sun.mp3",
   "the-sun-is-a-star": "the-sun-is-a-star.mp3",
@@ -54,6 +54,12 @@
   "solar-system": "solar-system.mp3",
   "eight-planets-go-around-the-sun": "eight-planets-go-around-the-sun.mp3",
   "orbit": "orbit.mp3",
-  "planets": "planets.mp3"
+  "planets": "planets.mp3",
+  "put-the-planets-home": "put-the-planets-home.mp3",
+  "try-again": "try-again.mp3",
+  "you-did-it-all-the-planets-are-home": "you-did-it-all-the-planets-are-home.mp3",
+  "great-job": "great-job.mp3",
+  "well-done": "well-done.mp3",
+  "yes": "yes.mp3"
  }
 }

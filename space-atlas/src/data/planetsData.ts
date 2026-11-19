@@ -370,3 +370,15 @@ export type Lesson = PlanetData | typeof SYSTEM_LESSON
 export function lessonFor(view: ViewId): Lesson {
   return view === 'system' ? SYSTEM_LESSON : PLANET_MAP[view]
 }
+
+/** Spoken lines for the "Put planets home" puzzle (pre-recorded like everything else). */
+export const PUZZLE_LINES = {
+  start: { en: 'Put the planets home!', vi: 'Đưa các hành tinh về nhà nhé!' },
+  tryAgain: { en: 'Try again!', vi: 'Thử lại nhé!' },
+  praise: [
+    { en: 'Great job!', vi: 'Giỏi lắm!' },
+    { en: 'Well done!', vi: 'Tuyệt vời!' },
+    { en: 'Yes!', vi: 'Đúng rồi!' },
+  ],
+  done: { en: 'You did it! All the planets are home!', vi: 'Con làm được rồi! Các hành tinh đã về nhà!' },
+}

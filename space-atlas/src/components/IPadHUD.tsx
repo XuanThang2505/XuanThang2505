@@ -20,6 +20,7 @@ interface Props {
   onVocab: (w: VocabWord) => void
   onToggleCompare: () => void
   onSelectPlanet: (id: ViewId) => void
+  onOpenPuzzle: () => void
   onSettingsChange: (s: Settings) => void
 }
 
@@ -177,7 +178,7 @@ function PlanetBall({ planet, size = 'w-14 h-14 lg:w-16 lg:h-16' }: { planet: Pl
   )
 }
 
-function PlanetDock({ currentId, onSelectPlanet }: Pick<Props, 'currentId' | 'onSelectPlanet'>) {
+function PlanetDock({ currentId, onSelectPlanet, onOpenPuzzle }: Pick<Props, 'currentId' | 'onSelectPlanet' | 'onOpenPuzzle'>) {
   return (
     <div className="pointer-events-auto flex items-end gap-1 rounded-[2rem] border border-white/10 bg-slate-900/60 px-3 pb-2 pt-3 shadow-2xl backdrop-blur-md lg:gap-2">
       <button
@@ -192,6 +193,15 @@ function PlanetDock({ currentId, onSelectPlanet }: Pick<Props, 'currentId' | 'on
         >
           SOLAR SYSTEM
         </span>
+      </button>
+      <button
+        onClick={onOpenPuzzle}
+        className="mr-1 flex flex-col items-center border-r border-white/10 pr-2 transition-transform duration-300 active:scale-90"
+      >
+        <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500 to-indigo-600 text-3xl shadow-lg shadow-fuchsia-500/30 lg:h-16 lg:w-16">
+          🧩
+        </span>
+        <span className="mt-1 rounded-full px-2 text-[11px] font-extrabold leading-tight tracking-wide text-white/85">PUZZLE</span>
       </button>
       {PLANETS.map((p) => {
         const active = p.id === currentId
@@ -359,7 +369,7 @@ export function IPadHUD(props: Props) {
         )}
 
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2">
-          <PlanetDock currentId={props.currentId} onSelectPlanet={props.onSelectPlanet} />
+          <PlanetDock currentId={props.currentId} onSelectPlanet={props.onSelectPlanet} onOpenPuzzle={props.onOpenPuzzle} />
         </div>
       </div>
 

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { SolarScene } from './components/SolarScene'
 import { IPadHUD } from './components/IPadHUD'
 import { WelcomeScreen } from './components/WelcomeScreen'
+import { PlanetsHome } from './puzzle/PlanetsHome'
 import type { ActiveEffect } from './components/PlanetMesh'
 import { COUNT_STEP, effectDuration, lessonFor, PLANET_MAP, PLANET_ORDER, type ViewId, type VocabWord } from './data/planetsData'
 import {
@@ -42,6 +43,7 @@ export default function App() {
   const [effect, setEffect] = useState<ActiveEffect | null>(null)
   const [activeWord, setActiveWord] = useState<string | null>(null)
   const [compareOn, setCompareOn] = useState(false)
+  const [puzzleOpen, setPuzzleOpen] = useState(false)
   const [bounce, setBounce] = useState(0)
   const [settings, setSettings] = useState<Settings>(loadSettings)
   const [viVoice, setViVoice] = useState(false)
@@ -155,6 +157,25 @@ export default function App() {
     setCompareOn(!compareOn)
   }, [flying, compareOn, planet, say])
 
+  const openPuzzle = useCallback(() => {
+    playPop()
+    stopSpeaking()
+    setEffect(null)
+    setActiveWord(null)
+    setCompareOn(false)
+    setPuzzleOpen(true)
+  }, [])
+
+  const closePuzzle = useCallback(
+    (to3D: boolean) => {
+      playPop()
+      stopSpeaking()
+      setPuzzleOpen(false)
+      if (to3D) handleSelectPlanet('system')
+    },
+    [handleSelectPlanet],
+  )
+
   return (
     <div className="relative h-[100dvh] w-screen touch-none select-none overflow-hidden bg-[#050818] font-nunito">
       <SolarScene
@@ -166,9 +187,12 @@ export default function App() {
         onArrive={handleArrive}
         onPlanetTap={handlePlanetTap}
         onSelectPlanet={handleSelectPlanet}
+        paused={puzzleOpen}
       />
 
-      {started && (
+      {started && puzzleOpen && <PlanetsHome onExit={closePuzzle} onSay={say} />}
+
+      {started && !puzzleOpen && (
         <IPadHUD
           planet={planet}
           currentId={planetId}
@@ -183,6 +207,7 @@ export default function App() {
           onVocab={handleVocab}
           onToggleCompare={handleToggleCompare}
           onSelectPlanet={handleSelectPlanet}
+          onOpenPuzzle={openPuzzle}
           onSettingsChange={setSettings}
         />
       )}

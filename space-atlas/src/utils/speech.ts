@@ -1,10 +1,10 @@
 /**
  * Speech for little learners.
  *
- * 1. Pre-recorded clips in /audio/en (natural American male voice, made with
+ * 1. Pre-recorded clips in /audio/en (natural American voice, Kokoro af_heart, made with
  *    scripts/make_voice.py). They are decoded once and played through the Web Audio
  *    context, which iOS lets us use at any time after the first tap.
- * 2. Fallback: Web Speech API, forced to an en-US voice (male voices preferred),
+ * 2. Fallback: Web Speech API, forced to an en-US voice,
  *    so the iPad never reads English with a Vietnamese voice.
  */
 import { getAudioContext } from './soundEffects'
@@ -17,21 +17,19 @@ const RATE: Record<SpeechRate, number> = { slow: 0.7, normal: 0.85 }
 /** Clip playback speed: recordings are already child-paced; Slow makes them a bit slower. */
 const CLIP_RATE: Record<SpeechRate, number> = { slow: 0.88, normal: 1 }
 
-// Natural male US voices first (iOS/macOS "Enhanced" voices, then Edge/Chrome), then any en-US.
+// Natural US voices that match the recorded clips (warm female), then any other en-US voice.
 const PREFERRED_EN = [
+  'Ava',
+  'Samantha',
+  'Allison',
+  'Nicky',
+  'Microsoft Jenny',
+  'Microsoft Aria',
+  'Google US English',
   'Evan',
   'Nathan',
   'Tom',
   'Aaron',
-  'Alex',
-  'Microsoft Andrew',
-  'Microsoft Guy',
-  'Microsoft Christopher',
-  'Microsoft Eric',
-  'Microsoft Brian',
-  'Fred',
-  'Google US English',
-  'Samantha',
 ]
 const PREFERRED_VI = ['Linh', 'Google Tiếng Việt', 'Microsoft HoaiMy', 'Microsoft An']
 

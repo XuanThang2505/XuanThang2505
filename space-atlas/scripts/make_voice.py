@@ -1,5 +1,5 @@
 """
-Pre-record every English text with a natural American male voice (Kokoro, Apache-2.0).
+Pre-record every English text with a natural American voice (Kokoro af_heart, Apache-2.0).
 
     pip install kokoro-onnx soundfile
     # model files: github.com/thewh1teagle/kokoro-onnx/releases (model-files-v1.0)
@@ -18,7 +18,7 @@ ap.add_argument("phrases")
 ap.add_argument("out")
 ap.add_argument("--model", required=True)
 ap.add_argument("--voices", required=True)
-ap.add_argument("--voice", default="am_michael")
+ap.add_argument("--voice", default="af_heart")
 args = ap.parse_args()
 
 kokoro = Kokoro(args.model, args.voices)
@@ -28,8 +28,17 @@ manifest = {}
 
 
 def tts_text(t: str) -> str:
-    # "SOLAR SYSTEM!" -> "Solar system!" so it is read as words, not letters
-    return t.capitalize() if t.upper() == t else t
+    """How the line is fed to the voice.
+
+    Single shouted words ("EARTH!") get odd intonation from TTS models trained on sentences,
+    so they are read as a calm short statement: "Earth."  ALL-CAPS is lower-cased so it is not
+    spelled out letter by letter.
+    """
+    if t.upper() == t:
+        t = t.capitalize()
+        if len(t.split()) <= 2:
+            t = t.rstrip("!") + "."
+    return t
 
 
 for it in items:
@@ -37,11 +46,14 @@ for it in items:
     single = len(text.split()) <= 2
     # espeak gives some British vowels; force General American r-coloured "ur" (Earth, Mercury, Saturn)
     ph = kokoro.tokenizer.phonemize(text, "en-us").replace("ɜː", "ɜɹ").replace("ɹɹ", "ɹ")
-    samples, sr = kokoro.create(ph, voice=args.voice, speed=0.82 if single else 0.9, lang="en-us", is_phonemes=True)
+    # Near-natural speed keeps consonants crisp; slowing the model below ~0.9 smears vowels.
+    samples, sr = kokoro.create(ph, voice=args.voice, speed=0.92 if single else 0.95, lang="en-us", is_phonemes=True)
     # trim silence, add tiny fade so nothing clicks
     thr = 0.01 * np.max(np.abs(samples))
     idx = np.where(np.abs(samples) > thr)[0]
     samples = samples[max(0, idx[0] - int(0.03 * sr)) : idx[-1] + int(0.12 * sr)]
+    # same loudness for every clip, with headroom (no clipping on iPad speakers)
+    samples = samples * (0.89 / max(1e-6, float(np.max(np.abs(samples)))))
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
         sf.write(f.name, samples, sr)
         wav = f.name
