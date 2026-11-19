@@ -83,7 +83,7 @@ function WordCard({
           aria-label="Speak name"
           style={c ? { width: TAP, height: TAP } : undefined}
           className={`flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-300 to-orange-500 text-white shadow-lg shadow-orange-500/40 active:scale-90 ${
-            c ? '' : 'h-14 w-14'
+            c ? '' : 'h-14 min-h-[44px] w-14 min-w-[44px]'
           }`}
         >
           <SpeakerIcon className={c ? 'h-6 w-6' : 'h-8 w-8'} />
@@ -385,7 +385,7 @@ function PlanetBall({ planet, size }: { planet: PlanetData; size: string }) {
 
 function PlanetDock({ currentId, onSelectPlanet, onOpenGames, stars, L }: Pick<Props, 'currentId' | 'onSelectPlanet' | 'onOpenGames' | 'stars'> & { L: Layout }) {
   const c = L.compact
-  const ball = c ? 'h-[46px] w-[46px]' : 'h-14 w-14 lg:h-16 lg:w-16'
+  const ball = c ? 'h-[46px] w-[46px]' : 'h-14 min-h-[44px] w-14 min-w-[44px] lg:h-16 lg:w-16'
   const scroller = useRef<HTMLDivElement>(null)
   const activeRef = useRef<HTMLButtonElement>(null)
 
@@ -502,7 +502,7 @@ function ParentLock({ onOpen, L }: { onOpen: () => void; L: Layout }) {
       onContextMenu={(e) => e.preventDefault()}
       aria-label="Parent settings (hold 2 seconds)"
       style={c ? { width: TAP, height: TAP } : undefined}
-      className={`pointer-events-auto relative flex items-center justify-center rounded-full ${c ? '' : 'h-14 w-14'}`}
+      className={`pointer-events-auto relative flex items-center justify-center rounded-full ${c ? '' : 'h-14 min-h-[44px] w-14 min-w-[44px]'}`}
     >
       <span className="absolute inset-0 rounded-full" style={{ background: `conic-gradient(#fbbf24 ${progress * 360}deg, rgba(15,23,42,0.7) 0deg)` }} />
       <span className={`relative flex items-center justify-center rounded-full bg-slate-900/90 ${c ? 'h-[36px] w-[36px] text-base' : 'h-11 w-11 text-xl'}`}>🔒</span>
@@ -634,7 +634,8 @@ export function IPadHUD(props: Props) {
           <>
             <div className={`absolute right-0 ${c ? 'top-[52px]' : 'top-1/2 -translate-y-1/2'}`}>{vocab}</div>
             {caption}
-            <div className="absolute bottom-0 left-1/2 max-w-full -translate-x-1/2">{dock}</div>
+            {/* full-width strip, dock centred: an element at left:50% could only use half the screen */}
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center">{dock}</div>
           </>
         )}
       </div>
