@@ -4,7 +4,7 @@
  */
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Html, OrbitControls, PerformanceMonitor } from '@react-three/drei'
+import { Html, OrbitControls } from '@react-three/drei'
 import { Bloom, EffectComposer, ToneMapping } from '@react-three/postprocessing'
 import { ToneMappingMode } from 'postprocessing'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
@@ -296,87 +296,98 @@ function SceneContent({ viewId, started, effect, compareOn, autoRotate, onArrive
 }
 
 /**
- * Quality steps, best first. Battery first: no MSAA (the post-processing chain smooths edges
- * well enough on Retina screens), moderate pixel ratio, Bloom only on the best step.
+ * Render quality is chosen ONCE and then left alone. Changing it while the app runs resizes the
+ * canvas (it goes blank for a frame) and recompiles every shader (a visible hitch) – that was the
+ * "flash flash" and the occasional lag. Edges are smoothed with MSAA again: without it thin orbit
+ * lines and rings shimmer, and Bloom turns the shimmering pixels into flickering sparkles.
  */
-const QUALITY = [
-  { dpr: 1.5, bloom: true },
-  { dpr: 1.25, bloom: false },
-  { dpr: 1, bloom: false },
-]
+function startQuality() {
+  if (typeof window === 'undefined') return { dpr: 1.5, msaa: 4 }
+  const phone = Math.min(window.innerWidth, window.innerHeight) < 520
+  return { dpr: Math.min(window.devicePixelRatio || 1, 1.5), msaa: phone ? 2 : 4 }
+}
+/** Only for a device that really cannot keep up: one single step down, never back up. */
+const LOW_QUALITY = { dpr: 1, msaa: 0 }
 
-/** Frames per second while the child is playing / when nobody has touched the screen for a while. */
-const FPS_ACTIVE = 30
-const FPS_IDLE = 12
-const IDLE_AFTER_MS = 45_000
+/** Steady 30 fps: smooth enough for slow space motion, half the work of 60 fps. */
+const FPS = 30
+/** Longest time step one frame may take (after a pause the scene continues, it does not jump). */
+const MAX_STEP = 1 / 15
 
 /**
- * Drives the render loop ourselves (frameloop="never" + advance) so the 3D scene never runs
- * faster than needed: 30 fps while playing, ~12 fps when idle, and nothing at all when the app is
- * hidden, paused behind a game, or the tab is in the background. This is the biggest battery saver.
+ * Drives the render loop ourselves (frameloop="never" + advance): a steady 30 fps, nothing at
+ * all while the app is hidden or a game covers the scene. The scene clock only moves while frames
+ * are drawn, so nothing jumps when the child comes back from a game.
  */
-function FrameLimiter({ paused }: { paused?: boolean }) {
+function FrameLimiter({ paused, onSlow }: { paused?: boolean; onSlow: () => void }) {
   const advance = useThree((s) => s.advance)
-  const lastTouch = useRef(performance.now())
-  useEffect(() => {
-    const touch = () => (lastTouch.current = performance.now())
-    window.addEventListener('pointerdown', touch, { passive: true })
-    window.addEventListener('pointermove', touch, { passive: true })
-    window.addEventListener('wheel', touch, { passive: true })
-    return () => {
-      window.removeEventListener('pointerdown', touch)
-      window.removeEventListener('pointermove', touch)
-      window.removeEventListener('wheel', touch)
-    }
-  }, [])
+  const sim = useRef(0)
+  const slowReported = useRef(false)
   useEffect(() => {
     if (paused) return
     let raf = 0
     let last = 0
+    let winStart = 0
+    let winFrames = 0
+    let slowWindows = 0
+    const startedAt = performance.now()
     const loop = (t: number) => {
       raf = requestAnimationFrame(loop)
-      if (document.hidden) return
-      const idle = performance.now() - lastTouch.current > IDLE_AFTER_MS
-      const gap = 1000 / (idle ? FPS_IDLE : FPS_ACTIVE)
-      if (t - last < gap - 2) return
+      if (document.hidden) {
+        last = 0
+        winStart = 0
+        return
+      }
+      if (last && t - last < 1000 / FPS - 2) return
+      const dt = last ? Math.min((t - last) / 1000, MAX_STEP) : 1 / FPS
       last = t
-      advance(t / 1000)
+      sim.current += dt
+      advance(sim.current)
+      // frame-rate check: two 5-second windows in a row under 18 fps → one quality step down
+      if (slowReported.current || t - startedAt < 8000) return
+      if (!winStart) {
+        winStart = t
+        winFrames = 0
+        return
+      }
+      winFrames++
+      if (t - winStart >= 5000) {
+        const fps = (winFrames * 1000) / (t - winStart)
+        slowWindows = fps < 18 ? slowWindows + 1 : 0
+        winStart = t
+        winFrames = 0
+        if (slowWindows >= 2) {
+          slowReported.current = true
+          onSlow()
+        }
+      }
     }
     raf = requestAnimationFrame(loop)
     return () => cancelAnimationFrame(raf)
-  }, [advance, paused])
+  }, [advance, paused, onSlow])
   return null
 }
 
 export function SolarScene(props: SolarSceneProps) {
-  // phones start one step lower (3× screens are expensive); the monitor adjusts from there
-  const [q, setQ] = useState(() => (typeof window !== 'undefined' && Math.min(window.innerWidth, window.innerHeight) < 520 ? 1 : 0))
-  const quality = QUALITY[q]
+  const [quality, setQuality] = useState(startQuality)
+  const onSlow = useCallback(() => setQuality(LOW_QUALITY), [])
   return (
     <Canvas
       frameloop="never"
       className="!absolute inset-0"
-      dpr={Math.min(quality.dpr, typeof window !== 'undefined' ? window.devicePixelRatio : 2)}
+      dpr={quality.dpr}
       camera={{ fov: 62, near: 0.05, far: 2000, position: [0, 6, 30] }}
       gl={{ antialias: false, powerPreference: 'default', stencil: false }}
     >
-      <FrameLimiter paused={props.paused} />
-      {/* measures the (30 fps capped) frame rate: clearly below that → step down one quality level */}
-      <PerformanceMonitor bounds={() => [20, 29]} flipflops={2} onDecline={() => setQ((x) => Math.min(x + 1, QUALITY.length - 1))} />
+      <FrameLimiter paused={props.paused} onSlow={onSlow} />
       <color attach="background" args={['#050818']} />
       <Suspense fallback={null}>
         <SceneContent {...props} />
       </Suspense>
-      {quality.bloom ? (
-        <EffectComposer multisampling={0} key="bloom">
-          <Bloom mipmapBlur intensity={0.85} luminanceThreshold={0.82} luminanceSmoothing={0.2} radius={0.75} />
-          <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
-        </EffectComposer>
-      ) : (
-        <EffectComposer multisampling={0} key="plain">
-          <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
-        </EffectComposer>
-      )}
+      <EffectComposer multisampling={quality.msaa} key={quality.msaa}>
+        <Bloom mipmapBlur intensity={0.7} luminanceThreshold={0.86} luminanceSmoothing={0.2} radius={0.7} />
+        <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+      </EffectComposer>
     </Canvas>
   )
 }

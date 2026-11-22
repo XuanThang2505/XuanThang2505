@@ -67,7 +67,7 @@ function OrbitLine({ radius, glow, highlight }: { radius: number; glow: () => nu
     if (!mat.current) return
     const g = glow()
     const h = highlight()
-    mat.current.opacity = 0.16 + g * (0.45 + Math.sin(state.clock.elapsedTime * 4) * 0.1) + h * 0.5
+    mat.current.opacity = 0.16 + g * (0.45 + Math.sin(state.clock.elapsedTime * 2) * 0.06) + h * 0.5
     mat.current.color.setRGB(1 - g * 0.6, 1 - g * 0.15, 1)
   })
   return (

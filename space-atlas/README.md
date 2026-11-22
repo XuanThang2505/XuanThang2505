@@ -114,7 +114,9 @@ Thỉnh thoảng một ngôi sao băng cũng bay ngang bầu trời 3D.
 
 ## Pin và âm thanh iOS
 
-- Cảnh 3D vẽ **30 hình/giây** khi bé chơi, **12 hình/giây** sau 45 giây không chạm, và **dừng hẳn** khi app bị ẩn hoặc đang mở trò chơi. Không dùng MSAA; Bloom chỉ bật ở mức chất lượng cao nhất; số sao nền giảm một nửa.
+- Cảnh 3D vẽ đều **30 hình/giây** và **dừng hẳn** khi app bị ẩn hoặc đang mở trò chơi; số sao nền giảm một nửa.
+- Chất lượng hình chọn **một lần** lúc mở app (độ phân giải tối đa 1.5×, MSAA 4× trên iPad, 2× trên điện thoại) và không đổi khi đang chạy: mỗi lần đổi làm khung hình nháy trắng và khựng. Chỉ máy quá yếu (dưới 18 hình/giây trong 10 giây) mới bị hạ đúng một bậc.
+- Không có hiệu ứng nhấp nháy nhanh: sao lấp lánh chậm, hiệu ứng lấp lánh của từ vựng dịu lại; bỏ lớp mờ kính (backdrop-blur) trên khung 3D vì Safari vẽ nó nặng và dễ chớp.
 - Nhạc nền tắt khi app xuống nền.
 - Âm thanh: `navigator.audioSession.type = 'playback'` + thẻ `<audio>` im lặng để tiếng vẫn phát khi gạt công tắc im lặng. Khi iOS đặt bộ âm thanh vào trạng thái `interrupted` (khóa màn hình, cuộc gọi), app tự đánh thức hoặc dựng lại. Phụ huynh có nút **🔊 Kiểm tra âm thanh** trong Cài đặt.
 

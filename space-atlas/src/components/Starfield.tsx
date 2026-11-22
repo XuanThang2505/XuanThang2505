@@ -14,10 +14,10 @@ const starVertex = /* glsl */ `
   void main() {
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
     gl_Position = projectionMatrix * mv;
-    float tw = 0.65 + 0.35 * sin(uTime * (1.0 + aPhase * 2.5) + aPhase * 30.0);
+    float tw = 0.8 + 0.2 * sin(uTime * (0.5 + aPhase * 1.0) + aPhase * 30.0);
     vAlpha = tw * (1.0 + uWarp * 0.8);
     vColor = aColor;
-    gl_PointSize = aSize * uPixelRatio * (1.0 + uWarp * 1.2);
+    gl_PointSize = max(1.6 * uPixelRatio, aSize * uPixelRatio * (1.0 + uWarp * 1.2));
   }
 `
 const starFragment = /* glsl */ `

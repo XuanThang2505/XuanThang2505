@@ -73,20 +73,25 @@ function stopKeepAlive() {
  * Handles iOS "suspended" AND "interrupted" (after a lock / call / app switch). If the context
  * will not wake up, it is rebuilt – recorded clips survive because AudioBuffers are not tied to it.
  */
-export async function ensureAudio(): Promise<boolean> {
+let ensuring: Promise<boolean> | null = null
+export function ensureAudio(): Promise<boolean> {
+  if (!ensuring) ensuring = ensureAudioNow().finally(() => (ensuring = null))
+  return ensuring
+}
+async function ensureAudioNow(): Promise<boolean> {
   setPlaybackSession()
   let c = ac()
   if (!c) return false
-  const state = c.state as string
-  if (state !== 'running') {
-    try {
-      await Promise.race([c.resume(), new Promise((r) => setTimeout(r, 400))])
-    } catch {
-      /* fall through */
-    }
+  if ((c.state as string) === 'running') return true
+  try {
+    await Promise.race([c.resume(), new Promise((r) => setTimeout(r, 1500))])
+  } catch {
+    /* fall through */
   }
-  if ((c.state as string) === 'closed' || (c.state as string) === 'interrupted' || c.state === 'suspended') {
-    // still dead → rebuild once
+  // Rebuild only when iOS really killed the engine (after a call / lock screen). A context that is
+  // merely "suspended" just waits for the next tap – rebuilding it would restart music and stutter.
+  const st = c.state as string
+  if (st === 'interrupted' || st === 'closed') {
     try {
       await c.close()
     } catch {
@@ -101,7 +106,7 @@ export async function ensureAudio(): Promise<boolean> {
     c = ac()
     if (!c) return false
     try {
-      await Promise.race([c.resume(), new Promise((r) => setTimeout(r, 400))])
+      await Promise.race([c.resume(), new Promise((r) => setTimeout(r, 1500))])
     } catch {
       /* ignore */
     }
