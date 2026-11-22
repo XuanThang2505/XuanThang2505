@@ -13,7 +13,7 @@ import { PLANET_MAP, PLANET_ORDER, PUZZLE_LINES, type PlanetId } from '../data/p
 import { playBoing, playPop, playSparkle } from '../utils/soundEffects'
 import { useLayout } from '../utils/useLayout'
 import { PlanetBall2D } from './PlanetBall2D'
-import { topBarHeight } from './ui'
+import { BackButton, topBarHeight } from './ui'
 
 type Pid = Exclude<PlanetId, 'sun'>
 
@@ -354,10 +354,9 @@ export function PlanetsHome({
       </style>
 
       {/* top bar */}
-      <div
-        className={`absolute flex items-center rounded-3xl border border-white/10 bg-slate-900/75 backdrop-blur-md ${compact ? 'gap-2 px-2.5 py-1' : 'gap-3 px-4 py-2'}`}
-        style={{ left: 'max(12px, env(safe-area-inset-left))', top: 'max(8px, env(safe-area-inset-top))' }}
-      >
+      <div className="absolute flex items-center gap-2" style={{ left: 'max(12px, env(safe-area-inset-left))', top: 'max(8px, env(safe-area-inset-top))' }}>
+      <BackButton onBack={() => onExit(false)} />
+      <div className={`flex items-center rounded-3xl border border-white/10 bg-slate-900/90 ${compact ? 'gap-2 px-2.5 py-1' : 'gap-3 px-4 py-2'}`}>
         <span className={compact ? 'text-2xl' : 'text-3xl'}>🧩</span>
         <div className="leading-tight">
           <div className={`font-extrabold tracking-wide text-white ${compact ? 'text-sm' : 'text-xl'}`}>PUT PLANETS HOME</div>
@@ -372,14 +371,8 @@ export function PlanetsHome({
           🔊
         </button>
       </div>
-      <button
-        onClick={() => onExit(false)}
-        aria-label="Close puzzle"
-        style={{ width: compact ? 44 : 56, height: compact ? 44 : 56, right: 'max(12px, env(safe-area-inset-right))', top: 'max(8px, env(safe-area-inset-top))' }}
-        className="absolute flex items-center justify-center rounded-full border border-white/15 bg-slate-900/80 text-2xl font-black text-white shadow-lg active:scale-90"
-      >
-        ✕
-      </button>
+      </div>
+
 
       {done && (
         <div className="absolute inset-x-0 flex items-center justify-center gap-3" style={{ top: trayTop, height: trayH }}>

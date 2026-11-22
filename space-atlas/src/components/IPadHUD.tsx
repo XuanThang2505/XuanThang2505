@@ -8,12 +8,12 @@
  * Touch targets are never smaller than 44 px (Apple's guideline). Safe areas (notch, Dynamic
  * Island, home bar) are respected on every side.
  */
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { FACTS, PLANETS, type Lesson, type PlanetData, type ViewId, type VocabWord } from '../data/planetsData'
 import { speak, stopSpeaking } from '../utils/speech'
 import { ensureAudio, playPop, playSparkle } from '../utils/soundEffects'
 import { loadStory } from '../data/storyData'
-import { ViRecorder } from './ViRecorder'
+const ViRecorder = lazy(() => import('./ViRecorder').then((m) => ({ default: m.ViRecorder })))
 import { Cosmo } from '../story/Cosmo'
 import { useLayout, type Layout } from '../utils/useLayout'
 import type { Settings } from '../App'
@@ -33,6 +33,8 @@ interface Props {
   onToggleCompare: () => void
   onSelectPlanet: (id: ViewId) => void
   onOpenGames: () => void
+  /** fly back to the previous planet (undefined when there is nowhere to go back to) */
+  onBack?: () => void
   /** stars earned in the games */
   stars: number
   /** speak one fun fact (English, + Vietnamese if enabled) */
@@ -572,6 +574,12 @@ function ParentPanel({
           <Toggle label="Tự động xoay" sub="Auto rotate" value={settings.autoRotate} onChange={(v) => onChange({ ...settings, autoRotate: v })} />
           <Toggle label="Nhạc nền" sub="Background music" value={settings.music} onChange={(v) => onChange({ ...settings, music: v })} />
           <Toggle
+            label="🔋 Tiết kiệm pin"
+            sub="Hình nhẹ hơn, bỏ hiệu ứng phát sáng, 24 hình/giây"
+            value={settings.saver}
+            onChange={(v) => onChange({ ...settings, saver: v })}
+          />
+          <Toggle
             label="Đọc thêm tiếng Việt"
             sub={hasViVoice ? 'Đọc nghĩa tiếng Việt sau từ tiếng Anh' : 'Máy chưa có giọng Việt (Cài đặt › Trợ năng › Nội dung được đọc)'}
             value={settings.vietnameseVoice}
@@ -653,7 +661,7 @@ export function IPadHUD(props: Props) {
     >
       <div className="relative h-full w-full">
         {/* top-left (landscape) / full width (portrait): word card + facts */}
-        <div className="absolute left-0 top-0" style={L.portrait ? { right: (c ? TAP : 56) + 8 } : undefined}>
+        <div className="absolute left-0 top-0" style={L.portrait ? { right: (c ? TAP : 56) + 8 + (props.onBack ? (c ? TAP + 8 : 120) : 0) } : undefined}>
           <WordCard
             planet={planet}
             flying={flying}
@@ -665,7 +673,24 @@ export function IPadHUD(props: Props) {
           <FactsPanel planet={planet} flying={flying} L={L} onFact={props.onFact} />
         </div>
 
-        <div className="absolute right-0 top-0">
+        <div className="absolute right-0 top-0 flex items-start gap-2">
+          {props.onBack && (
+            <button
+              data-testid="hud-back"
+              aria-label="Back"
+              onClick={() => {
+                playPop()
+                props.onBack?.()
+              }}
+              style={{ minHeight: TAP, minWidth: TAP }}
+              className={`pointer-events-auto flex items-center justify-center gap-1 rounded-full border-2 border-white/25 bg-gradient-to-r from-sky-500 to-blue-700 font-black text-white shadow-lg active:scale-90 ${
+                c ? 'text-xl' : 'px-4 text-lg'
+              }`}
+            >
+              <span className={c ? '' : 'text-2xl'}>←</span>
+              {!c && 'BACK'}
+            </button>
+          )}
           <ParentLock onOpen={() => setPanelOpen(true)} L={L} />
         </div>
 
@@ -689,7 +714,11 @@ export function IPadHUD(props: Props) {
       {panelOpen && (
         <ParentPanel settings={props.settings} hasViVoice={props.hasViVoice} stars={props.stars} onChange={props.onSettingsChange} onRecord={() => setRecorderOpen(true)} onClose={() => setPanelOpen(false)} />
       )}
-      {recorderOpen && <ViRecorder onClose={() => setRecorderOpen(false)} />}
+      {recorderOpen && (
+        <Suspense fallback={null}>
+          <ViRecorder onClose={() => setRecorderOpen(false)} />
+        </Suspense>
+      )}
     </div>
   )
 }

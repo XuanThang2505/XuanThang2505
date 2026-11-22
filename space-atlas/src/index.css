@@ -181,6 +181,15 @@ button {
   }
   .animate-count { animation: count-pop 1s ease-out forwards; }
 
+  @keyframes dance {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    20% { transform: translateY(-14px) rotate(-12deg); }
+    40% { transform: translateY(0) rotate(0deg) scaleY(0.92); }
+    60% { transform: translateY(-14px) rotate(12deg); }
+    80% { transform: translateY(0) rotate(0deg) scaleY(0.92); }
+  }
+  .animate-dance { animation: dance 0.9s ease-in-out infinite; transform-origin: 50% 90%; }
+
   @keyframes glow-ring {
     0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.8); }
     50% { box-shadow: 0 0 0 14px rgba(251, 191, 36, 0); }
@@ -191,3 +200,8 @@ button {
 /* hide scrollbars on the horizontally scrolling dock */
 .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* the app sleeps: every CSS animation stops, so the screen stops redrawing */
+.app-sleeping *, .app-sleeping *::before, .app-sleeping *::after {
+  animation-play-state: paused !important;
+}

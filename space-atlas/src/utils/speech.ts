@@ -87,10 +87,18 @@ function loadClip(slug: string): Promise<AudioBuffer | null> {
   return p
 }
 
-/** Decode every clip in the background right after the first tap. */
-export async function preloadVoiceClips() {
+/**
+ * Warm up only the clips needed first (planet names), slowly, when the device is idle.
+ * Decoding all ~250 clips at start-up competed with the 3D scene and made the first seconds lag;
+ * every other clip is decoded the first time it is needed (a few milliseconds).
+ */
+export async function preloadVoiceClips(texts: string[]) {
   await loadManifest()
-  for (const slug of Object.keys(manifest ?? {})) await loadClip(slug)
+  const idle = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => void }).requestIdleCallback
+  for (const t of texts) {
+    await new Promise<void>((r) => (idle ? idle(() => r(), { timeout: 1500 }) : setTimeout(r, 120)))
+    await loadClip(slugify(t))
+  }
 }
 
 function playBuffer(buf: AudioBuffer, rate?: number): Promise<void> {

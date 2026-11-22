@@ -91,6 +91,28 @@ App tự co giãn theo mọi màn hình, nằm ngang hay dọc, không cần cà
 
 Mã nguồn: `src/utils/useLayout.ts` (nhận diện kiểu màn hình), `src/index.css` (cỡ gốc), `IPadHUD.tsx`, `src/games/*`.
 
+## Khám phá mới (bản 3)
+
+- **🤿 Deep sea dive** – vuốt lên để tàu ngầm của Cosmo lặn qua 4 tầng biển (Sunlight, Twilight, Midnight, đáy biển, tới 4000 m). 14 con vật: chạm để nghe tên tiếng Anh và đọc điều thú vị bằng tiếng Việt; con mới tìm thấy vào "sổ biển" (+1 ⭐). Đáy biển có rương kho báu (+3 ⭐). Đèn tàu ngầm sáng dần khi xuống sâu.
+- **🔧 Robot shop** – trang trí Cosmo: 6 màu, 4 kiểu mắt (tròn, cười, ngôi sao, trái tim), 5 kiểu mũ (không, mũ lưỡi trai, vương miện, nơ, tai nghe), nút DANCE cho Cosmo nhảy. Cosmo mặc đồ này ở mọi nơi trong app.
+- **🐬 Splash's ocean** có 3 cấp độ: 1 · bắt tự do, 2 · nghe và bắt đúng vật ("Catch the fish!"), 3 · bắt và đếm (3, 4, 5 vật: "One! Two! Three!…").
+- **🕹️ Lái tên lửa** (trong Rocket lab): kéo ngón tay để lái tên lửa của bé, bắt 12 ngôi sao, né thiên thạch (đụng chỉ bị lắc), rồi đáp xuống hành tinh. Nhanh dần theo số sao bắt được.
+
+## Điều hướng
+
+- Mọi trò chơi có nút **← BACK** lớn ở góc trên bên trái: về màn hình trước (trò chơi → menu PLAY → không gian 3D, menu có nút **← SPACE**).
+- Trong không gian 3D, sau khi bay sang hành tinh khác có nút **← BACK** (góc trên bên phải) để bay về hành tinh vừa xem.
+
+## Nhẹ hơn, mở nhanh hơn
+
+- Màn hình chào hiện ngay (mã 3D ~1 MB tải ngầm phía sau, trò chơi tải khi cần).
+- Toàn cảnh Hệ Mặt Trời dùng ảnh 512 px (`public/textures/sm/`), cận cảnh trên điện thoại dùng 1024 px (`md/`), iPad/máy tính 2048 px. Trước đây toàn cảnh nạp 12 ảnh 2048 px cùng lúc (~130 MB bộ nhớ đồ họa) làm máy đơ khi mở.
+- Bản đồ hành tinh vẽ bằng thuật toán chỉ được vẽ khi ảnh thật lỗi (trước đây vẽ cả 6 bản đồ lúc mở app).
+- Giọng đọc: chỉ giải mã trước tên hành tinh khi máy rảnh; câu khác giải mã khi cần.
+- **Ngủ**: 2 phút không chạm → app ngủ (dừng 3D, nhạc, mọi hiệu ứng), chạm để đánh thức.
+- **🔋 Tiết kiệm pin** (cài đặt phụ huynh): độ phân giải 1×, bỏ hiệu ứng phát sáng, 24 hình/giây, tắt sao băng nền.
+- Thẻ âm thanh im lặng chạy nền chỉ dùng trên iOS cũ (iOS 17+ không cần).
+
 ## Cosmo & Splash (nhân vật)
 
 - **Cosmo**: robot xanh có ba lô tên lửa (lửa phụt, mắt chớp, vẫy tay). **Splash**: cá heo vũ trụ đội mũ bong bóng (bơi, quẫy đuôi). Vẽ bằng SVG, không cần ảnh.

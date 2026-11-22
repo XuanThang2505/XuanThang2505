@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
-import { paintAll } from './proceduralPixels'
+import { paintSome, type ProceduralKey } from './proceduralPixels'
 
-paintAll((key, px) => {
-  ;(self as unknown as DedicatedWorkerGlobalScope).postMessage({ key, px }, [px.data.buffer])
-})
-;(self as unknown as DedicatedWorkerGlobalScope).postMessage({ done: true })
+const scope = self as unknown as DedicatedWorkerGlobalScope
+scope.onmessage = (e: MessageEvent<ProceduralKey[]>) => {
+  paintSome(e.data, (key, px) => scope.postMessage({ key, px }, [px.data.buffer]))
+}

@@ -47,7 +47,20 @@ function setPlaybackSession() {
   }
 }
 
+let audioSleeping = false
+/** While the app sleeps the silent keep-alive tag is stopped too (it keeps the audio hardware on). */
+export function setAudioSleeping(on: boolean) {
+  audioSleeping = on
+  if (on) {
+    stopKeepAlive()
+    void ctx?.suspend().catch(() => {})
+  } else startKeepAlive()
+}
+
 function startKeepAlive() {
+  // iOS 17+ has navigator.audioSession, which already plays through the silent switch:
+  // no need to keep a silent track running (it costs battery)
+  if ((navigator as Navigator & { audioSession?: unknown }).audioSession || audioSleeping || document.hidden) return
   try {
     if (!keepAlive) {
       keepAlive = new Audio(SILENT_WAV)

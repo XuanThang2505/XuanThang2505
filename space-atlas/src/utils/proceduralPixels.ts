@@ -310,13 +310,16 @@ export function streakPixels(w = 1024, h = 512) {
 
 export type ProceduralKey = 'mars' | 'marsBump' | 'jupiter' | 'saturn' | 'neptune' | 'streaks'
 
-/** Paint every procedural map, in the order a child is most likely to visit. */
-export function paintAll(onEach: (key: ProceduralKey, px: Pixels) => void) {
-  const mars = marsPixels()
-  onEach('mars', mars.map)
-  onEach('marsBump', mars.bump)
-  onEach('jupiter', jupiterPixels())
-  onEach('saturn', saturnPixels())
-  onEach('neptune', neptunePixels())
-  onEach('streaks', streakPixels())
+/** Paint only the maps that were asked for (Mars' colour and bump maps come together). */
+export function paintSome(keys: ProceduralKey[], onEach: (key: ProceduralKey, px: Pixels) => void) {
+  const want = new Set(keys)
+  if (want.has('mars') || want.has('marsBump')) {
+    const mars = marsPixels()
+    onEach('mars', mars.map)
+    onEach('marsBump', mars.bump)
+  }
+  if (want.has('jupiter')) onEach('jupiter', jupiterPixels())
+  if (want.has('saturn')) onEach('saturn', saturnPixels())
+  if (want.has('neptune')) onEach('neptune', neptunePixels())
+  if (want.has('streaks')) onEach('streaks', streakPixels())
 }

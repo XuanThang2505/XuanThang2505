@@ -9,7 +9,7 @@
  */
 import * as THREE from 'three'
 
-import { clamp01, fbm, hex, makePerlin, mix, paintAll, smooth, type Pixels, type ProceduralKey, type RGB } from './proceduralPixels'
+import { clamp01, fbm, hex, makePerlin, mix, paintSome, smooth, type Pixels, type ProceduralKey, type RGB } from './proceduralPixels'
 export { JUPITER_SPOT } from './proceduralPixels'
 
 function newCanvas(w: number, h: number) {
@@ -218,7 +218,6 @@ export function cached<T>(key: string, make: () => T): T {
 type Listener = () => void
 const ready = new Map<ProceduralKey, THREE.DataTexture>()
 const listeners = new Set<Listener>()
-let started = false
 
 function toDataTexture(px: Pixels, srgb: boolean) {
   const t = new THREE.DataTexture(px.data, px.w, px.h, THREE.RGBAFormat)
@@ -238,29 +237,29 @@ function store(key: ProceduralKey, px: Pixels) {
 }
 
 /**
- * Paint all procedural planet maps in a Web Worker so flights stay smooth.
- * Safe to call many times. Falls back to the main thread if workers are unavailable.
+ * Procedural maps are painted only when something needs them (a photo that failed to load,
+ * Neptune's / Venus' wind streaks) – painting all of them at start-up cost seconds of CPU and
+ * battery for maps that are almost never shown. Painting happens in a Web Worker.
  */
-export function preloadProceduralTextures() {
-  if (started) return
-  started = true
-  try {
-    const worker = new Worker(new URL('./textureWorker.ts', import.meta.url), { type: 'module' })
-    worker.onmessage = (e: MessageEvent<{ key: ProceduralKey; px: Pixels } | { done: true }>) => {
-      if ('done' in e.data) worker.terminate()
-      else store(e.data.key, e.data.px)
+const requested = new Set<ProceduralKey>()
+let worker: Worker | null | undefined
+export function requestProcedural(key: ProceduralKey) {
+  if (ready.has(key) || requested.has(key)) return
+  requested.add(key)
+  if (worker === undefined) {
+    try {
+      worker = new Worker(new URL('./textureWorker.ts', import.meta.url), { type: 'module' })
+      worker.onmessage = (e: MessageEvent<{ key: ProceduralKey; px: Pixels }>) => store(e.data.key, e.data.px)
+      worker.onerror = () => {
+        worker?.terminate()
+        worker = null
+      }
+    } catch {
+      worker = null
     }
-    worker.onerror = () => {
-      worker.terminate()
-      paintOnMainThread()
-    }
-  } catch {
-    paintOnMainThread()
   }
-}
-
-function paintOnMainThread() {
-  setTimeout(() => paintAll((k, px) => !ready.has(k) && store(k, px)), 50)
+  if (worker) worker.postMessage([key])
+  else setTimeout(() => paintSome([key], (k, px) => !ready.has(k) && store(k, px)), 50)
 }
 
 export function allProcedural() {

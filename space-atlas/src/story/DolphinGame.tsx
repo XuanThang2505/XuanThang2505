@@ -5,13 +5,18 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { OCEAN_WORDS, SPLASH_LINES } from '../data/storyData'
+import { catchLine, COUNT_WORDS, DOLPHIN_LEVEL_LINES } from '../data/moreData'
+import { PUZZLE_LINES } from '../data/planetsData'
 import { Screen, TopBar, wait, type Say } from '../games/ui'
-import { playBubble, playPop, playSparkle, playSplash } from '../utils/soundEffects'
+import { playBoing, playBubble, playPop, playSparkle, playSplash } from '../utils/soundEffects'
 import { speak, stopSpeaking } from '../utils/speech'
 import { useLayout } from '../utils/useLayout'
 import { Splash } from './Cosmo'
 
-const GOAL = 8
+/** Level 1: catch anything · 2: listen and catch the word you hear · 3: catch and count */
+type Level = 1 | 2 | 3
+const GOALS: Record<Level, number> = { 1: 8, 2: 6, 3: 12 }
+const COUNT_ROUNDS = [3, 4, 5]
 const WATER = 0.66 // water surface, fraction of the play area's height
 
 interface Thing {
@@ -23,7 +28,45 @@ interface Thing {
 
 const WAVE = 'M0 30 ' + Array.from({ length: 8 }, (_, i) => `Q ${i * 150 + 75} ${i % 2 ? 58 : 2} ${(i + 1) * 150} 30`).join(' ') + ' V60 H0 Z'
 
-export function DolphinGame({ stars, onBack, onStar, onSay }: { stars: number; onBack: () => void; onStar: () => void; onSay: Say }) {
+export function DolphinGame(props: { stars: number; onBack: () => void; onStar: () => void; onSay: Say }) {
+  const [level, setLevel] = useState<Level | null>(null)
+  const c = useLayout().compact
+  if (level) return <DolphinPlay key={level} level={level} {...props} onBack={() => setLevel(null)} />
+  const levels: { l: Level; icon: string; en: string; vi: string; cls: string }[] = [
+    { l: 1, icon: '🐬', en: 'Catch!', vi: 'Bắt tự do', cls: 'from-sky-400 to-blue-700' },
+    { l: 2, icon: '👂', en: 'Listen & catch', vi: 'Nghe và bắt đúng', cls: 'from-teal-400 to-cyan-700' },
+    { l: 3, icon: '🔢', en: 'Count!', vi: 'Bắt và đếm số', cls: 'from-indigo-400 to-violet-700' },
+  ]
+  return (
+    <Screen>
+      <TopBar onBack={props.onBack} stars={props.stars} middle={<div className={`font-black ${c ? 'text-lg' : 'text-4xl'}`}>Splash's ocean 🌊</div>} />
+      <div className={`flex flex-1 flex-col items-center justify-center ${c ? 'gap-3' : 'gap-6'} px-3 pb-3`}>
+        <Splash size={c ? 110 : 200} />
+        <div className={`flex flex-wrap justify-center ${c ? 'gap-2' : 'gap-5'}`}>
+          {levels.map((lv) => (
+            <button
+              key={lv.l}
+              data-testid={`dolphin-level-${lv.l}`}
+              onClick={() => {
+                playPop()
+                setLevel(lv.l)
+              }}
+              className={`relative flex flex-col items-center justify-center rounded-[2rem] border-2 border-white/25 bg-gradient-to-br ${lv.cls} shadow-xl active:scale-95 ${c ? 'h-28 w-28 p-2' : 'h-48 w-52 p-3'}`}
+            >
+              <span className={`absolute left-3 top-2 rounded-full bg-black/25 px-2 font-black ${c ? 'text-xs' : 'text-base'}`}>{lv.l}</span>
+              <span className={c ? 'text-4xl' : 'text-6xl'}>{lv.icon}</span>
+              <b className={`font-black leading-tight ${c ? 'text-sm' : 'text-2xl'}`}>{lv.en}</b>
+              <small className={`font-semibold text-white/85 ${c ? 'text-[11px]' : 'text-base'}`}>{lv.vi}</small>
+            </button>
+          ))}
+        </div>
+      </div>
+    </Screen>
+  )
+}
+
+function DolphinPlay({ level, stars, onBack, onStar, onSay }: { level: Level; stars: number; onBack: () => void; onStar: () => void; onSay: Say }) {
+  const GOAL = GOALS[level]
   const L = useLayout()
   const c = L.compact
   const area = useRef<HTMLDivElement>(null)
@@ -40,7 +83,11 @@ export function DolphinGame({ stars, onBack, onStar, onSay }: { stars: number; o
   const alive = useRef(true)
   const nextId = useRef(1)
   const deck = useRef<number[]>([])
-  const done = caught >= GOAL
+  const want = useRef<string>('') // level 2: the word to catch
+  const round = useRef(0) // level 3: which counting round
+  const inRound = useRef(0) // level 3: catches in this round
+  const [wobble, setWobble] = useState<number | null>(null)
+  const done = caught >= GOALS[level]
   const dSize = c ? 110 : 190
   const dH = dSize * 0.75
 
@@ -55,13 +102,17 @@ export function DolphinGame({ stars, onBack, onStar, onSay }: { stars: number; o
 
   useEffect(() => {
     alive.current = true
-    const t = setTimeout(() => void onSay(SPLASH_LINES.tap.en, SPLASH_LINES.tap.vi), 500)
+    const t = setTimeout(async () => {
+      if (level === 1) void onSay(SPLASH_LINES.tap.en, SPLASH_LINES.tap.vi)
+      else if (level === 3) void onSay(DOLPHIN_LEVEL_LINES.count.en, DOLPHIN_LEVEL_LINES.count.vi)
+      else if (want.current) void speak(catchLine(want.current).en)
+    }, 500)
     return () => {
       alive.current = false
       clearTimeout(t)
       stopSpeaking()
     }
-  }, [onSay])
+  }, [onSay, level])
 
   const spawn = (avoid: number[] = []) => {
     if (!deck.current.length) deck.current = OCEAN_WORDS.map((_, i) => i).sort(() => Math.random() - 0.5)
@@ -75,18 +126,33 @@ export function DolphinGame({ stars, onBack, onStar, onSay }: { stars: number; o
     return { id: nextId.current++, w, x, y: 0.14 + Math.random() * 0.3 }
   }
 
-  // three things in the sky at the start
+  /** a fresh sky for the current level */
+  const newSet = (): Thing[] => {
+    if (level === 3) {
+      const n = COUNT_ROUNDS[round.current] ?? 3
+      const w = OCEAN_WORDS[Math.floor(Math.random() * OCEAN_WORDS.length)]
+      return Array.from({ length: n }, (_, i) => ({ id: nextId.current++, w, x: 0.1 + (0.8 * (i + 0.5)) / n, y: 0.14 + ((i * 37) % 30) / 100 }))
+    }
+    const a = spawn()
+    let b = spawn([a.x])
+    while (b.w.en === a.w.en) b = spawn([a.x])
+    let d = spawn([a.x, b.x])
+    while (d.w.en === a.w.en || d.w.en === b.w.en) d = spawn([a.x, b.x])
+    const set = [a, b, d]
+    if (level === 2) want.current = set[Math.floor(Math.random() * 3)].w.en
+    return set
+  }
+
+  // things in the sky at the start
   useEffect(() => {
     if (done) return
-    const a = spawn()
-    const b = spawn([a.x])
-    const d = spawn([a.x, b.x])
-    setThings([a, b, d])
+    setThings(newSet())
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [done])
 
   const restY = box.h * WATER - dH * 0.45
-  const leap = async (tx: number, ty: number, target?: Thing) => {
+  const leap = async (tx: number, ty: number, aimed?: Thing) => {
+    let target = aimed
     const el = dolphin.current
     if (!el || busy.current) return
     busy.current = true
@@ -109,6 +175,8 @@ export function DolphinGame({ stars, onBack, onStar, onSay }: { stars: number; o
       { duration: 1100, easing: 'ease-in-out' },
     )
     await wait(520)
+    const wrongPick = !!target && level === 2 && target.w.en !== want.current
+    if (wrongPick) target = undefined
     if (target && alive.current) {
       playBubble()
       playSparkle()
@@ -116,7 +184,8 @@ export function DolphinGame({ stars, onBack, onStar, onSay }: { stars: number; o
       const pid = nextId.current++
       setPops((p) => [...p, { id: pid, x: target.x * box.w, y: target.y * box.h, t: target.w.en }])
       setTimeout(() => setPops((p) => p.filter((q) => q.id !== pid)), 1400)
-      void speak(target.w.en + '!')
+      if (level === 3) void speak(COUNT_WORDS[Math.min(inRound.current, COUNT_WORDS.length - 1)])
+      else void speak(target.w.en + '!')
     }
     await anim.finished.catch(() => {})
     if (!alive.current) return
@@ -130,22 +199,49 @@ export function DolphinGame({ stars, onBack, onStar, onSay }: { stars: number; o
     setDrops((d) => [...d, { id: did, x: nx * box.w, y: box.h * WATER }])
     setTimeout(() => setDrops((d) => d.filter((q) => q.id !== did)), 900)
     busy.current = false
+    if (wrongPick && aimed) {
+      // level 2, wrong thing: it wobbles, Splash asks again
+      playBoing()
+      setWobble(aimed.id)
+      setTimeout(() => setWobble(null), 700)
+      await speak(PUZZLE_LINES.tryAgain.en)
+      if (alive.current) void speak(catchLine(want.current).en, { interrupt: false })
+      return
+    }
     if (target) {
       const n = caught + 1
       setCaught(n)
-      onStar()
+      if (level !== 3 || n % 2 === 0) onStar()
       if (n >= GOAL) {
         playSparkle()
         await wait(700)
         if (alive.current) void onSay(SPLASH_LINES.done.en, SPLASH_LINES.done.vi)
-      } else {
+      } else if (level === 1) {
         setTimeout(() => alive.current && setThings((l) => (l.length < Math.min(3, GOAL - n) ? [...l, spawn(l.map((t) => t.x))] : l)), 500)
+      } else if (level === 2) {
+        await wait(700)
+        if (!alive.current) return
+        setThings(newSet())
+        await wait(300)
+        if (alive.current) void speak(catchLine(want.current).en)
+      } else {
+        inRound.current++
+        if (inRound.current >= (COUNT_ROUNDS[round.current] ?? 3)) {
+          inRound.current = 0
+          round.current++
+          await wait(900)
+          if (!alive.current) return
+          playSparkle()
+          void speak(target.w.en + '!')
+          await wait(1200)
+          if (alive.current) setThings(newSet())
+        }
       }
     }
   }
 
   const bubbles = useMemo(() => Array.from({ length: 7 }, (_, i) => ({ x: (i * 17 + 5) % 100, d: i * 0.7, s: 6 + (i % 3) * 5 })), [])
-  const sky = useMemo(() => Array.from({ length: 30 }, (_, i) => ({ x: (i * 37) % 100, y: (i * 23) % 60, d: (i % 6) * 0.4 })), [])
+  const sky = useMemo(() => Array.from({ length: 12 }, (_, i) => ({ x: (i * 37) % 100, y: (i * 23) % 60, d: (i % 6) * 0.4 })), [])
 
   return (
     <Screen>
@@ -168,7 +264,7 @@ export function DolphinGame({ stars, onBack, onStar, onSay }: { stars: number; o
           <div className={`font-black drop-shadow-[0_0_20px_rgba(56,189,248,0.8)] ${c ? 'text-3xl' : 'text-6xl'}`}>Splash is so happy!</div>
           <div className={`font-semibold text-sky-200 ${c ? 'text-base' : 'text-2xl'}`}>Splash vui quá! Con được {GOAL} ngôi sao ⭐</div>
           <div className="flex gap-3">
-            <button onClick={() => { playPop(); setCaught(0) }} className={`rounded-full bg-gradient-to-r from-cyan-400 to-blue-600 font-black shadow-xl active:scale-95 ${c ? 'px-5 py-2.5 text-lg' : 'px-8 py-4 text-2xl'}`}>
+            <button onClick={() => { playPop(); round.current = 0; inRound.current = 0; setCaught(0) }} className={`rounded-full bg-gradient-to-r from-cyan-400 to-blue-600 font-black shadow-xl active:scale-95 ${c ? 'px-5 py-2.5 text-lg' : 'px-8 py-4 text-2xl'}`}>
               ▶ AGAIN
             </button>
             <button onClick={onBack} className={`rounded-full border border-white/20 bg-slate-800/80 font-black shadow-xl active:scale-95 ${c ? 'px-5 py-2.5 text-lg' : 'px-8 py-4 text-2xl'}`}>
@@ -206,7 +302,7 @@ export function DolphinGame({ stars, onBack, onStar, onSay }: { stars: number; o
               style={{ left: t.x * box.w, top: t.y * box.h, minWidth: 64, minHeight: 64 }}
             >
               <span
-                className="animate-float flex items-center justify-center rounded-full border-2 border-white/50 bg-sky-200/15 shadow-[inset_0_0_18px_rgba(186,230,253,0.5)]"
+                className={`${wobble === t.id ? 'animate-wiggle' : 'animate-float'} flex items-center justify-center rounded-full border-2 border-white/50 bg-sky-200/15 shadow-[inset_0_0_18px_rgba(186,230,253,0.5)]`}
                 style={{ width: c ? 70 : 108, height: c ? 70 : 108, animationDelay: `${i * 0.5}s`, fontSize: c ? 38 : 60 }}
               >
                 {t.w.emoji}
