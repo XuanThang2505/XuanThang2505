@@ -7,8 +7,9 @@
  * 2. Fallback: Web Speech API, forced to an en-US voice,
  *    so the iPad never reads English with a Vietnamese voice.
  */
-import { getAudioContext } from './soundEffects'
+import { ensureAudio, getAudioContext } from './soundEffects'
 import { slugify } from './slug'
+import { getVi } from './viRecordings'
 
 export { slugify }
 export type SpeechRate = 'slow' | 'normal'
@@ -92,14 +93,13 @@ export async function preloadVoiceClips() {
   for (const slug of Object.keys(manifest ?? {})) await loadClip(slug)
 }
 
-function playBuffer(buf: AudioBuffer): Promise<void> {
+function playBuffer(buf: AudioBuffer, rate?: number): Promise<void> {
   const ctx = getAudioContext()
   if (!ctx) return Promise.resolve()
-  if (ctx.state === 'suspended') void ctx.resume()
   return new Promise((resolve) => {
     const src = ctx.createBufferSource()
     src.buffer = buf
-    src.playbackRate.value = CLIP_RATE[currentRate]
+    src.playbackRate.value = rate ?? CLIP_RATE[currentRate]
     const g = ctx.createGain()
     g.gain.value = 1
     src.connect(g).connect(ctx.destination)
@@ -108,8 +108,48 @@ function playBuffer(buf: AudioBuffer): Promise<void> {
       resolve()
     }
     currentSource = src
-    src.start()
+    // wake the engine first if iOS put it to sleep, then play
+    if (ctx.state === 'running') src.start()
+    else void ensureAudio().then(() => src.start())
   })
+}
+
+/** A line recorded by the family (Settings › Giọng Việt), decoded once and kept. */
+const viBuffers = new Map<string, AudioBuffer | null>()
+async function familyClip(text: string): Promise<AudioBuffer | null> {
+  const key = slugify(text)
+  if (viBuffers.has(key)) return viBuffers.get(key)!
+  let buf: AudioBuffer | null = null
+  try {
+    const blob = await getVi(text)
+    const ctx = getAudioContext()
+    if (blob && ctx) {
+      const data = await blob.arrayBuffer()
+      buf = await new Promise<AudioBuffer>((res, rej) => ctx.decodeAudioData(data, res, rej))
+    }
+  } catch {
+    buf = null
+  }
+  viBuffers.set(key, buf)
+  return buf
+}
+/** Forget cached recordings (after the parent records or deletes a line). */
+export function forgetFamilyClip(text: string) {
+  viBuffers.delete(slugify(text))
+}
+/** Play any audio blob right now (the recorder previews a take with this). */
+export async function playBlob(blob: Blob) {
+  const ctx = getAudioContext()
+  if (!ctx) return
+  await ensureAudio()
+  try {
+    const data = await blob.arrayBuffer()
+    const buf = await new Promise<AudioBuffer>((res, rej) => ctx.decodeAudioData(data, res, rej))
+    stopSpeaking()
+    await playBuffer(buf, 1)
+  } catch {
+    /* unreadable take – ignore */
+  }
 }
 
 // ---------------------------------------------------------------- Web Speech fallback
@@ -153,7 +193,7 @@ function speakWithSynth(text: string, lang: 'en' | 'vi'): Promise<void> {
     const voice = lang === 'en' ? enVoice : viVoice
     if (voice) u.voice = voice
     u.lang = voice?.lang ?? (lang === 'en' ? 'en-US' : 'vi-VN')
-    u.rate = lang === 'en' ? RATE[currentRate] : RATE[currentRate] + 0.1
+    u.rate = lang === 'en' ? RATE[currentRate] : 1
     u.pitch = 1
     u.volume = 1
     let done = false
@@ -223,6 +263,14 @@ export async function speak(text: string, opts: { lang?: 'en' | 'vi'; interrupt?
       return playBuffer(buf)
     }
     await ensureVoices()
+  } else {
+    const fam = await familyClip(text)
+    if (myGeneration !== generation) return
+    if (fam) {
+      log(text, 'clip')
+      return playBuffer(fam, 1)
+    }
+    await ensureVoices()
   }
   // iOS Safari drops an utterance queued right after cancel(): give it a breath.
   if (synthBusy) await new Promise((r) => setTimeout(r, 90))
@@ -237,7 +285,7 @@ export async function speakBilingual(en: string, vi: string | undefined, withVie
   const myGeneration = generation
   await first
   if (!withVietnamese || !vi || myGeneration !== generation) return
-  await new Promise((r) => setTimeout(r, 250))
+  await new Promise((r) => setTimeout(r, 120))
   if (myGeneration !== generation) return
   await speak(vi, { lang: 'vi', interrupt: false })
 }

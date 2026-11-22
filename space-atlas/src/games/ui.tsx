@@ -2,7 +2,7 @@
 import type React from 'react'
 import { useLayout } from '../utils/useLayout'
 
-export type Say = (en: string, vi?: string) => void
+export type Say = (en: string, vi?: string) => void | Promise<void>
 
 export function shuffle<T>(a: T[]) {
   const b = [...a]

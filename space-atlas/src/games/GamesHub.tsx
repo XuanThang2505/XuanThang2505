@@ -18,10 +18,14 @@ import { MemoryPairs } from './MemoryPairs'
 import { PlanetJigsaw } from './PlanetJigsaw'
 import { PlanetsHome } from './PlanetsHome'
 import { NewStickerPopup, StickerBook, stickersUnlocked } from './StickerBook'
+import { StoryMode } from '../story/StoryMode'
+import { Station } from '../story/Station'
+import { ShootingWish } from '../story/ShootingWish'
+import { isGeminids } from '../data/storyData'
 import { Done, QuestionButton, Screen, shuffle, TopBar, wait } from './ui'
 
 import type { Say } from './ui'
-type Game = 'menu' | 'home' | 'quiz' | 'order' | 'jigsaw' | 'memory' | 'stickers'
+type Game = 'menu' | 'home' | 'quiz' | 'order' | 'jigsaw' | 'memory' | 'stickers' | 'story' | 'station' | 'wish'
 
 const STARS_KEY = 'space-atlas-stars'
 export function loadStars() {
@@ -48,6 +52,9 @@ function Menu({ stars, onPick, onClose, onSay }: { stars: number; onPick: (g: Ga
     return () => clearTimeout(t)
   }, [onSay])
   const cards: { g: Game; icon: string; en: string; vi: string; age: string; cls: string }[] = [
+    { g: 'story', icon: '🚀', en: "Cosmo's mission", vi: 'Cùng Cosmo tìm 8 viên pha lê', age: 'NEW', cls: 'from-cyan-400 to-indigo-700' },
+    { g: 'station', icon: '🛰️', en: 'My space station', vi: 'Trang trí trạm vũ trụ', age: 'NEW', cls: 'from-violet-500 to-slate-700' },
+    { g: 'wish', icon: '🌠', en: isGeminids() ? 'Geminids night!' : 'Shooting stars', vi: isGeminids() ? 'Đêm mưa sao băng Geminids' : 'Bắt sao băng, ước điều ước', age: isGeminids() ? 'EVENT' : 'WEEK', cls: 'from-yellow-400 to-rose-600' },
     { g: 'home', icon: '🧩', en: 'Put planets home', vi: 'Kéo hành tinh về nhà', age: '3+', cls: 'from-fuchsia-500 to-indigo-600' },
     { g: 'quiz', icon: '🎯', en: 'Which planet?', vi: 'Nghe câu hỏi và chọn', age: '4+', cls: 'from-amber-400 to-orange-600' },
     { g: 'order', icon: '🔢', en: 'Line up!', vi: 'Xếp 8 hành tinh theo thứ tự', age: '4+', cls: 'from-emerald-400 to-teal-600' },
@@ -374,6 +381,9 @@ export function GamesHub({
   else if (game === 'jigsaw') screen = <PlanetJigsaw stars={stars} onBack={back} onStar={onStar} onSay={onSay} />
   else if (game === 'memory') screen = <MemoryPairs stars={stars} onBack={back} onStar={onStar} onSay={onSay} />
   else if (game === 'stickers') screen = <StickerBook stars={stars} onBack={back} onSay={onSay} />
+  else if (game === 'story') screen = <StoryMode stars={stars} onBack={back} onStar={onStar} onSay={onSay} onOpenStation={() => go('station')} />
+  else if (game === 'station') screen = <Station stars={stars} onBack={back} onSay={onSay} />
+  else if (game === 'wish') screen = <ShootingWish stars={stars} onBack={back} onStar={onStar} onSay={onSay} />
   else screen = <Menu stars={stars} onPick={go} onClose={() => onClose(false)} onSay={onSay} />
   return (
     <>

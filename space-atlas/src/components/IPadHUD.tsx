@@ -11,7 +11,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { FACTS, PLANETS, type Lesson, type PlanetData, type ViewId, type VocabWord } from '../data/planetsData'
 import { speak, stopSpeaking } from '../utils/speech'
-import { playPop } from '../utils/soundEffects'
+import { ensureAudio, playPop, playSparkle } from '../utils/soundEffects'
+import { loadStory } from '../data/storyData'
+import { ViRecorder } from './ViRecorder'
 import { useLayout, type Layout } from '../utils/useLayout'
 import type { Settings } from '../App'
 
@@ -524,7 +526,29 @@ function Toggle({ label, sub, value, onChange }: { label: string; sub?: string; 
   )
 }
 
-function ParentPanel({ settings, hasViVoice, onChange, onClose }: { settings: Settings; hasViVoice: boolean; onChange: (s: Settings) => void; onClose: () => void }) {
+function ParentPanel({
+  settings,
+  hasViVoice,
+  stars,
+  onChange,
+  onRecord,
+  onClose,
+}: {
+  settings: Settings
+  hasViVoice: boolean
+  stars: number
+  onChange: (s: Settings) => void
+  onRecord: () => void
+  onClose: () => void
+}) {
+  const story = loadStory()
+  const [soundMsg, setSoundMsg] = useState('')
+  const testSound = async () => {
+    const ok = await ensureAudio()
+    playSparkle()
+    void speak('Great job!')
+    setSoundMsg(ok ? 'Đã phát. Nếu vẫn không nghe: tắt công tắc im lặng bên cạnh iPad, tăng âm lượng, rồi thử lại.' : 'Âm thanh chưa sẵn sàng: chạm màn hình một lần rồi bấm lại.')
+  }
   return (
     <div data-testid="parent-panel" className="pointer-events-auto fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 backdrop-blur-sm" onClick={onClose}>
       <div className="max-h-full w-[min(94vw,460px)] overflow-y-auto rounded-3xl border border-white/10 bg-slate-900 p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
@@ -552,6 +576,26 @@ function ParentPanel({ settings, hasViVoice, onChange, onClose }: { settings: Se
             value={settings.vietnameseVoice}
             onChange={(v) => onChange({ ...settings, vietnameseVoice: v })}
           />
+          <div className="rounded-2xl bg-white/5 px-4 py-3">
+            <div className="text-lg font-bold text-white">🔊 Kiểm tra âm thanh</div>
+            <button data-testid="test-sound" onClick={() => void testSound()} className="mt-2 w-full rounded-xl bg-emerald-500 py-2 text-lg font-extrabold text-white active:scale-95" style={{ minHeight: 44 }}>
+              Phát thử tiếng Anh
+            </button>
+            {soundMsg && <div className="mt-2 text-sm text-sky-200">{soundMsg}</div>}
+          </div>
+          <div className="rounded-2xl bg-white/5 px-4 py-3">
+            <div className="text-lg font-bold text-white">🎙 Giọng Việt của nhà mình</div>
+            <div className="text-sm text-slate-300">Bố mẹ thu lại các câu tiếng Việt: chuẩn dấu, bé thích nghe hơn giọng máy.</div>
+            <button data-testid="open-recorder" onClick={onRecord} className="mt-2 w-full rounded-xl bg-rose-500 py-2 text-lg font-extrabold text-white active:scale-95" style={{ minHeight: 44 }}>
+              Mở màn hình thu âm
+            </button>
+          </div>
+          <div className="rounded-2xl bg-white/5 px-4 py-3 text-white">
+            <div className="text-lg font-bold">📈 Tiến độ của bé</div>
+            <div className="mt-1 text-sm text-slate-200">
+              ⭐ {stars} sao · 💎 {story.done}/8 viên pha lê · 🧩 {Math.min(12, Math.floor(stars / 3))}/12 hình dán {story.finished ? '· 🏆 Hoàn thành cốt truyện' : ''}
+            </div>
+          </div>
         </div>
         <button onClick={onClose} className="mt-5 w-full rounded-2xl bg-sky-500 py-3 text-xl font-extrabold text-white active:scale-95">
           Xong ✓
@@ -564,6 +608,7 @@ function ParentPanel({ settings, hasViVoice, onChange, onClose }: { settings: Se
 // ---------------------------------------------------------------- HUD
 export function IPadHUD(props: Props) {
   const [panelOpen, setPanelOpen] = useState(false)
+  const [recorderOpen, setRecorderOpen] = useState(false)
   const L = useLayout()
   const { planet, compareOn, flying } = props
   const c = L.compact
@@ -641,8 +686,9 @@ export function IPadHUD(props: Props) {
       </div>
 
       {panelOpen && (
-        <ParentPanel settings={props.settings} hasViVoice={props.hasViVoice} onChange={props.onSettingsChange} onClose={() => setPanelOpen(false)} />
+        <ParentPanel settings={props.settings} hasViVoice={props.hasViVoice} stars={props.stars} onChange={props.onSettingsChange} onRecord={() => setRecorderOpen(true)} onClose={() => setPanelOpen(false)} />
       )}
+      {recorderOpen && <ViRecorder onClose={() => setRecorderOpen(false)} />}
     </div>
   )
 }

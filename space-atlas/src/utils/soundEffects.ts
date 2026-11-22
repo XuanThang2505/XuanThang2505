@@ -9,6 +9,12 @@ let musicGain: GainNode | null = null
 let musicTimer: number | null = null
 let musicNodes: AudioNode[] = []
 
+/** Called when the audio engine had to be rebuilt (iOS can leave it dead after a call / lock). */
+let onRebuilt: (() => void) | null = null
+export function setAudioRebuiltHandler(fn: (() => void) | null) {
+  onRebuilt = fn
+}
+
 function ac(): AudioContext | null {
   if (!ctx) {
     const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
@@ -26,11 +32,91 @@ export function getAudioContext() {
   return ac()
 }
 
+// A looping silent <audio> tag moves iOS Safari into the "playback" audio session, so Web Audio
+// keeps playing even when the ring/silent switch is on (the child's iPad is usually muted).
+const SILENT_WAV =
+  'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAA='
+let keepAlive: HTMLAudioElement | null = null
+
+function setPlaybackSession() {
+  try {
+    const nav = navigator as Navigator & { audioSession?: { type: string } }
+    if (nav.audioSession) nav.audioSession.type = 'playback'
+  } catch {
+    /* not supported */
+  }
+}
+
+function startKeepAlive() {
+  try {
+    if (!keepAlive) {
+      keepAlive = new Audio(SILENT_WAV)
+      keepAlive.loop = true
+      keepAlive.setAttribute('playsinline', '')
+    }
+    void keepAlive.play().catch(() => {})
+  } catch {
+    /* ignore */
+  }
+}
+
+function stopKeepAlive() {
+  try {
+    keepAlive?.pause()
+  } catch {
+    /* ignore */
+  }
+}
+
+/**
+ * Make sure sound will come out. Safe to call often (every tap, when the app comes back).
+ * Handles iOS "suspended" AND "interrupted" (after a lock / call / app switch). If the context
+ * will not wake up, it is rebuilt – recorded clips survive because AudioBuffers are not tied to it.
+ */
+export async function ensureAudio(): Promise<boolean> {
+  setPlaybackSession()
+  let c = ac()
+  if (!c) return false
+  const state = c.state as string
+  if (state !== 'running') {
+    try {
+      await Promise.race([c.resume(), new Promise((r) => setTimeout(r, 400))])
+    } catch {
+      /* fall through */
+    }
+  }
+  if ((c.state as string) === 'closed' || (c.state as string) === 'interrupted' || c.state === 'suspended') {
+    // still dead → rebuild once
+    try {
+      await c.close()
+    } catch {
+      /* ignore */
+    }
+    ctx = null
+    master = null
+    musicGain = null
+    musicNodes = []
+    if (musicTimer) window.clearInterval(musicTimer)
+    musicTimer = null
+    c = ac()
+    if (!c) return false
+    try {
+      await Promise.race([c.resume(), new Promise((r) => setTimeout(r, 400))])
+    } catch {
+      /* ignore */
+    }
+    onRebuilt?.()
+  }
+  return c.state === 'running'
+}
+
 /** Call inside the first user gesture (iOS Safari policy). */
 export async function unlockAudio() {
+  setPlaybackSession()
+  startKeepAlive()
   const c = ac()
   if (!c) return
-  if (c.state === 'suspended') await c.resume()
+  if (c.state !== 'running') await c.resume().catch(() => {})
   // Play one silent sample – this is what really unlocks iOS.
   const buf = c.createBuffer(1, 1, 22050)
   const src = c.createBufferSource()
@@ -183,4 +269,24 @@ export function stopMusic() {
   }
   musicGain = null
   musicNodes = []
+}
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      stopKeepAlive()
+      void ctx?.suspend().catch(() => {})
+    } else {
+      startKeepAlive()
+      void ensureAudio()
+    }
+  })
+  // any touch re-checks the engine (cheap when it is already running)
+  window.addEventListener(
+    'pointerdown',
+    () => {
+      if (ctx && (ctx.state as string) !== 'running') void ensureAudio()
+    },
+    { capture: true, passive: true },
+  )
 }

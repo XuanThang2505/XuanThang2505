@@ -295,12 +295,58 @@ function SceneContent({ viewId, started, effect, compareOn, autoRotate, onArrive
   )
 }
 
-/** Quality steps, best first. Older iPads step down automatically if frames get slow. */
+/**
+ * Quality steps, best first. Battery first: no MSAA (the post-processing chain smooths edges
+ * well enough on Retina screens), moderate pixel ratio, Bloom only on the best step.
+ */
 const QUALITY = [
-  { dpr: 2, msaa: 4 },
-  { dpr: 1.5, msaa: 2 },
-  { dpr: 1, msaa: 0 },
+  { dpr: 1.5, bloom: true },
+  { dpr: 1.25, bloom: false },
+  { dpr: 1, bloom: false },
 ]
+
+/** Frames per second while the child is playing / when nobody has touched the screen for a while. */
+const FPS_ACTIVE = 30
+const FPS_IDLE = 12
+const IDLE_AFTER_MS = 45_000
+
+/**
+ * Drives the render loop ourselves (frameloop="never" + advance) so the 3D scene never runs
+ * faster than needed: 30 fps while playing, ~12 fps when idle, and nothing at all when the app is
+ * hidden, paused behind a game, or the tab is in the background. This is the biggest battery saver.
+ */
+function FrameLimiter({ paused }: { paused?: boolean }) {
+  const advance = useThree((s) => s.advance)
+  const lastTouch = useRef(performance.now())
+  useEffect(() => {
+    const touch = () => (lastTouch.current = performance.now())
+    window.addEventListener('pointerdown', touch, { passive: true })
+    window.addEventListener('pointermove', touch, { passive: true })
+    window.addEventListener('wheel', touch, { passive: true })
+    return () => {
+      window.removeEventListener('pointerdown', touch)
+      window.removeEventListener('pointermove', touch)
+      window.removeEventListener('wheel', touch)
+    }
+  }, [])
+  useEffect(() => {
+    if (paused) return
+    let raf = 0
+    let last = 0
+    const loop = (t: number) => {
+      raf = requestAnimationFrame(loop)
+      if (document.hidden) return
+      const idle = performance.now() - lastTouch.current > IDLE_AFTER_MS
+      const gap = 1000 / (idle ? FPS_IDLE : FPS_ACTIVE)
+      if (t - last < gap - 2) return
+      last = t
+      advance(t / 1000)
+    }
+    raf = requestAnimationFrame(loop)
+    return () => cancelAnimationFrame(raf)
+  }, [advance, paused])
+  return null
+}
 
 export function SolarScene(props: SolarSceneProps) {
   // phones start one step lower (3× screens are expensive); the monitor adjusts from there
@@ -308,27 +354,29 @@ export function SolarScene(props: SolarSceneProps) {
   const quality = QUALITY[q]
   return (
     <Canvas
-      frameloop={props.paused ? 'never' : 'always'}
+      frameloop="never"
       className="!absolute inset-0"
       dpr={Math.min(quality.dpr, typeof window !== 'undefined' ? window.devicePixelRatio : 2)}
       camera={{ fov: 62, near: 0.05, far: 2000, position: [0, 6, 30] }}
-      gl={{ antialias: true, powerPreference: 'high-performance' }}
+      gl={{ antialias: false, powerPreference: 'default', stencil: false }}
     >
-      {/* measures the frame rate: below ~40 fps → step down, back up when it is smooth again */}
-      <PerformanceMonitor
-        bounds={() => [40, 58]}
-        flipflops={4}
-        onDecline={() => setQ((x) => Math.min(x + 1, QUALITY.length - 1))}
-        onIncline={() => setQ((x) => Math.max(x - 1, 0))}
-      />
+      <FrameLimiter paused={props.paused} />
+      {/* measures the (30 fps capped) frame rate: clearly below that → step down one quality level */}
+      <PerformanceMonitor bounds={() => [20, 29]} flipflops={2} onDecline={() => setQ((x) => Math.min(x + 1, QUALITY.length - 1))} />
       <color attach="background" args={['#050818']} />
       <Suspense fallback={null}>
         <SceneContent {...props} />
       </Suspense>
-      <EffectComposer key={quality.msaa} multisampling={quality.msaa}>
-        <Bloom mipmapBlur intensity={0.85} luminanceThreshold={0.82} luminanceSmoothing={0.2} radius={0.75} />
-        <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
-      </EffectComposer>
+      {quality.bloom ? (
+        <EffectComposer multisampling={0} key="bloom">
+          <Bloom mipmapBlur intensity={0.85} luminanceThreshold={0.82} luminanceSmoothing={0.2} radius={0.75} />
+          <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+        </EffectComposer>
+      ) : (
+        <EffectComposer multisampling={0} key="plain">
+          <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+        </EffectComposer>
+      )}
     </Canvas>
   )
 }
