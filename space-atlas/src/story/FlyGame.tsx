@@ -135,7 +135,8 @@ export function FlyGame({ trip, stars, onBack, onStar, onSay }: { trip: number; 
           streaks.map((s, i) => (
             <span key={i} className="animate-star-fall pointer-events-none absolute top-0 w-0.5 rounded-full bg-white/50" style={{ left: `${s.x}%`, height: s.h, animationDelay: `${s.d}s`, animationDuration: '1.2s' }} />
           ))}
-        {items.map((it) => (
+        {!done &&
+          items.map((it) => (
           <span key={it.id} data-testid={`fly-${it.kind}`} className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2" style={{ left: it.x * W, top: it.y, fontSize: c ? 38 : 56 }}>
             {it.kind === 'star' ? '⭐' : '🪨'}
           </span>

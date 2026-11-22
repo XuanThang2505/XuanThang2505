@@ -135,7 +135,7 @@ export function DeepSea({ stars, onBack, onStar, onSay }: { stars: number; onBac
   const zone = [...ZONES].reverse().find((z) => depth >= z.from) ?? ZONES[0]
   const meters = Math.round((depth * SEA_DEPTH_M) / 10) * 10
   const snow = useMemo(
-    () => Array.from({ length: 40 }, (_, i) => `radial-gradient(circle at ${(i * 37) % 100}% ${(i * 53) % 100}%, rgba(255,255,255,0.5) 0 1.5px, transparent 2px)`).join(','),
+    () => Array.from({ length: 40 }, (_, i) => `radial-gradient(circle at ${(i * 37) % 100}% ${(i * 53) % 100}%, rgba(255,255,255,0.28) 0 1.3px, transparent 2px)`).join(','),
     [],
   )
 
