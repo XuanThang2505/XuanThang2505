@@ -14,6 +14,7 @@ import { speak, stopSpeaking } from '../utils/speech'
 import { ensureAudio, playPop, playSparkle } from '../utils/soundEffects'
 import { loadStory } from '../data/storyData'
 import { ViRecorder } from './ViRecorder'
+import { Cosmo } from '../story/Cosmo'
 import { useLayout, type Layout } from '../utils/useLayout'
 import type { Settings } from '../App'
 
@@ -440,8 +441,8 @@ function PlanetDock({ currentId, onSelectPlanet, onOpenGames, stars, L }: Pick<P
         aria-label="Play games"
         className="relative mr-1 flex shrink-0 flex-col items-center border-r border-white/10 pr-2 transition-transform duration-300 active:scale-90"
       >
-        <span className={`flex items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500 to-indigo-600 shadow-lg shadow-fuchsia-500/30 ${ball} ${c ? 'text-2xl' : 'text-3xl'}`}>
-          🎮
+        <span className={`flex items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-700 shadow-lg shadow-sky-500/40 ${ball}`}>
+          <Cosmo size={c ? 34 : 44} wave={false} fly={false} />
         </span>
         {stars > 0 && <span className="absolute -right-0.5 -top-1.5 rounded-full bg-amber-400 px-1.5 text-[11px] font-black text-slate-900 shadow">⭐{stars}</span>}
         {!c && <span className="mt-1 rounded-full px-2 text-[11px] font-extrabold leading-tight tracking-wide text-white/85">PLAY</span>}

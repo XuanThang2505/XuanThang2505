@@ -178,6 +178,50 @@ export function playWhoosh() {
   tone(180, 1.2, { type: 'triangle', vol: 0.08, slideTo: 520 })
 }
 
+/** Filtered noise burst: water splash (low) or rocket rumble (long). */
+function noiseHit(dur: number, f0: number, f1: number, vol: number, q = 0.8) {
+  const c = ac()
+  if (!c || !master) return
+  const t = c.currentTime
+  const src = c.createBufferSource()
+  src.buffer = noiseBuffer(c, dur)
+  const bp = c.createBiquadFilter()
+  bp.type = 'lowpass'
+  bp.Q.value = q
+  bp.frequency.setValueAtTime(f0, t)
+  bp.frequency.exponentialRampToValueAtTime(f1, t + dur)
+  const g = c.createGain()
+  g.gain.setValueAtTime(0.0001, t)
+  g.gain.exponentialRampToValueAtTime(vol, t + Math.min(0.05, dur / 4))
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur)
+  src.connect(bp).connect(g).connect(master)
+  src.start(t)
+  src.stop(t + dur)
+}
+
+/** Dolphin lands in the water. */
+export function playSplash() {
+  noiseHit(0.6, 2200, 300, 0.4)
+  tone(320, 0.18, { type: 'sine', vol: 0.08, slideTo: 140, delay: 0.02 })
+}
+
+/** Little bubble "bloop" (catching something). */
+export function playBubble() {
+  tone(420, 0.16, { type: 'sine', vol: 0.18, slideTo: 1100 })
+  tone(700, 0.12, { type: 'sine', vol: 0.08, slideTo: 1500, delay: 0.08 })
+}
+
+/** Countdown beep (high on "blast off"). */
+export function playBeep(high = false) {
+  tone(high ? 1320 : 880, high ? 0.5 : 0.22, { type: 'square', vol: 0.06 })
+}
+
+/** Rocket engine rumble for the launch. */
+export function playRumble() {
+  noiseHit(3.2, 900, 120, 0.45, 0.5)
+  tone(70, 2.8, { type: 'sawtooth', vol: 0.05, slideTo: 140, attack: 0.4 })
+}
+
 /** Soft "pop" for button taps. */
 export function playPop() {
   tone(660, 0.12, { type: 'sine', vol: 0.22, slideTo: 990 })

@@ -21,11 +21,17 @@ import { NewStickerPopup, StickerBook, stickersUnlocked } from './StickerBook'
 import { StoryMode } from '../story/StoryMode'
 import { Station } from '../story/Station'
 import { ShootingWish } from '../story/ShootingWish'
-import { isGeminids } from '../data/storyData'
+import { isGeminids, loadRocket, loadStory } from '../data/storyData'
+import { RocketLab } from '../story/RocketLab'
+import { DolphinGame } from '../story/DolphinGame'
+import { RocketArt } from '../story/Rocket'
+import { Cosmo, Splash } from '../story/Cosmo'
 import { Done, QuestionButton, Screen, shuffle, TopBar, wait } from './ui'
 
 import type { Say } from './ui'
-type Game = 'menu' | 'home' | 'quiz' | 'order' | 'jigsaw' | 'memory' | 'stickers' | 'story' | 'station' | 'wish'
+type Game = 'menu' | 'home' | 'quiz' | 'order' | 'jigsaw' | 'memory' | 'stickers' | 'story' | 'station' | 'wish' | 'rocket' | 'dolphin'
+/** Games with their own big celebrations: a new-sticker popup waits until the child is back in the menu. */
+const CALM: Game[] = ['story', 'station', 'wish', 'rocket', 'dolphin']
 
 const STARS_KEY = 'space-atlas-stars'
 export function loadStars() {
@@ -51,15 +57,27 @@ function Menu({ stars, onPick, onClose, onSay }: { stars: number; onPick: (g: Ga
     const t = setTimeout(() => onSay(GAME_LINES.letsPlay.en, GAME_LINES.letsPlay.vi), 400)
     return () => clearTimeout(t)
   }, [onSay])
+  const story = loadStory()
+  const featured: { g: Game; art: React.ReactNode; en: string; vi: string; tag: string; cls: string }[] = [
+    {
+      g: 'story',
+      art: <Cosmo size={c0 ? 56 : 104} />,
+      en: "Cosmo's mission",
+      vi: story.finished ? 'Đã xong! Chơi lại nhé' : `Tìm pha lê · ${story.done}/8 💎`,
+      tag: 'STORY',
+      cls: 'from-sky-400 via-blue-600 to-indigo-800',
+    },
+    { g: 'rocket', art: <RocketArt design={loadRocket()} size={c0 ? 84 : 150} flame={0.6} />, en: 'Rocket lab', vi: 'Làm tên lửa và phóng!', tag: 'NEW', cls: 'from-cyan-400 via-sky-600 to-blue-900' },
+    { g: 'dolphin', art: <Splash size={c0 ? 80 : 150} />, en: "Splash's ocean", vi: 'Cá heo nhảy bắt đồ vật', tag: 'NEW', cls: 'from-teal-300 via-cyan-600 to-blue-800' },
+  ]
   const cards: { g: Game; icon: string; en: string; vi: string; age: string; cls: string }[] = [
-    { g: 'story', icon: '🚀', en: "Cosmo's mission", vi: 'Cùng Cosmo tìm 8 viên pha lê', age: 'NEW', cls: 'from-cyan-400 to-indigo-700' },
-    { g: 'station', icon: '🛰️', en: 'My space station', vi: 'Trang trí trạm vũ trụ', age: 'NEW', cls: 'from-violet-500 to-slate-700' },
-    { g: 'wish', icon: '🌠', en: isGeminids() ? 'Geminids night!' : 'Shooting stars', vi: isGeminids() ? 'Đêm mưa sao băng Geminids' : 'Bắt sao băng, ước điều ước', age: isGeminids() ? 'EVENT' : 'WEEK', cls: 'from-yellow-400 to-rose-600' },
-    { g: 'home', icon: '🧩', en: 'Put planets home', vi: 'Kéo hành tinh về nhà', age: '3+', cls: 'from-fuchsia-500 to-indigo-600' },
-    { g: 'quiz', icon: '🎯', en: 'Which planet?', vi: 'Nghe câu hỏi và chọn', age: '4+', cls: 'from-amber-400 to-orange-600' },
-    { g: 'order', icon: '🔢', en: 'Line up!', vi: 'Xếp 8 hành tinh theo thứ tự', age: '4+', cls: 'from-emerald-400 to-teal-600' },
-    { g: 'jigsaw', icon: '🖼️', en: 'Planet jigsaw', vi: 'Ghép ảnh hành tinh', age: '4+', cls: 'from-sky-400 to-blue-700' },
-    { g: 'memory', icon: '🃏', en: 'Memory pairs', vi: 'Lật thẻ tìm cặp', age: '5+', cls: 'from-rose-400 to-pink-700' },
+    { g: 'station', icon: '🛰️', en: 'My station', vi: 'Trang trí trạm', age: '3+', cls: 'from-violet-500 to-slate-700' },
+    { g: 'wish', icon: '🌠', en: isGeminids() ? 'Geminids!' : 'Shooting stars', vi: isGeminids() ? 'Mưa sao băng' : 'Bắt sao băng', age: isGeminids() ? 'EVENT' : '3+', cls: 'from-yellow-400 to-rose-600' },
+    { g: 'home', icon: '🧩', en: 'Planets home', vi: 'Kéo về nhà', age: '3+', cls: 'from-fuchsia-500 to-indigo-600' },
+    { g: 'quiz', icon: '🎯', en: 'Which planet?', vi: 'Nghe và chọn', age: '4+', cls: 'from-amber-400 to-orange-600' },
+    { g: 'order', icon: '🔢', en: 'Line up!', vi: 'Xếp thứ tự', age: '4+', cls: 'from-emerald-400 to-teal-600' },
+    { g: 'jigsaw', icon: '🖼️', en: 'Jigsaw', vi: 'Ghép ảnh', age: '4+', cls: 'from-sky-400 to-blue-700' },
+    { g: 'memory', icon: '🃏', en: 'Memory', vi: 'Lật thẻ', age: '5+', cls: 'from-rose-400 to-pink-700' },
   ]
   return (
     <Screen>
@@ -85,25 +103,52 @@ function Menu({ stars, onPick, onClose, onSay }: { stars: number; onPick: (g: Ga
           </div>
         }
       />
-      <div className={`flex flex-1 flex-wrap content-center items-center justify-center overflow-y-auto ${c0 ? 'gap-3 p-2' : 'gap-4 p-3'}`}>
-        {cards.map((c) => (
-          <button
-            data-testid={`game-${c.g}`}
-            key={c.g}
-            onClick={() => {
-              playPop()
-              onPick(c.g)
-            }}
-            className={`relative flex flex-col items-center justify-center rounded-[2rem] bg-gradient-to-br ${c.cls} text-center shadow-2xl active:scale-95 ${
-              c0 ? (L.portrait ? 'h-[124px] w-[170px] gap-0 p-2' : 'h-[108px] w-[152px] gap-0 p-2') : 'h-44 w-56 gap-1 p-3 lg:h-56 lg:w-72'
-            }`}
-          >
-            <span className={`absolute rounded-full bg-black/25 font-extrabold ${c0 ? 'right-2.5 top-2 px-1.5 text-[10px]' : 'right-4 top-3 px-2 text-sm'}`}>{c.age}</span>
-            <span className={c0 ? 'text-4xl' : 'text-6xl lg:text-7xl'}>{c.icon}</span>
-            <b className={`font-black leading-tight ${c0 ? 'text-[15px]' : 'text-2xl'}`}>{c.en}</b>
-            <small className={`font-semibold text-white/85 ${c0 ? 'text-[11px] leading-tight' : 'text-base'}`}>{c.vi}</small>
-          </button>
-        ))}
+      <div className={`flex flex-1 flex-col items-center overflow-y-auto ${c0 ? 'gap-2 p-2' : 'gap-5 p-3'}`}>
+        <div className={`my-auto flex w-full flex-col items-center ${c0 ? 'gap-2' : 'gap-5'}`}>
+          {/* the three big adventures */}
+          <div className={`flex flex-wrap justify-center ${c0 ? 'gap-2' : 'gap-5'}`}>
+            {featured.map((f) => (
+              <button
+                data-testid={`game-${f.g}`}
+                key={f.g}
+                onClick={() => {
+                  playPop()
+                  onPick(f.g)
+                }}
+                className={`relative flex items-center overflow-hidden rounded-[2rem] border-2 border-white/25 bg-gradient-to-br ${f.cls} text-left shadow-[0_10px_40px_rgba(14,165,233,0.35)] active:scale-95 ${
+                  c0 ? (L.portrait ? 'h-[96px] w-[340px] gap-2 px-3' : 'h-[104px] w-[200px] gap-1 px-2') : 'h-48 w-[22rem] gap-3 px-5 lg:h-56 lg:w-[26rem]'
+                }`}
+              >
+                <span className={`absolute rounded-full bg-black/25 font-extrabold ${c0 ? 'right-2.5 top-2 px-1.5 text-[10px]' : 'right-4 top-3 px-2 text-sm'}`}>{f.tag}</span>
+                <span className="flex shrink-0 items-center justify-center">{f.art}</span>
+                <span className="min-w-0">
+                  <b className={`block font-black leading-tight drop-shadow ${c0 ? 'text-[15px]' : 'text-3xl'}`}>{f.en}</b>
+                  <small className={`block font-semibold text-white/90 ${c0 ? 'text-[11px] leading-tight' : 'text-lg'}`}>{f.vi}</small>
+                </span>
+              </button>
+            ))}
+          </div>
+          <div className={`flex flex-wrap justify-center ${c0 ? 'gap-2' : 'gap-3'}`}>
+            {cards.map((c) => (
+              <button
+                data-testid={`game-${c.g}`}
+                key={c.g}
+                onClick={() => {
+                  playPop()
+                  onPick(c.g)
+                }}
+                className={`relative flex flex-col items-center justify-center rounded-3xl bg-gradient-to-br ${c.cls} text-center shadow-xl active:scale-95 ${
+                  c0 ? 'h-[84px] w-[96px] p-1' : 'h-32 w-36 gap-0.5 p-2 lg:h-36 lg:w-40'
+                }`}
+              >
+                <span className={`absolute rounded-full bg-black/25 font-extrabold ${c0 ? 'right-1.5 top-1 px-1 text-[9px]' : 'right-2.5 top-2 px-1.5 text-[11px]'}`}>{c.age}</span>
+                <span className={c0 ? 'text-3xl' : 'text-5xl'}>{c.icon}</span>
+                <b className={`font-black leading-tight ${c0 ? 'text-[12px]' : 'text-lg'}`}>{c.en}</b>
+                <small className={`font-semibold text-white/85 ${c0 ? 'text-[10px] leading-tight' : 'text-sm'}`}>{c.vi}</small>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </Screen>
   )
@@ -357,6 +402,7 @@ export function GamesHub({
 }) {
   const [game, setGame] = useState<Game>('menu')
   const [popup, setPopup] = useState<number | null>(null)
+  const [pending, setPending] = useState<number | null>(null)
   const seen = useRef(stickersUnlocked(stars))
   // a new sticker earned while playing → celebrate it (after the game's own voice line)
   useEffect(() => {
@@ -364,11 +410,19 @@ export function GamesHub({
     if (now > seen.current) {
       const idx = now - 1
       seen.current = now
-      // wait for the name + fun fact that the game is saying first
-      const t = setTimeout(() => setPopup(idx), 5200)
-      return () => clearTimeout(t)
+      setPending(idx)
     }
   }, [stars])
+  // classic games: wait for the name + fun fact being said first; the big adventures: wait until
+  // the child is back in the menu, so the popup never interrupts a story or a launch
+  useEffect(() => {
+    if (pending === null || CALM.includes(game)) return
+    const t = setTimeout(() => {
+      setPopup(pending)
+      setPending(null)
+    }, game === 'menu' ? 700 : 5200)
+    return () => clearTimeout(t)
+  }, [pending, game])
   const go = (g: Game) => {
     stopSpeaking()
     setGame(g)
@@ -383,6 +437,8 @@ export function GamesHub({
   else if (game === 'stickers') screen = <StickerBook stars={stars} onBack={back} onSay={onSay} />
   else if (game === 'story') screen = <StoryMode stars={stars} onBack={back} onStar={onStar} onSay={onSay} onOpenStation={() => go('station')} />
   else if (game === 'station') screen = <Station stars={stars} onBack={back} onSay={onSay} />
+  else if (game === 'rocket') screen = <RocketLab stars={stars} onBack={back} onStar={onStar} onSay={onSay} />
+  else if (game === 'dolphin') screen = <DolphinGame stars={stars} onBack={back} onStar={onStar} onSay={onSay} />
   else if (game === 'wish') screen = <ShootingWish stars={stars} onBack={back} onStar={onStar} onSay={onSay} />
   else screen = <Menu stars={stars} onPick={go} onClose={() => onClose(false)} onSay={onSay} />
   return (
