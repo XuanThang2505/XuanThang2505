@@ -4,13 +4,13 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { GAME_LINES, PLANET_MAP, PUZZLE_LINES, QUIZ, type PlanetId, type VocabWord } from '../data/planetsData'
-import { loadStory, saveStory, STORY, STORY_PLANETS, type StoryProgress } from '../data/storyData'
+import { loadStory, saveStory, SPLASH_LINES, STORY, STORY_PLANETS, type StoryProgress } from '../data/storyData'
 import { PlanetBall2D } from '../games/PlanetBall2D'
 import { QuestionButton, Screen, shuffle, TopBar, wait, type Say } from '../games/ui'
 import { playBoing, playPop, playSparkle } from '../utils/soundEffects'
 import { speak, stopSpeaking } from '../utils/speech'
 import { useLayout } from '../utils/useLayout'
-import { Bubble, Cosmo, Crystal } from './Cosmo'
+import { Bubble, Cosmo, Crystal, Splash } from './Cosmo'
 
 interface Props {
   stars: number
@@ -47,6 +47,7 @@ export function StoryMode({ stars, onBack, onStar, onSay, onOpenStation }: Props
     if (prog.seenHello || chapter !== null) return
     const t = setTimeout(async () => {
       await onSay(STORY.hello.en, STORY.hello.vi)
+      if (alive.current) await onSay(SPLASH_LINES.hello.en, SPLASH_LINES.hello.vi)
       if (alive.current) update({ ...loadStory(), seenHello: true })
     }, 500)
     return () => clearTimeout(t)
@@ -124,7 +125,8 @@ export function StoryMode({ stars, onBack, onStar, onSay, onOpenStation }: Props
           })}
         </div>
         <div className={`flex items-end ${c ? 'gap-2' : 'gap-5'}`}>
-          <Cosmo size={c ? 76 : 140} />
+          <Cosmo size={c ? 70 : 130} />
+          <Splash size={c ? 70 : 130} />
           <Bubble
             compact={c}
             en={prog.finished ? 'Come back any time!' : prog.done === 0 ? 'Tap the glowing planet!' : `Crystal ${prog.done} of 8! Keep going!`}
@@ -290,7 +292,8 @@ function Chapter({
           <div className="animate-drift">
             <PlanetBall2D id={id} size={step === 'reward' ? (c ? 80 : 160) : c ? 96 : 190} />
           </div>
-          <Cosmo size={c ? 70 : 130} cheer={step === 'reward'} />
+          <Cosmo size={c ? 64 : 120} cheer={step === 'reward'} />
+          <Splash size={c ? 64 : 120} cheer={step === 'reward'} />
         </div>
 
         <Bubble compact={c} en={bubbleLine.en} vi={bubbleLine.vi} onTap={() => void onSay(bubbleLine.en, bubbleLine.vi)} />

@@ -88,3 +88,75 @@ export function saveStory(p: StoryProgress) {
     /* private mode */
   }
 }
+
+// ---------------------------------------------------------------- Splash the dolphin + Rocket lab
+export const SPLASH_LINES = {
+  hello: { en: 'And this is Splash, my dolphin friend!', vi: 'Còn đây là Splash, bạn cá heo của mình!' },
+  tap: { en: 'Tap to make Splash jump!', vi: 'Chạm để Splash nhảy lên nào!' },
+  done: { en: 'Splash is so happy!', vi: 'Splash vui quá!' },
+}
+
+/** Things Splash catches in the Dolphin game – each one teaches a word. */
+export const OCEAN_WORDS: { emoji: string; en: string; vi: string }[] = [
+  { emoji: '🫧', en: 'BUBBLE', vi: 'Bong bóng' },
+  { emoji: '🐠', en: 'FISH', vi: 'Con cá' },
+  { emoji: '💧', en: 'WATER', vi: 'Nước' },
+  { emoji: '🐚', en: 'SHELL', vi: 'Vỏ sò' },
+  { emoji: '⭐', en: 'STAR', vi: 'Ngôi sao' },
+  { emoji: '🌙', en: 'MOON', vi: 'Mặt Trăng' },
+  { emoji: '🐙', en: 'OCTOPUS', vi: 'Bạch tuộc' },
+  { emoji: '🦀', en: 'CRAB', vi: 'Con cua' },
+  { emoji: '🐳', en: 'WHALE', vi: 'Cá voi' },
+  { emoji: '🌊', en: 'WAVE', vi: 'Con sóng' },
+]
+
+export const ROCKET_LINES = {
+  build: { en: 'Build your rocket!', vi: 'Con tự làm tên lửa nhé!' },
+  count: [
+    { en: 'Three!', vi: 'Ba!' },
+    { en: 'Two!', vi: 'Hai!' },
+    { en: 'One!', vi: 'Một!' },
+    { en: 'Blast off!', vi: 'Phóng!' },
+  ],
+  trips: [
+    { en: 'To the Moon!', vi: 'Bay tới Mặt Trăng!', dest: 'moon' as const },
+    { en: 'To Mars!', vi: 'Bay tới Sao Hỏa!', dest: 'mars' as const },
+    { en: 'To Saturn!', vi: 'Bay tới Sao Thổ!', dest: 'saturn' as const },
+    { en: 'To the ocean planet!', vi: 'Bay về hành tinh đại dương!', dest: 'earth' as const },
+  ],
+}
+
+export const ROCKET_COLORS: { en: string; vi: string; main: string; dark: string }[] = [
+  { en: 'BLUE', vi: 'Xanh dương', main: '#38bdf8', dark: '#0369a1' },
+  { en: 'GREEN', vi: 'Xanh lá', main: '#4ade80', dark: '#15803d' },
+  { en: 'PURPLE', vi: 'Màu tím', main: '#c084fc', dark: '#7e22ce' },
+  { en: 'RED', vi: 'Màu đỏ', main: '#f87171', dark: '#b91c1c' },
+  { en: 'ORANGE', vi: 'Màu cam', main: '#fb923c', dark: '#c2410c' },
+  { en: 'WHITE', vi: 'Màu trắng', main: '#f1f5f9', dark: '#64748b' },
+]
+export const ROCKET_PILOTS = [
+  { id: 'robot', en: 'ROBOT', vi: 'Người máy' },
+  { id: 'dolphin', en: 'DOLPHIN', vi: 'Cá heo' },
+  { id: 'astronaut', en: 'ASTRONAUT', vi: 'Phi hành gia' },
+] as const
+export type PilotId = (typeof ROCKET_PILOTS)[number]['id']
+export interface RocketDesign {
+  color: number
+  fins: number
+  pilot: PilotId
+}
+const ROCKET_KEY = 'space-atlas-rocket'
+export function loadRocket(): RocketDesign {
+  try {
+    return { color: 0, fins: 0, pilot: 'robot', ...JSON.parse(localStorage.getItem(ROCKET_KEY) ?? '{}') }
+  } catch {
+    return { color: 0, fins: 0, pilot: 'robot' }
+  }
+}
+export function saveRocket(r: RocketDesign) {
+  try {
+    localStorage.setItem(ROCKET_KEY, JSON.stringify(r))
+  } catch {
+    /* private mode */
+  }
+}

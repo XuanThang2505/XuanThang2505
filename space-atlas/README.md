@@ -91,9 +91,20 @@ App tự co giãn theo mọi màn hình, nằm ngang hay dọc, không cần cà
 
 Mã nguồn: `src/utils/useLayout.ts` (nhận diện kiểu màn hình), `src/index.css` (cỡ gốc), `IPadHUD.tsx`, `src/games/*`.
 
-## Cốt truyện, Trạm vũ trụ, Sự kiện (mới)
+## Cosmo & Splash (nhân vật)
 
-Trong nút PLAY 🎮 có ba mục mới:
+- **Cosmo**: robot xanh có ba lô tên lửa (lửa phụt, mắt chớp, vẫy tay). **Splash**: cá heo vũ trụ đội mũ bong bóng (bơi, quẫy đuôi). Vẽ bằng SVG, không cần ảnh.
+- Nút PLAY trên thanh hành tinh giờ là mặt Cosmo.
+
+## Phiêu lưu lớn (hàng trên của menu PLAY)
+
+- **🚀 Rocket lab** – chọn màu (BLUE, GREEN…), kiểu cánh, phi công (ROBOT / DOLPHIN / ASTRONAUT), mỗi lựa chọn đọc từ tiếng Anh. Bấm LAUNCH: đếm "Three! Two! One! Blast off!", tên lửa rung, khói, lửa, bay lên trời và đáp xuống Mặt Trăng / Sao Hỏa / Sao Thổ / hành tinh đại dương. Tên lửa được lưu và đặt được vào Trạm vũ trụ.
+- **🐬 Splash's ocean** – biển dưới bầu trời sao. Chạm đồ vật trên trời, Splash nhảy khỏi mặt nước bắt lấy (bong bóng, cá, vỏ sò, bạch tuộc, cua, cá voi…), mỗi lần bắt đọc một từ. Giọt nước bắn, cá bơi, bong bóng nổi. 8 lần bắt = 8 ⭐.
+- Thêm 6 hình dán biển/robot: DOLPHIN, ROBOT, WHALE, FISH, WAVE, OCTOPUS.
+- Hình dán mới đạt được trong các phiêu lưu lớn sẽ hiện khi bé quay về menu, không làm ngắt câu chuyện.
+
+## Cốt truyện, Trạm vũ trụ, Sự kiện
+
 
 - **🚀 Cosmo's mission** – cốt truyện 8 chương. Robot Cosmo làm rơi 8 viên pha lê trên 8 hành tinh. Mỗi chương: Cosmo giới thiệu hành tinh, bé nghe và chạm 2 từ vựng, trả lời 1 câu hỏi, nhận 1 viên pha lê (+2 ⭐). Đủ 8 viên thì tên lửa bay về nhà. Tiến độ lưu trên máy (`space-atlas-story`).
 - **🛰️ My space station** – chơi tự do, không thắng thua: đặt Cosmo, pha lê, các hành tinh đã cứu và hình dán vào trạm, kéo để di chuyển, chạm để nghe tên. Lưu trên máy (`space-atlas-station`).

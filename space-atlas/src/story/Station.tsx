@@ -5,18 +5,19 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { PLANET_MAP, STICKERS, type PlanetId } from '../data/planetsData'
-import { loadStory, STATION_LINES, STORY_PLANETS } from '../data/storyData'
+import { loadRocket, loadStory, STATION_LINES, STORY_PLANETS } from '../data/storyData'
+import { RocketArt } from './Rocket'
 import { PlanetBall2D } from '../games/PlanetBall2D'
 import { stickersUnlocked } from '../games/StickerBook'
 import { Screen, TopBar, type Say } from '../games/ui'
 import { playPop, playSparkle } from '../utils/soundEffects'
 import { speak } from '../utils/speech'
 import { useLayout } from '../utils/useLayout'
-import { Cosmo, Crystal } from './Cosmo'
+import { Cosmo, Crystal, Splash } from './Cosmo'
 
 interface Item {
   id: number
-  kind: 'sticker' | 'planet' | 'crystal' | 'cosmo'
+  kind: 'sticker' | 'planet' | 'crystal' | 'cosmo' | 'splash' | 'rocket'
   key: string
   x: number
   y: number
@@ -41,6 +42,7 @@ export function Station({ stars, onBack, onSay }: { stars: number; onBack: () =>
   const drag = useRef<{ id: number; moved: boolean; sx: number; sy: number } | null>(null)
   const nextId = useRef(items.reduce((m, i) => Math.max(m, i.id), 0) + 1)
   const story = useMemo(loadStory, [])
+  const rocket = useMemo(loadRocket, [])
   const unlocked = stickersUnlocked(stars)
 
   useEffect(() => {
@@ -57,12 +59,14 @@ export function Station({ stars, onBack, onSay }: { stars: number; onBack: () =>
 
   const tray: { kind: Item['kind']; key: string; label: string }[] = [
     { kind: 'cosmo', key: 'cosmo', label: 'Cosmo' },
+    { kind: 'splash', key: 'splash', label: 'Splash' },
+    { kind: 'rocket', key: 'rocket', label: 'MY ROCKET' },
     { kind: 'crystal', key: 'crystal', label: 'STAR' },
     ...STORY_PLANETS.slice(0, story.done).map((p) => ({ kind: 'planet' as const, key: p, label: PLANET_MAP[p].englishName })),
     ...STICKERS.slice(0, unlocked).map((s) => ({ kind: 'sticker' as const, key: s.en, label: s.en })),
   ]
 
-  const nameOf = (it: Item) => (it.kind === 'planet' ? PLANET_MAP[it.key as PlanetId].englishName : it.kind === 'sticker' ? it.key : it.kind === 'cosmo' ? 'ASTRONAUT' : 'STAR')
+  const nameOf = (it: Item) => (it.kind === 'planet' ? PLANET_MAP[it.key as PlanetId].englishName : it.kind === 'sticker' ? it.key : it.kind === 'cosmo' ? 'ROBOT' : it.kind === 'splash' ? 'DOLPHIN' : it.kind === 'rocket' ? 'ROCKET' : 'STAR')
 
   const add = (t: (typeof tray)[number]) => {
     playPop()
@@ -134,6 +138,10 @@ export function Station({ stars, onBack, onSay }: { stars: number; onBack: () =>
                 <Crystal size={size * 0.8} />
               ) : it.kind === 'cosmo' ? (
                 <Cosmo size={size * 1.2} />
+              ) : it.kind === 'splash' ? (
+                <Splash size={size * 1.4} />
+              ) : it.kind === 'rocket' ? (
+                <RocketArt design={rocket} size={size * 1.8} flame={0.5} />
               ) : (
                 <span style={{ fontSize: size * 0.8 }}>{STICKERS.find((s) => s.en === it.key)?.emoji}</span>
               )}
@@ -166,7 +174,7 @@ export function Station({ stars, onBack, onSay }: { stars: number; onBack: () =>
             className="flex shrink-0 flex-col items-center justify-center rounded-2xl border border-white/15 bg-indigo-500/30 px-2 active:scale-90"
           >
             <span className="flex items-center justify-center" style={{ height: c ? 34 : 52 }}>
-              {t.kind === 'planet' ? <PlanetBall2D id={t.key as PlanetId} size={c ? 32 : 48} /> : t.kind === 'crystal' ? <Crystal size={c ? 32 : 48} /> : t.kind === 'cosmo' ? <Cosmo size={c ? 40 : 60} wave={false} /> : <span className={c ? 'text-3xl' : 'text-5xl'}>{STICKERS.find((s) => s.en === t.key)?.emoji}</span>}
+              {t.kind === 'planet' ? <PlanetBall2D id={t.key as PlanetId} size={c ? 32 : 48} /> : t.kind === 'crystal' ? <Crystal size={c ? 32 : 48} /> : t.kind === 'cosmo' ? <Cosmo size={c ? 30 : 46} wave={false} fly={false} /> : t.kind === 'splash' ? <Splash size={c ? 44 : 66} swim={false} /> : t.kind === 'rocket' ? <RocketArt design={rocket} size={c ? 34 : 52} /> : <span className={c ? 'text-3xl' : 'text-5xl'}>{STICKERS.find((s) => s.en === t.key)?.emoji}</span>}
             </span>
             <span className={`font-extrabold ${c ? 'text-[10px]' : 'text-xs'}`}>{t.label}</span>
           </button>

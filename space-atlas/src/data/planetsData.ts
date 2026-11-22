@@ -495,4 +495,10 @@ export const STICKERS: { emoji: string; en: string; vi: string }[] = [
   { emoji: '🪐', en: 'PLANET', vi: 'Hành tinh' },
   { emoji: '🌌', en: 'GALAXY', vi: 'Dải ngân hà' },
   { emoji: '🌍', en: 'EARTH', vi: 'Trái Đất' },
+  { emoji: '🐬', en: 'DOLPHIN', vi: 'Cá heo' },
+  { emoji: '🤖', en: 'ROBOT', vi: 'Người máy' },
+  { emoji: '🐳', en: 'WHALE', vi: 'Cá voi' },
+  { emoji: '🐠', en: 'FISH', vi: 'Con cá' },
+  { emoji: '🌊', en: 'WAVE', vi: 'Con sóng' },
+  { emoji: '🐙', en: 'OCTOPUS', vi: 'Bạch tuộc' },
 ]
