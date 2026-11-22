@@ -91,7 +91,8 @@ export function Graduation({ stars, onBack, onSay, onComplete }: P & { onComplet
                 maxLength={16}
                 placeholder="Tên của bé"
                 onBlur={(e) => {
-                  const p = { ...prog, name: e.target.value.trim() }
+                  // read the saved progress again: the graduation was just recorded by Hero HQ
+                  const p = { ...loadHero(), name: e.target.value.trim() }
                   setProg(p)
                   saveHero(p)
                   setEditing(false)
