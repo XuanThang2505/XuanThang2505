@@ -61,14 +61,14 @@ function Menu({ stars, onPick, onClose, onSay }: { stars: number; onPick: (g: Ga
   const featured: { g: Game; art: React.ReactNode; en: string; vi: string; tag: string; cls: string }[] = [
     {
       g: 'story',
-      art: <Cosmo size={c0 ? 56 : 104} />,
+      art: <Cosmo size={c0 ? 56 : 92} />,
       en: "Cosmo's mission",
       vi: story.finished ? 'Đã xong! Chơi lại nhé' : `Tìm pha lê · ${story.done}/8 💎`,
       tag: 'STORY',
       cls: 'from-sky-400 via-blue-600 to-indigo-800',
     },
-    { g: 'rocket', art: <RocketArt design={loadRocket()} size={c0 ? 84 : 150} flame={0.6} />, en: 'Rocket lab', vi: 'Làm tên lửa và phóng!', tag: 'NEW', cls: 'from-cyan-400 via-sky-600 to-blue-900' },
-    { g: 'dolphin', art: <Splash size={c0 ? 80 : 150} />, en: "Splash's ocean", vi: 'Cá heo nhảy bắt đồ vật', tag: 'NEW', cls: 'from-teal-300 via-cyan-600 to-blue-800' },
+    { g: 'rocket', art: <RocketArt design={loadRocket()} size={c0 ? 84 : 140} flame={0.6} />, en: 'Rocket lab', vi: 'Làm tên lửa và phóng!', tag: 'NEW', cls: 'from-cyan-400 via-sky-600 to-blue-900' },
+    { g: 'dolphin', art: <Splash size={c0 ? 80 : 130} />, en: "Splash's ocean", vi: 'Cá heo nhảy bắt đồ vật', tag: 'NEW', cls: 'from-teal-300 via-cyan-600 to-blue-800' },
   ]
   const cards: { g: Game; icon: string; en: string; vi: string; age: string; cls: string }[] = [
     { g: 'station', icon: '🛰️', en: 'My station', vi: 'Trang trí trạm', age: '3+', cls: 'from-violet-500 to-slate-700' },
@@ -116,14 +116,14 @@ function Menu({ stars, onPick, onClose, onSay }: { stars: number; onPick: (g: Ga
                   onPick(f.g)
                 }}
                 className={`relative flex items-center overflow-hidden rounded-[2rem] border-2 border-white/25 bg-gradient-to-br ${f.cls} text-left shadow-[0_10px_40px_rgba(14,165,233,0.35)] active:scale-95 ${
-                  c0 ? (L.portrait ? 'h-[96px] w-[340px] gap-2 px-3' : 'h-[104px] w-[200px] gap-1 px-2') : 'h-48 w-[22rem] gap-3 px-5 lg:h-56 lg:w-[26rem]'
+                  c0 ? (L.portrait ? 'h-[96px] w-[340px] gap-2 px-3' : 'h-[104px] w-[200px] gap-1 px-2') : (L.portrait ? 'h-40 w-[26rem] gap-3 px-5' : 'h-44 w-[min(30vw,24rem)] gap-2 px-4')
                 }`}
               >
                 <span className={`absolute rounded-full bg-black/25 font-extrabold ${c0 ? 'right-2.5 top-2 px-1.5 text-[10px]' : 'right-4 top-3 px-2 text-sm'}`}>{f.tag}</span>
                 <span className="flex shrink-0 items-center justify-center">{f.art}</span>
                 <span className="min-w-0">
-                  <b className={`block font-black leading-tight drop-shadow ${c0 ? 'text-[15px]' : 'text-3xl'}`}>{f.en}</b>
-                  <small className={`block font-semibold text-white/90 ${c0 ? 'text-[11px] leading-tight' : 'text-lg'}`}>{f.vi}</small>
+                  <b className={`block font-black leading-tight drop-shadow ${c0 ? 'text-[15px]' : 'text-2xl'}`}>{f.en}</b>
+                  <small className={`block font-semibold text-white/90 ${c0 ? 'text-[11px] leading-tight' : 'text-base'}`}>{f.vi}</small>
                 </span>
               </button>
             ))}
@@ -138,12 +138,12 @@ function Menu({ stars, onPick, onClose, onSay }: { stars: number; onPick: (g: Ga
                   onPick(c.g)
                 }}
                 className={`relative flex flex-col items-center justify-center rounded-3xl bg-gradient-to-br ${c.cls} text-center shadow-xl active:scale-95 ${
-                  c0 ? 'h-[84px] w-[96px] p-1' : 'h-32 w-36 gap-0.5 p-2 lg:h-36 lg:w-40'
+                  c0 ? 'h-[84px] w-[96px] p-1' : 'h-28 w-32 gap-0 p-2'
                 }`}
               >
                 <span className={`absolute rounded-full bg-black/25 font-extrabold ${c0 ? 'right-1.5 top-1 px-1 text-[9px]' : 'right-2.5 top-2 px-1.5 text-[11px]'}`}>{c.age}</span>
-                <span className={c0 ? 'text-3xl' : 'text-5xl'}>{c.icon}</span>
-                <b className={`font-black leading-tight ${c0 ? 'text-[12px]' : 'text-lg'}`}>{c.en}</b>
+                <span className={c0 ? 'text-3xl' : 'text-4xl'}>{c.icon}</span>
+                <b className={`font-black leading-tight ${c0 ? 'text-[12px]' : 'text-base'}`}>{c.en}</b>
                 <small className={`font-semibold text-white/85 ${c0 ? 'text-[10px] leading-tight' : 'text-sm'}`}>{c.vi}</small>
               </button>
             ))}

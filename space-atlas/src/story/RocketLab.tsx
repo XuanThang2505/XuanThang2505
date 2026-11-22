@@ -83,6 +83,8 @@ export function RocketLab({ stars, onBack, onStar, onSay }: { stars: number; onB
   const rocketSize = Math.min(c ? H * 0.5 : H * 0.55, c ? 230 : 420)
   const streaks = useMemo(() => Array.from({ length: 26 }, (_, i) => ({ x: (i * 41) % 100, d: (i % 7) * 0.1, h: 30 + (i % 4) * 30 })), [])
   const dest = ROCKET_LINES.trips[trip].dest
+  // the planet we land on: fits the screen and leaves room for the caption + buttons
+  const planetD = Math.min(rocketSize * 0.95, L.w * 0.7, L.h * 0.38)
 
   // ------------------------------------------------ launch / flight scene
   if (phase !== 'build') {
@@ -101,12 +103,14 @@ export function RocketLab({ stars, onBack, onStar, onSay }: { stars: number; onB
 
           {/* destination */}
           {phase === 'arrive' && (
-            <div className="animate-word-pop absolute left-1/2 top-[52%] -translate-x-1/2 -translate-y-1/2">
-              {dest === 'moon' ? (
-                <div className="rounded-full bg-[radial-gradient(circle_at_35%_35%,#fefce8,#e2e8f0_45%,#64748b)] shadow-[0_0_60px_rgba(255,255,230,0.5)]" style={{ width: rocketSize * 0.95, height: rocketSize * 0.95 }} />
-              ) : (
-                <PlanetBall2D id={dest} size={rocketSize * 0.95} />
-              )}
+            <div className="absolute left-1/2 top-[58%] -translate-x-1/2 -translate-y-1/2">
+              <div className="animate-word-pop">
+                {dest === 'moon' ? (
+                  <div className="rounded-full bg-[radial-gradient(circle_at_35%_35%,#fefce8,#e2e8f0_45%,#64748b)] shadow-[0_0_60px_rgba(255,255,230,0.5)]" style={{ width: planetD, height: planetD }} />
+                ) : (
+                  <PlanetBall2D id={dest} size={planetD} />
+                )}
+              </div>
             </div>
           )}
 
@@ -114,7 +118,7 @@ export function RocketLab({ stars, onBack, onStar, onSay }: { stars: number; onB
           <div
             className="absolute left-1/2 -translate-x-1/2 transition-transform ease-in"
             style={{
-              bottom: phase === 'arrive' ? '52%' : '10%',
+              bottom: phase === 'arrive' ? `calc(42% + ${planetD / 2 - 6}px)` : '10%',
               transform: `translateX(-50%) translateY(${flying ? `-${H * 1.4}px` : '0'})`,
               transitionDuration: flying ? '2200ms' : '0ms',
             }}
