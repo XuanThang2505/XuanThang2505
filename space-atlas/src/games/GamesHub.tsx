@@ -24,6 +24,9 @@ import { ShootingWish } from '../story/ShootingWish'
 import { isGeminids, loadRocket, loadStory } from '../data/storyData'
 import { RocketLab } from '../story/RocketLab'
 import { DeepSea } from '../story/DeepSea'
+import { HeroHQ } from '../hero/HeroHQ'
+import { CaptainStar, StarShield } from '../hero/CaptainStar'
+import { loadHero } from '../data/heroData'
 import { RobotWorkshop } from '../story/RobotWorkshop'
 import { DolphinGame } from '../story/DolphinGame'
 import { RocketArt } from '../story/Rocket'
@@ -31,9 +34,9 @@ import { Cosmo, Splash } from '../story/Cosmo'
 import { Done, QuestionButton, Screen, shuffle, TopBar, wait } from './ui'
 
 import type { Say } from './ui'
-type Game = 'menu' | 'home' | 'quiz' | 'order' | 'jigsaw' | 'memory' | 'stickers' | 'story' | 'station' | 'wish' | 'rocket' | 'dolphin' | 'sea' | 'workshop'
+type Game = 'menu' | 'home' | 'quiz' | 'order' | 'jigsaw' | 'memory' | 'stickers' | 'story' | 'station' | 'wish' | 'rocket' | 'dolphin' | 'sea' | 'workshop' | 'hero'
 /** Games with their own big celebrations: a new-sticker popup waits until the child is back in the menu. */
-const CALM: Game[] = ['story', 'station', 'wish', 'rocket', 'dolphin', 'sea', 'workshop']
+const CALM: Game[] = ['story', 'station', 'wish', 'rocket', 'dolphin', 'sea', 'workshop', 'hero']
 
 import { loadStars, saveStars } from './stars'
 export { loadStars, saveStars }
@@ -97,7 +100,35 @@ function Menu({ stars, onPick, onClose, onSay }: { stars: number; onPick: (g: Ga
       />
       <div className={`flex flex-1 flex-col items-center overflow-y-auto ${c0 ? 'gap-2 p-2' : 'gap-5 p-3'}`}>
         <div className={`my-auto flex w-full flex-col items-center ${c0 ? 'gap-2' : 'gap-5'}`}>
-          {/* the three big adventures */}
+          {/* Captain Star banner */}
+          <button
+            data-testid="game-hero"
+            onClick={() => {
+              playPop()
+              onPick('hero')
+            }}
+            className={`relative flex w-full max-w-[64rem] items-center overflow-hidden rounded-[2rem] border-4 border-amber-300/80 bg-gradient-to-r from-rose-600 via-blue-700 to-sky-500 text-left shadow-[0_10px_50px_rgba(251,191,36,0.35)] active:scale-[0.98] ${
+              c0 ? 'h-[92px] gap-2 px-3' : 'h-36 gap-5 px-8'
+            }`}
+          >
+            <span className="pointer-events-none absolute inset-0 opacity-20" style={{ background: 'repeating-conic-gradient(from 0deg at 15% 50%, #fff 0deg 6deg, transparent 6deg 20deg)' }} />
+            <span className="relative shrink-0">
+              <CaptainStar size={c0 ? 78 : 128} cheer />
+            </span>
+            <span className="relative min-w-0 flex-1">
+              <b className={`block font-black italic leading-none tracking-wide drop-shadow ${c0 ? 'text-xl' : 'text-5xl'}`}>Captain Star</b>
+              <small className={`block font-bold text-amber-100 ${c0 ? 'text-[11px] leading-tight' : 'text-xl'}`}>
+                Siêu anh hùng vũ trụ · {loadHero().done.length}/5 nhiệm vụ 🎖️
+              </small>
+            </span>
+            {!c0 && (
+              <span className="relative shrink-0 animate-float">
+                <StarShield size={90} />
+              </span>
+            )}
+            <span className={`absolute rounded-full bg-amber-300 font-black text-rose-700 ${c0 ? 'right-2 top-1.5 px-1.5 text-[10px]' : 'right-5 top-3 px-3 text-base'}`}>HERO</span>
+          </button>
+          {/* the big adventures */}
           <div className={`flex flex-wrap justify-center ${c0 ? 'gap-2' : 'gap-5'}`}>
             {featured.map((f) => (
               <button
@@ -431,6 +462,7 @@ export function GamesHub({
   else if (game === 'station') screen = <Station stars={stars} onBack={back} onSay={onSay} />
   else if (game === 'rocket') screen = <RocketLab stars={stars} onBack={back} onStar={onStar} onSay={onSay} />
   else if (game === 'dolphin') screen = <DolphinGame stars={stars} onBack={back} onStar={onStar} onSay={onSay} />
+  else if (game === 'hero') screen = <HeroHQ stars={stars} onBack={back} onStar={onStar} onSay={onSay} />
   else if (game === 'sea') screen = <DeepSea stars={stars} onBack={back} onStar={onStar} onSay={onSay} />
   else if (game === 'workshop') screen = <RobotWorkshop stars={stars} onBack={back} onStar={onStar} onSay={onSay} />
   else if (game === 'wish') screen = <ShootingWish stars={stars} onBack={back} onStar={onStar} onSay={onSay} />

@@ -53,7 +53,7 @@ for it in items:
     text = tts_text(it["text"])
     single = len(text.split()) <= 2
     # espeak gives some British vowels; force General American r-coloured "ur" (Earth, Mercury, Saturn)
-    ph = kokoro.tokenizer.phonemize(text, "en-us").replace("ɜː", "ɜɹ").replace("ɹɹ", "ɹ")
+    ph = kokoro.tokenizer.phonemize(text, "en-us").replace("ɜː", "ɜɹ").replace("iəɹ", "ɪɹ").replace("ɹɹ", "ɹ")
     # Near-natural speed keeps consonants crisp; slowing the model below ~0.9 smears vowels.
     samples, sr = kokoro.create(ph, voice=args.voice, speed=0.92 if single else 0.95, lang="en-us", is_phonemes=True)
     # trim silence, add tiny fade so nothing clicks

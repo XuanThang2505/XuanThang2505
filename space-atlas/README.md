@@ -91,6 +91,24 @@ App tự co giãn theo mọi màn hình, nằm ngang hay dọc, không cần cà
 
 Mã nguồn: `src/utils/useLayout.ts` (nhận diện kiểu màn hình), `src/index.css` (cỡ gốc), `IPadHUD.tsx`, `src/games/*`.
 
+## 🛡️ Captain Star & the Space Guardians (bản 4)
+
+Siêu anh hùng vũ trụ **riêng của app** (mang tinh thần dũng cảm, bảo vệ mọi người, có khiên – nhưng thiết kế riêng, không dùng nhân vật có bản quyền như Captain America vì app đăng công khai). Anh hùng ở đây chỉ **bảo vệ và giúp đỡ**, không đánh nhau. Câu cửa miệng: *"Heroes help! Heroes are kind!"*
+
+Vào từ banner lớn **Captain Star** ở đầu menu PLAY → **Hero HQ** (màn xuất hiện: bay vào, chữ "SUPER!", nhạc anh hùng):
+
+- **🗺️ Missions** – cốt truyện 5 nhiệm vụ, mở lần lượt:
+  1. ☄️ *Mưa thiên thạch* – chặn viên to / viên nhỏ bằng khiên ngôi sao (BIG, SMALL), "POW!", rung màn hình.
+  2. 🐬 *Cứu Splash* – nhặt rác (BOTTLE, CAN, BAG) bỏ vào thùng tái chế, lưới mờ dần, Splash được tự do; chạm cá thì "Not the fish!".
+  3. 🛰️ *Sửa vệ tinh cùng Cosmo* – tìm hình (CIRCLE, SQUARE, TRIANGLE, STAR).
+  4. 💡 *Thắp đèn căn cứ Mặt Trăng* – bật đúng màu (BLUE, RED, GREEN, YELLOW, PURPLE).
+  5. 🎖️ *Tốt nghiệp trường anh hùng* – thẻ anh hùng kiểu bìa truyện tranh với bộ đồ của bé, 4 huy hiệu, tên bé (bố mẹ chạm vào tên để nhập), "You are a hero!".
+- **🛡️ Shield throw** – ném khiên boomerang trúng bong bóng số ("Hit number three!"), POW/BAM/ZOOM.
+- **🦸 Hero suit** – chọn màu bộ đồ, áo choàng, mặt nạ, khiên (7 màu) và biểu tượng ngực (⭐ 🐬 🚀 ⚡ 💙), nút HERO POSE. Captain Star mặc bộ đồ này ở mọi nơi.
+- **💙 What would a hero do?** – 6 tình huống (bạn ngã, bạn buồn, chia bánh, nhặt rác, cho em chơi cùng, xin lỗi); chọn hành động tốt → "That's what heroes do!".
+
+Nhân vật vẽ bằng SVG + CSS (nhẹ, không cần ảnh). 67 câu giọng Mỹ mới.
+
 ## Khám phá mới (bản 3)
 
 - **🤿 Deep sea dive** – vuốt lên để tàu ngầm của Cosmo lặn qua 4 tầng biển (Sunlight, Twilight, Midnight, đáy biển, tới 4000 m). 14 con vật: chạm để nghe tên tiếng Anh và đọc điều thú vị bằng tiếng Việt; con mới tìm thấy vào "sổ biển" (+1 ⭐). Đáy biển có rương kho báu (+3 ⭐). Đèn tàu ngầm sáng dần khi xuống sâu.

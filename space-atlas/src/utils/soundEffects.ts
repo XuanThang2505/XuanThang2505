@@ -240,6 +240,28 @@ export function playRumble() {
   tone(70, 2.8, { type: 'sawtooth', vol: 0.05, slideTo: 140, attack: 0.4 })
 }
 
+/** Short heroic fanfare (Captain Star arrives / mission complete). */
+export function playHeroTheme() {
+  const notes: [number, number, number][] = [
+    [392, 0, 0.18],
+    [523.25, 0.16, 0.18],
+    [659.25, 0.32, 0.18],
+    [783.99, 0.48, 0.5],
+    [659.25, 0.82, 0.14],
+    [783.99, 0.96, 0.7],
+  ]
+  notes.forEach(([f, d, len]) => {
+    tone(f, len, { type: 'square', vol: 0.05, delay: d })
+    tone(f / 2, len, { type: 'triangle', vol: 0.09, delay: d })
+  })
+}
+
+/** Comic "POW!" impact. */
+export function playPow() {
+  noiseHit(0.35, 3000, 200, 0.45, 1)
+  tone(140, 0.25, { type: 'square', vol: 0.08, slideTo: 60 })
+}
+
 /** Soft "pop" for button taps. */
 export function playPop() {
   tone(660, 0.12, { type: 'sine', vol: 0.22, slideTo: 990 })
