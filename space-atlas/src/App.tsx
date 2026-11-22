@@ -16,7 +16,8 @@ import {
   type SpeechRate,
 } from './utils/speech'
 import { preloadProceduralTextures } from './utils/textures'
-import { playArrive, playBoing, playPop, playSparkle, playWhoosh, startMusic, stopMusic, unlockAudio } from './utils/soundEffects'
+import { AmbientStars } from './story/AmbientStars'
+import { ensureAudio, playArrive, playBoing, playPop, playSparkle, playWhoosh, setAudioRebuiltHandler, startMusic, stopMusic, unlockAudio } from './utils/soundEffects'
 
 export interface Settings {
   rate: SpeechRate
@@ -60,14 +61,32 @@ export default function App() {
     setSpeechRate(settings.rate)
   }, [settings])
 
+  const wantMusic = started && settings.music
+  const wantMusicRef = useRef(wantMusic)
+  wantMusicRef.current = wantMusic
   useEffect(() => {
-    if (started && settings.music) startMusic()
+    if (wantMusic && !document.hidden) startMusic()
     else stopMusic()
-  }, [started, settings.music])
+  }, [wantMusic])
 
-  const say = useCallback((en: string, vi?: string) => {
-    void speakBilingual(en, vi, settingsRef.current.vietnameseVoice)
+  // Battery + iOS: no music while the app is in the background; wake the sound engine on return;
+  // if iOS killed the engine (call, lock screen) it is rebuilt and the music restarts.
+  useEffect(() => {
+    const onVis = () => {
+      if (document.hidden) stopMusic()
+      else {
+        void ensureAudio().then(() => wantMusicRef.current && startMusic())
+      }
+    }
+    document.addEventListener('visibilitychange', onVis)
+    setAudioRebuiltHandler(() => wantMusicRef.current && startMusic())
+    return () => {
+      document.removeEventListener('visibilitychange', onVis)
+      setAudioRebuiltHandler(null)
+    }
   }, [])
+
+  const say = useCallback((en: string, vi?: string) => speakBilingual(en, vi, settingsRef.current.vietnameseVoice), [])
 
   const handleStart = useCallback(() => {
     // Everything here runs inside the tap → iOS unlocks audio + speech.
@@ -192,6 +211,8 @@ export default function App() {
         onSelectPlanet={handleSelectPlanet}
         paused={gamesOpen}
       />
+
+      <AmbientStars on={started && !gamesOpen} />
 
       {started && gamesOpen && <GamesHub stars={stars} onStar={addStar} onClose={closeGames} onSay={say} />}
 

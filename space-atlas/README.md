@@ -91,6 +91,26 @@ App tự co giãn theo mọi màn hình, nằm ngang hay dọc, không cần cà
 
 Mã nguồn: `src/utils/useLayout.ts` (nhận diện kiểu màn hình), `src/index.css` (cỡ gốc), `IPadHUD.tsx`, `src/games/*`.
 
+## Cốt truyện, Trạm vũ trụ, Sự kiện (mới)
+
+Trong nút PLAY 🎮 có ba mục mới:
+
+- **🚀 Cosmo's mission** – cốt truyện 8 chương. Robot Cosmo làm rơi 8 viên pha lê trên 8 hành tinh. Mỗi chương: Cosmo giới thiệu hành tinh, bé nghe và chạm 2 từ vựng, trả lời 1 câu hỏi, nhận 1 viên pha lê (+2 ⭐). Đủ 8 viên thì tên lửa bay về nhà. Tiến độ lưu trên máy (`space-atlas-story`).
+- **🛰️ My space station** – chơi tự do, không thắng thua: đặt Cosmo, pha lê, các hành tinh đã cứu và hình dán vào trạm, kéo để di chuyển, chạm để nghe tên. Lưu trên máy (`space-atlas-station`).
+- **🌠 Shooting stars** – sự kiện bắt sao băng (tuần Geminids 10–17/12 đổi tên thành "Geminids night!").
+
+Thỉnh thoảng một ngôi sao băng cũng bay ngang bầu trời 3D.
+
+## Pin và âm thanh iOS
+
+- Cảnh 3D vẽ **30 hình/giây** khi bé chơi, **12 hình/giây** sau 45 giây không chạm, và **dừng hẳn** khi app bị ẩn hoặc đang mở trò chơi. Không dùng MSAA; Bloom chỉ bật ở mức chất lượng cao nhất; số sao nền giảm một nửa.
+- Nhạc nền tắt khi app xuống nền.
+- Âm thanh: `navigator.audioSession.type = 'playback'` + thẻ `<audio>` im lặng để tiếng vẫn phát khi gạt công tắc im lặng. Khi iOS đặt bộ âm thanh vào trạng thái `interrupted` (khóa màn hình, cuộc gọi), app tự đánh thức hoặc dựng lại. Phụ huynh có nút **🔊 Kiểm tra âm thanh** trong Cài đặt.
+
+## Giọng Việt của nhà mình
+
+Cài đặt phụ huynh › **🎙 Giọng Việt của nhà mình**: bố mẹ thu âm từng câu tiếng Việt (khoảng 170 câu, thu dần cũng được). Bản thu lưu trong IndexedDB trên máy; câu nào chưa thu sẽ dùng giọng hệ thống.
+
 ## Trò chơi (nút PLAY 🎮)
 
 Quy tắc chung cho bé: không thua, không đếm giờ, mọi hướng dẫn bằng giọng nói, chọn sai chỉ nghe "Try again!",

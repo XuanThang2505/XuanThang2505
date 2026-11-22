@@ -72,8 +72,8 @@ function buildStars(count: number, band: boolean) {
 export function Starfield({ warp }: { warp: () => number }) {
   const gl = useThree((s) => s.gl)
   const group = useRef<THREE.Group>(null)
-  const stars = useMemo(() => buildStars(6000, false), [])
-  const milky = useMemo(() => buildStars(14000, true), [])
+  const stars = useMemo(() => buildStars(3500, false), [])
+  const milky = useMemo(() => buildStars(7000, true), [])
   const uniforms = useMemo(
     () => ({ uTime: { value: 0 }, uPixelRatio: { value: Math.min(gl.getPixelRatio(), 2) }, uWarp: { value: 0 } }),
     [gl],

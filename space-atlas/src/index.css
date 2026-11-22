@@ -64,6 +64,51 @@ button {
     100% { transform: translateY(110vh) rotate(540deg); opacity: 0.8; }
   }
   .animate-confetti { animation: confetti 3s ease-in forwards; }
+
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.25; transform: scale(0.7); }
+    50% { opacity: 1; transform: scale(1.15); }
+  }
+  .animate-twinkle { animation: twinkle 2.4s ease-in-out infinite; }
+
+  @keyframes drift {
+    0% { transform: translate(0, 0) rotate(-4deg); }
+    50% { transform: translate(14px, -10px) rotate(4deg); }
+    100% { transform: translate(0, 0) rotate(-4deg); }
+  }
+  .animate-drift { animation: drift 5s ease-in-out infinite; }
+
+  @keyframes crystal-glow {
+    0%, 100% { filter: drop-shadow(0 0 6px rgba(120, 220, 255, 0.7)); transform: rotate(-6deg) scale(1); }
+    50% { filter: drop-shadow(0 0 22px rgba(190, 240, 255, 1)); transform: rotate(6deg) scale(1.12); }
+  }
+  .animate-crystal { animation: crystal-glow 1.8s ease-in-out infinite; }
+
+  @keyframes wave-arm {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(-28deg); }
+  }
+  .animate-wave { transform-origin: 80% 70%; animation: wave-arm 0.7s ease-in-out infinite; }
+
+  @keyframes launch {
+    0% { transform: translateY(0) scale(1); }
+    25% { transform: translateY(8px) scale(1.04); }
+    100% { transform: translateY(-120vh) scale(0.8); }
+  }
+  .animate-launch { animation: launch 3.2s cubic-bezier(0.5, 0, 0.9, 0.4) forwards; }
+
+  @keyframes streak {
+    0% { transform: translate(0, 0) rotate(28deg); opacity: 0; }
+    10% { opacity: 1; }
+    100% { transform: translate(-70vw, 45vh) rotate(28deg); opacity: 0; }
+  }
+  .animate-streak { animation: streak 1.6s ease-in forwards; }
+
+  @keyframes glow-ring {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.8); }
+    50% { box-shadow: 0 0 0 14px rgba(251, 191, 36, 0); }
+  }
+  .animate-glow-ring { animation: glow-ring 1.3s ease-out infinite; }
 }
 
 /* hide scrollbars on the horizontally scrolling dock */

@@ -4,6 +4,7 @@
  *   npx tsx scripts/phrases.ts > /tmp/phrases.json
  */
 import { FACTS, GAME_LINES, PLANETS, PUZZLE_LINES, QUIZ, STICKERS, SYSTEM_LESSON } from '../src/data/planetsData'
+import { STORY, WISH_LINES, STATION_LINES } from '../src/data/storyData'
 import { slugify } from '../src/utils/slug'
 
 const texts = new Set<string>()
@@ -21,6 +22,7 @@ Object.values(GAME_LINES).forEach((l) => texts.add(l.en))
 Object.values(FACTS).forEach((list) => list.forEach(([, en]) => texts.add(en)))
 QUIZ.forEach(([, q]) => texts.add(q))
 STICKERS.forEach((st) => texts.add(st.en + '!'))
+;[STORY.hello, STORY.tapWord, STORY.finale, ...Object.values(STORY.intro), ...STORY.crystal, ...Object.values(WISH_LINES), STATION_LINES.title].forEach((l) => texts.add(l.en))
 
 const seen = new Map<string, string>()
 for (const t of texts) if (!seen.has(slugify(t))) seen.set(slugify(t), t)
