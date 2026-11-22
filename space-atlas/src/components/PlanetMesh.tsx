@@ -13,7 +13,7 @@ import {
   getProcedural,
   makeEarthFallback,
   makeSaturnRingTexture,
-  preloadProceduralTextures,
+  requestProcedural,
   SATURN_RING,
   subscribeProcedural,
 } from '../utils/textures'
@@ -70,13 +70,28 @@ export function useEffectClock(effect: ActiveEffect | null) {
 
 // ---------------------------------------------------------------- procedural maps (painted in a worker)
 function useProcedural(key: ProceduralKey | null) {
-  useEffect(() => preloadProceduralTextures(), [])
+  useEffect(() => {
+    if (key) requestProcedural(key)
+  }, [key])
   return useSyncExternalStore(subscribeProcedural, () => (key ? getProcedural(key) : null))
 }
 
 // ---------------------------------------------------------------- textures from files
 const loaded = new Map<string, THREE.Texture>()
-function useFileTexture(url: string | undefined, srgb = true) {
+/**
+ * Same photo in three sizes: the Solar System overview shows planets only a few dozen pixels
+ * wide, so it uses 512 px maps (loading twelve 2048 px maps there froze older iPads at start-up);
+ * phones use 1024 px close-ups; tablets and computers get the full 2048 px.
+ */
+const PHONE = typeof window !== 'undefined' && Math.min(window.innerWidth, window.innerHeight) < 520
+function sized(url: string, overview: boolean) {
+  const dir = overview ? 'sm/' : PHONE ? 'md/' : ''
+  return dir ? url.replace('./textures/', `./textures/${dir}`) : url
+}
+
+function useFileTexture(rawUrl: string | undefined, srgb = true) {
+  const overview = useContext(OverviewContext)
+  const url = rawUrl && sized(rawUrl, overview)
   const [state, setState] = useState<{ tex: THREE.Texture | null; failed: boolean }>(() => ({
     tex: url ? loaded.get(url) ?? null : null,
     failed: false,
@@ -92,7 +107,7 @@ function useFileTexture(url: string | undefined, srgb = true) {
       url,
       (t) => {
         t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace
-        t.anisotropy = 8
+        t.anisotropy = overview ? 1 : 4
         loaded.set(url, t)
         if (alive) setState({ tex: t, failed: false })
       },
@@ -555,10 +570,12 @@ function GenericPlanet({
   const id = planet.id
   const overview = useContext(OverviewContext)
   const file = useFileTexture(planet.textureUrl)
-  const procedural = useProcedural(id === 'mars' || id === 'jupiter' || id === 'saturn' || id === 'neptune' ? id : null)
+  // painted maps only as a fall-back when the photo could not be loaded
+  const procedural = useProcedural(file.failed && (id === 'mars' || id === 'jupiter' || id === 'saturn' || id === 'neptune') ? id : null)
   const map = file.tex ?? procedural
-  const bump = useProcedural(id === 'mars' && !file.tex ? 'marsBump' : null)
-  const streaks = useProcedural(id === 'neptune' || id === 'venus' ? 'streaks' : null)
+  const bump = useProcedural(id === 'mars' && file.failed ? 'marsBump' : null)
+  // wind streaks are only used by close-up effects
+  const streaks = useProcedural(!overview && (id === 'neptune' || id === 'venus') ? 'streaks' : null)
 
   const body = useRef<THREE.Mesh>(null)
   const mat = useRef<THREE.MeshStandardMaterial>(null)

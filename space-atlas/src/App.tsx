@@ -1,8 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { SolarScene } from './components/SolarScene'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
+// The 3D engine is the biggest part of the app: load it in the background while the welcome
+// screen is already on screen, so opening the app feels instant.
+const SolarScene = lazy(() => import('./components/SolarScene').then((m) => ({ default: m.SolarScene })))
 import { IPadHUD } from './components/IPadHUD'
 import { WelcomeScreen } from './components/WelcomeScreen'
-import { GamesHub, loadStars, saveStars } from './games/GamesHub'
+import { loadStars, saveStars } from './games/stars'
+const GamesHub = lazy(() => import('./games/GamesHub').then((m) => ({ default: m.GamesHub })))
 import type { ActiveEffect } from './components/PlanetMesh'
 import { COUNT_STEP, effectDuration, lessonFor, PLANET_MAP, PLANET_ORDER, type ViewId, type VocabWord } from './data/planetsData'
 import {
@@ -15,19 +18,22 @@ import {
   unlockSpeech,
   type SpeechRate,
 } from './utils/speech'
-import { preloadProceduralTextures } from './utils/textures'
 import { AmbientStars } from './story/AmbientStars'
-import { ensureAudio, playArrive, playBoing, playPop, playSparkle, playWhoosh, setAudioRebuiltHandler, startMusic, stopMusic, unlockAudio } from './utils/soundEffects'
+import { setAudioSleeping, ensureAudio, playArrive, playBoing, playPop, playSparkle, playWhoosh, setAudioRebuiltHandler, startMusic, stopMusic, unlockAudio } from './utils/soundEffects'
 
 export interface Settings {
   rate: SpeechRate
   autoRotate: boolean
   music: boolean
   vietnameseVoice: boolean
+  /** Battery saver: lower resolution, no glow effect, 24 fps, no background sparkles */
+  saver: boolean
 }
 
 const SETTINGS_KEY = 'space-atlas-settings'
-const DEFAULT_SETTINGS: Settings = { rate: 'normal', autoRotate: true, music: true, vietnameseVoice: false }
+const DEFAULT_SETTINGS: Settings = { rate: 'normal', autoRotate: true, music: true, vietnameseVoice: false, saver: false }
+/** Nobody touched the screen for this long → the app goes to sleep (nothing is drawn or played). */
+const SLEEP_AFTER_MS = 2 * 60_000
 
 function loadSettings(): Settings {
   try {
@@ -61,7 +67,28 @@ export default function App() {
     setSpeechRate(settings.rate)
   }, [settings])
 
-  const wantMusic = started && settings.music
+  // ---- sleep: after 2 minutes without a touch the 3D scene, music and animations all stop
+  const [sleeping, setSleeping] = useState(false)
+  useEffect(() => {
+    if (!started) return
+    let timer = 0
+    const arm = () => {
+      window.clearTimeout(timer)
+      timer = window.setTimeout(() => setSleeping(true), SLEEP_AFTER_MS)
+    }
+    arm()
+    window.addEventListener('pointerdown', arm, { passive: true })
+    return () => {
+      window.clearTimeout(timer)
+      window.removeEventListener('pointerdown', arm)
+    }
+  }, [started])
+  useEffect(() => {
+    document.documentElement.classList.toggle('app-sleeping', sleeping)
+    setAudioSleeping(sleeping)
+  }, [sleeping])
+
+  const wantMusic = started && settings.music && !sleeping
   const wantMusicRef = useRef(wantMusic)
   wantMusicRef.current = wantMusic
   useEffect(() => {
@@ -101,8 +128,10 @@ export default function App() {
       /* not supported – fine */
     }
     setStarted(true)
-    preloadProceduralTextures()
-    void preloadVoiceClips()
+    // load the games quietly in the background so PLAY opens at once
+    setTimeout(() => void import('./games/GamesHub'), 9000)
+    // only the first words a child hears, a few seconds after the intro flight
+    setTimeout(() => void preloadVoiceClips(['SOLAR SYSTEM!', ...PLANET_ORDER.map((id) => PLANET_MAP[id].englishName + '!'), 'SUN!']), 4000)
     setTimeout(() => setViVoice(hasVietnameseVoice()), 800)
   }, [])
 
@@ -117,6 +146,9 @@ export default function App() {
     [say],
   )
 
+  // where the child has been, so BACK can fly to the previous planet
+  const [trail, setTrail] = useState<ViewId[]>([])
+  const fromBack = useRef(false)
   const handleSelectPlanet = useCallback(
     (id: ViewId) => {
       if (id === planetId) {
@@ -126,6 +158,8 @@ export default function App() {
         return
       }
       stopSpeaking()
+      if (!fromBack.current) setTrail((t) => [...t, planetId].slice(-20))
+      fromBack.current = false
       playWhoosh()
       setFlying(true)
       setEffect(null)
@@ -135,6 +169,14 @@ export default function App() {
     },
     [planetId, planet, say],
   )
+
+  const handleBack = useCallback(() => {
+    if (flying || !trail.length) return
+    const prev = trail[trail.length - 1]
+    setTrail((t) => t.slice(0, -1))
+    fromBack.current = true
+    handleSelectPlanet(prev)
+  }, [flying, trail, handleSelectPlanet])
 
   const handleSpeakName = useCallback(() => {
     setBounce((b) => b + 1)
@@ -200,6 +242,7 @@ export default function App() {
 
   return (
     <div className="relative h-[100dvh] w-screen touch-none select-none overflow-hidden bg-[#050818] font-nunito">
+      <Suspense fallback={null}>
       <SolarScene
         viewId={planetId}
         started={started}
@@ -209,12 +252,18 @@ export default function App() {
         onArrive={handleArrive}
         onPlanetTap={handlePlanetTap}
         onSelectPlanet={handleSelectPlanet}
-        paused={gamesOpen}
+        paused={gamesOpen || sleeping}
+        saver={settings.saver}
       />
+      </Suspense>
 
-      <AmbientStars on={started && !gamesOpen} />
+      <AmbientStars on={started && !gamesOpen && !sleeping && !settings.saver} />
 
-      {started && gamesOpen && <GamesHub stars={stars} onStar={addStar} onClose={closeGames} onSay={say} />}
+      {started && gamesOpen && (
+        <Suspense fallback={<div className="absolute inset-0 z-30 flex items-center justify-center bg-[#0a0d2c] text-6xl"><span className="animate-float">🚀</span></div>}>
+          <GamesHub stars={stars} onStar={addStar} onClose={closeGames} onSay={say} />
+        </Suspense>
+      )}
 
       {started && !gamesOpen && (
         <IPadHUD
@@ -231,6 +280,7 @@ export default function App() {
           onVocab={handleVocab}
           onToggleCompare={handleToggleCompare}
           onSelectPlanet={handleSelectPlanet}
+          onBack={trail.length ? handleBack : undefined}
           onOpenGames={openGames}
           stars={stars}
           onFact={say}
@@ -239,6 +289,22 @@ export default function App() {
       )}
 
       <WelcomeScreen onStart={handleStart} leaving={started} />
+
+      {sleeping && (
+        <button
+          data-testid="sleep-overlay"
+          aria-label="Wake up"
+          onClick={() => {
+            setSleeping(false)
+            void ensureAudio()
+          }}
+          className="absolute inset-0 z-[70] flex flex-col items-center justify-center gap-3 bg-[#03040f] font-nunito text-white"
+        >
+          <span className="text-7xl">😴</span>
+          <span className="text-3xl font-black">Cosmo is sleeping…</span>
+          <span className="text-lg font-bold text-sky-200">Chạm để đánh thức · Tap to wake up</span>
+        </button>
+      )}
     </div>
   )
 }

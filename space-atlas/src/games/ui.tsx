@@ -1,6 +1,7 @@
 /** Shared building blocks for the 2D games (full-screen layout, top bar, question, finish screen). */
 import type React from 'react'
 import { useLayout } from '../utils/useLayout'
+import { playPop } from '../utils/soundEffects'
 
 export type Say = (en: string, vi?: string) => void | Promise<void>
 
@@ -35,18 +36,33 @@ export function Screen({ children }: { children: React.ReactNode }) {
   )
 }
 
-export function TopBar({ onBack, middle, stars }: { onBack: () => void; middle: React.ReactNode; stars: number }) {
+/** Big, labelled back button: goes one screen back (game → games menu → space). */
+export function BackButton({ onBack, label = 'BACK' }: { onBack: () => void; label?: string }) {
+  const { compact } = useLayout()
+  return (
+    <button
+      onClick={() => {
+        playPop()
+        onBack()
+      }}
+      aria-label="Back"
+      data-testid="back"
+      style={{ minHeight: compact ? 44 : 56 }}
+      className={`flex shrink-0 items-center gap-1.5 rounded-full border-2 border-white/25 bg-gradient-to-r from-sky-500 to-blue-700 font-black text-white shadow-lg active:scale-90 ${
+        compact ? 'px-3 text-sm' : 'px-5 text-xl'
+      }`}
+    >
+      <span className={compact ? 'text-xl' : 'text-3xl'}>←</span>
+      {label}
+    </button>
+  )
+}
+
+export function TopBar({ onBack, middle, stars, backLabel }: { onBack: () => void; middle: React.ReactNode; stars: number; backLabel?: string }) {
   const { compact } = useLayout()
   return (
     <div className={`flex items-center ${compact ? 'gap-2 p-2' : 'gap-3 p-3'}`} style={{ paddingTop: `max(${compact ? 8 : 12}px, env(safe-area-inset-top))` }}>
-      <button
-        onClick={onBack}
-        aria-label="Back"
-        style={{ width: compact ? 44 : 56, height: compact ? 44 : 56 }}
-        className="flex shrink-0 items-center justify-center rounded-full border border-white/15 bg-slate-900/80 text-2xl font-black shadow-lg active:scale-90"
-      >
-        ✕
-      </button>
+      <BackButton onBack={onBack} label={backLabel} />
       <div className="flex min-w-0 flex-1 justify-center">{middle}</div>
       <div className={`shrink-0 rounded-full bg-amber-400/90 font-black text-slate-900 shadow-lg ${compact ? 'px-3 py-1.5 text-base' : 'px-4 py-2 text-xl'}`}>⭐ {stars}</div>
     </div>

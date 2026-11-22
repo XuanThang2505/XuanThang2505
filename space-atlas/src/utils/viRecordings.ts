@@ -5,6 +5,7 @@
  */
 import { FACTS, GAME_LINES, PLANETS, PUZZLE_LINES, QUIZ, STICKERS, SYSTEM_LESSON } from '../data/planetsData'
 import { OCEAN_WORDS, ROCKET_COLORS, ROCKET_LINES, SPLASH_LINES, STATION_LINES, STORY, WISH_LINES } from '../data/storyData'
+import { CREATURES, DIVE_LINES, DOLPHIN_LEVEL_LINES, FLY_LINES, WORKSHOP_LINES, ZONES } from '../data/moreData'
 import { slugify } from './slug'
 
 const DB = 'space-atlas-vi'
@@ -47,6 +48,7 @@ export function allViLines(): string[] {
   ;[PUZZLE_LINES.start, PUZZLE_LINES.tryAgain, PUZZLE_LINES.done, ...PUZZLE_LINES.praise].forEach((l) => out.push(l.vi))
   ;[STORY.hello, STORY.tapWord, STORY.finale, ...Object.values(STORY.intro), ...STORY.crystal, ...Object.values(WISH_LINES), STATION_LINES.title].forEach((l) => out.push(l.vi))
   ;[...Object.values(SPLASH_LINES), ROCKET_LINES.build, ...ROCKET_LINES.count, ...ROCKET_LINES.trips, ...OCEAN_WORDS, ...ROCKET_COLORS].forEach((l) => out.push(l.vi))
+  ;[...Object.values(DIVE_LINES), ...Object.values(WORKSHOP_LINES), ...Object.values(DOLPHIN_LEVEL_LINES), ...Object.values(FLY_LINES), ...ZONES, ...CREATURES].forEach((l) => out.push(l.vi))
   PLANETS.forEach((p) => out.push(p.vietnameseSub, p.compare.vi))
   out.push(SYSTEM_LESSON.vietnameseSub)
   Object.values(FACTS).forEach((list) => list.forEach((f) => out.push(f[2])))

@@ -45,6 +45,8 @@ export interface SolarSceneProps {
   onSelectPlanet: (id: PlanetId) => void
   /** Stop rendering (e.g. while the 2D puzzle covers the screen) to save battery */
   paused?: boolean
+  /** Battery saver (parent setting) */
+  saver?: boolean
 }
 
 const FRONT = new THREE.Vector3(0, 0.22, 1).normalize()
@@ -301,13 +303,14 @@ function SceneContent({ viewId, started, effect, compareOn, autoRotate, onArrive
  * "flash flash" and the occasional lag. Edges are smoothed with MSAA again: without it thin orbit
  * lines and rings shimmer, and Bloom turns the shimmering pixels into flickering sparkles.
  */
-function startQuality() {
-  if (typeof window === 'undefined') return { dpr: 1.5, msaa: 4 }
+function startQuality(saver?: boolean) {
+  if (typeof window === 'undefined') return { dpr: 1.5, msaa: 4, bloom: true }
+  if (saver) return { dpr: 1, msaa: 2, bloom: false }
   const phone = Math.min(window.innerWidth, window.innerHeight) < 520
-  return { dpr: Math.min(window.devicePixelRatio || 1, 1.5), msaa: phone ? 2 : 4 }
+  return { dpr: Math.min(window.devicePixelRatio || 1, 1.5), msaa: phone ? 2 : 4, bloom: true }
 }
 /** Only for a device that really cannot keep up: one single step down, never back up. */
-const LOW_QUALITY = { dpr: 1, msaa: 0 }
+const LOW_QUALITY = { dpr: 1, msaa: 0, bloom: false }
 
 /** Steady 30 fps: smooth enough for slow space motion, half the work of 60 fps. */
 const FPS = 30
@@ -319,7 +322,7 @@ const MAX_STEP = 1 / 15
  * all while the app is hidden or a game covers the scene. The scene clock only moves while frames
  * are drawn, so nothing jumps when the child comes back from a game.
  */
-function FrameLimiter({ paused, onSlow }: { paused?: boolean; onSlow: () => void }) {
+function FrameLimiter({ paused, fps = FPS, onSlow }: { paused?: boolean; fps?: number; onSlow: () => void }) {
   const advance = useThree((s) => s.advance)
   const sim = useRef(0)
   const slowReported = useRef(false)
@@ -338,8 +341,8 @@ function FrameLimiter({ paused, onSlow }: { paused?: boolean; onSlow: () => void
         winStart = 0
         return
       }
-      if (last && t - last < 1000 / FPS - 2) return
-      const dt = last ? Math.min((t - last) / 1000, MAX_STEP) : 1 / FPS
+      if (last && t - last < 1000 / fps - 2) return
+      const dt = last ? Math.min((t - last) / 1000, MAX_STEP) : 1 / fps
       last = t
       sim.current += dt
       advance(sim.current)
@@ -364,12 +367,19 @@ function FrameLimiter({ paused, onSlow }: { paused?: boolean; onSlow: () => void
     }
     raf = requestAnimationFrame(loop)
     return () => cancelAnimationFrame(raf)
-  }, [advance, paused, onSlow])
+  }, [advance, paused, fps, onSlow])
   return null
 }
 
 export function SolarScene(props: SolarSceneProps) {
-  const [quality, setQuality] = useState(startQuality)
+  const [quality, setQuality] = useState(() => startQuality(props.saver))
+  // the parent switched battery saver on/off: a one-off change, chosen by a grown-up
+  const firstSaver = useRef(props.saver)
+  useEffect(() => {
+    if (firstSaver.current === props.saver) return
+    firstSaver.current = props.saver
+    setQuality(startQuality(props.saver))
+  }, [props.saver])
   const onSlow = useCallback(() => setQuality(LOW_QUALITY), [])
   return (
     <Canvas
@@ -379,15 +389,21 @@ export function SolarScene(props: SolarSceneProps) {
       camera={{ fov: 62, near: 0.05, far: 2000, position: [0, 6, 30] }}
       gl={{ antialias: false, powerPreference: 'default', stencil: false }}
     >
-      <FrameLimiter paused={props.paused} onSlow={onSlow} />
+      <FrameLimiter paused={props.paused} fps={props.saver ? 24 : FPS} onSlow={onSlow} />
       <color attach="background" args={['#050818']} />
       <Suspense fallback={null}>
         <SceneContent {...props} />
       </Suspense>
-      <EffectComposer multisampling={quality.msaa} key={quality.msaa}>
-        <Bloom mipmapBlur intensity={0.7} luminanceThreshold={0.86} luminanceSmoothing={0.2} radius={0.7} />
-        <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
-      </EffectComposer>
+      {quality.bloom ? (
+        <EffectComposer multisampling={quality.msaa} key={`b${quality.msaa}`}>
+          <Bloom mipmapBlur intensity={0.7} luminanceThreshold={0.86} luminanceSmoothing={0.2} radius={0.7} />
+          <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+        </EffectComposer>
+      ) : (
+        <EffectComposer multisampling={quality.msaa} key={`n${quality.msaa}`}>
+          <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+        </EffectComposer>
+      )}
     </Canvas>
   )
 }

@@ -23,31 +23,20 @@ import { Station } from '../story/Station'
 import { ShootingWish } from '../story/ShootingWish'
 import { isGeminids, loadRocket, loadStory } from '../data/storyData'
 import { RocketLab } from '../story/RocketLab'
+import { DeepSea } from '../story/DeepSea'
+import { RobotWorkshop } from '../story/RobotWorkshop'
 import { DolphinGame } from '../story/DolphinGame'
 import { RocketArt } from '../story/Rocket'
 import { Cosmo, Splash } from '../story/Cosmo'
 import { Done, QuestionButton, Screen, shuffle, TopBar, wait } from './ui'
 
 import type { Say } from './ui'
-type Game = 'menu' | 'home' | 'quiz' | 'order' | 'jigsaw' | 'memory' | 'stickers' | 'story' | 'station' | 'wish' | 'rocket' | 'dolphin'
+type Game = 'menu' | 'home' | 'quiz' | 'order' | 'jigsaw' | 'memory' | 'stickers' | 'story' | 'station' | 'wish' | 'rocket' | 'dolphin' | 'sea' | 'workshop'
 /** Games with their own big celebrations: a new-sticker popup waits until the child is back in the menu. */
-const CALM: Game[] = ['story', 'station', 'wish', 'rocket', 'dolphin']
+const CALM: Game[] = ['story', 'station', 'wish', 'rocket', 'dolphin', 'sea', 'workshop']
 
-const STARS_KEY = 'space-atlas-stars'
-export function loadStars() {
-  try {
-    return parseInt(localStorage.getItem(STARS_KEY) ?? '0', 10) || 0
-  } catch {
-    return 0
-  }
-}
-export function saveStars(n: number) {
-  try {
-    localStorage.setItem(STARS_KEY, String(n))
-  } catch {
-    /* private mode – fine */
-  }
-}
+import { loadStars, saveStars } from './stars'
+export { loadStars, saveStars }
 
 // ---------------------------------------------------------------- menu
 function Menu({ stars, onPick, onClose, onSay }: { stars: number; onPick: (g: Game) => void; onClose: () => void; onSay: Say }) {
@@ -61,16 +50,18 @@ function Menu({ stars, onPick, onClose, onSay }: { stars: number; onPick: (g: Ga
   const featured: { g: Game; art: React.ReactNode; en: string; vi: string; tag: string; cls: string }[] = [
     {
       g: 'story',
-      art: <Cosmo size={c0 ? 56 : 92} />,
+      art: <Cosmo size={c0 ? 56 : 80} />,
       en: "Cosmo's mission",
       vi: story.finished ? 'Đã xong! Chơi lại nhé' : `Tìm pha lê · ${story.done}/8 💎`,
       tag: 'STORY',
       cls: 'from-sky-400 via-blue-600 to-indigo-800',
     },
-    { g: 'rocket', art: <RocketArt design={loadRocket()} size={c0 ? 84 : 140} flame={0.6} />, en: 'Rocket lab', vi: 'Làm tên lửa và phóng!', tag: 'NEW', cls: 'from-cyan-400 via-sky-600 to-blue-900' },
-    { g: 'dolphin', art: <Splash size={c0 ? 80 : 130} />, en: "Splash's ocean", vi: 'Cá heo nhảy bắt đồ vật', tag: 'NEW', cls: 'from-teal-300 via-cyan-600 to-blue-800' },
+    { g: 'rocket', art: <RocketArt design={loadRocket()} size={c0 ? 84 : 120} flame={0.6} />, en: 'Rocket lab', vi: 'Làm tên lửa và phóng!', tag: 'NEW', cls: 'from-cyan-400 via-sky-600 to-blue-900' },
+    { g: 'dolphin', art: <Splash size={c0 ? 80 : 120} />, en: "Splash's ocean", vi: '3 cấp độ: bắt, nghe, đếm', tag: '3 LEVELS', cls: 'from-teal-300 via-cyan-600 to-blue-800' },
+    { g: 'sea', art: <span className={c0 ? 'text-5xl' : 'text-7xl'}>🤿</span>, en: 'Deep sea dive', vi: 'Lặn tìm 14 con vật biển', tag: 'EXPLORE', cls: 'from-blue-400 via-indigo-700 to-slate-900' },
   ]
   const cards: { g: Game; icon: string; en: string; vi: string; age: string; cls: string }[] = [
+    { g: 'workshop', icon: '🔧', en: 'Robot shop', vi: 'Trang trí Cosmo', age: 'NEW', cls: 'from-cyan-500 to-indigo-700' },
     { g: 'station', icon: '🛰️', en: 'My station', vi: 'Trang trí trạm', age: '3+', cls: 'from-violet-500 to-slate-700' },
     { g: 'wish', icon: '🌠', en: isGeminids() ? 'Geminids!' : 'Shooting stars', vi: isGeminids() ? 'Mưa sao băng' : 'Bắt sao băng', age: isGeminids() ? 'EVENT' : '3+', cls: 'from-yellow-400 to-rose-600' },
     { g: 'home', icon: '🧩', en: 'Planets home', vi: 'Kéo về nhà', age: '3+', cls: 'from-fuchsia-500 to-indigo-600' },
@@ -83,6 +74,7 @@ function Menu({ stars, onPick, onClose, onSay }: { stars: number; onPick: (g: Ga
     <Screen>
       <TopBar
         onBack={onClose}
+        backLabel="SPACE"
         stars={stars}
         middle={
           <div className={`flex items-center ${c0 && L.portrait ? 'flex-col gap-1' : c0 ? 'gap-3' : 'gap-4'}`}>
@@ -116,14 +108,14 @@ function Menu({ stars, onPick, onClose, onSay }: { stars: number; onPick: (g: Ga
                   onPick(f.g)
                 }}
                 className={`relative flex items-center overflow-hidden rounded-[2rem] border-2 border-white/25 bg-gradient-to-br ${f.cls} text-left shadow-[0_10px_40px_rgba(14,165,233,0.35)] active:scale-95 ${
-                  c0 ? (L.portrait ? 'h-[96px] w-[340px] gap-2 px-3' : 'h-[104px] w-[200px] gap-1 px-2') : (L.portrait ? 'h-40 w-[26rem] gap-3 px-5' : 'h-44 w-[min(30vw,24rem)] gap-2 px-4')
+                  c0 ? (L.portrait ? 'h-[84px] w-[340px] gap-2 px-3' : 'h-[96px] w-[calc(25vw-14px)] max-w-[200px] gap-1 px-2') : (L.portrait ? 'h-36 w-[26rem] gap-3 px-5' : 'h-40 w-[min(22.5vw,20rem)] gap-1 px-3')
                 }`}
               >
                 <span className={`absolute rounded-full bg-black/25 font-extrabold ${c0 ? 'right-2.5 top-2 px-1.5 text-[10px]' : 'right-4 top-3 px-2 text-sm'}`}>{f.tag}</span>
                 <span className="flex shrink-0 items-center justify-center">{f.art}</span>
                 <span className="min-w-0">
-                  <b className={`block font-black leading-tight drop-shadow ${c0 ? 'text-[15px]' : 'text-2xl'}`}>{f.en}</b>
-                  <small className={`block font-semibold text-white/90 ${c0 ? 'text-[11px] leading-tight' : 'text-base'}`}>{f.vi}</small>
+                  <b className={`block font-black leading-tight drop-shadow ${c0 ? 'text-[15px]' : 'text-xl'}`}>{f.en}</b>
+                  <small className={`block font-semibold text-white/90 ${c0 ? 'text-[11px] leading-tight' : 'text-sm'}`}>{f.vi}</small>
                 </span>
               </button>
             ))}
@@ -439,6 +431,8 @@ export function GamesHub({
   else if (game === 'station') screen = <Station stars={stars} onBack={back} onSay={onSay} />
   else if (game === 'rocket') screen = <RocketLab stars={stars} onBack={back} onStar={onStar} onSay={onSay} />
   else if (game === 'dolphin') screen = <DolphinGame stars={stars} onBack={back} onStar={onStar} onSay={onSay} />
+  else if (game === 'sea') screen = <DeepSea stars={stars} onBack={back} onStar={onStar} onSay={onSay} />
+  else if (game === 'workshop') screen = <RobotWorkshop stars={stars} onBack={back} onStar={onStar} onSay={onSay} />
   else if (game === 'wish') screen = <ShootingWish stars={stars} onBack={back} onStar={onStar} onSay={onSay} />
   else screen = <Menu stars={stars} onPick={go} onClose={() => onClose(false)} onSay={onSay} />
   return (

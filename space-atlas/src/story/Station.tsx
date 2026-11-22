@@ -103,7 +103,7 @@ export function Station({ stars, onBack, onSay }: { stars: number; onBack: () =>
   }
 
   const size = c ? 56 : 96
-  const sky = useMemo(() => Array.from({ length: 36 }, (_, i) => ({ x: (i * 53) % 100, y: (i * 29) % 70, d: (i % 7) * 0.5, s: 2 + (i % 3) })), [])
+  const sky = useMemo(() => Array.from({ length: 12 }, (_, i) => ({ x: (i * 53) % 100, y: (i * 29) % 70, d: (i % 7) * 0.5, s: 2 + (i % 3) })), [])
 
   return (
     <Screen>

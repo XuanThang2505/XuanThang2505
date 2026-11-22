@@ -12,8 +12,9 @@ import { speak, stopSpeaking } from '../utils/speech'
 import { useLayout } from '../utils/useLayout'
 import { Cosmo } from './Cosmo'
 import { RocketArt } from './Rocket'
+import { FlyGame } from './FlyGame'
 
-type Phase = 'build' | 'count' | 'lift' | 'fly' | 'arrive'
+type Phase = 'build' | 'count' | 'lift' | 'fly' | 'arrive' | 'game'
 
 export function RocketLab({ stars, onBack, onStar, onSay }: { stars: number; onBack: () => void; onStar: () => void; onSay: Say }) {
   const L = useLayout()
@@ -86,6 +87,8 @@ export function RocketLab({ stars, onBack, onStar, onSay }: { stars: number; onB
   // the planet we land on: fits the screen and leaves room for the caption + buttons
   const planetD = Math.min(rocketSize * 0.95, L.w * 0.7, L.h * 0.38)
 
+  if (phase === 'game') return <FlyGame trip={trip} stars={stars} onStar={onStar} onSay={onSay} onBack={() => setPhase('build')} />
+
   // ------------------------------------------------ launch / flight scene
   if (phase !== 'build') {
     const flying = phase === 'fly'
@@ -149,7 +152,17 @@ export function RocketLab({ stars, onBack, onStar, onSay }: { stars: number; onB
                 <b className={`block font-black ${c ? 'text-xl' : 'text-4xl'}`}>{ROCKET_LINES.trips[trip].en}</b>
                 <small className={`font-semibold text-slate-500 ${c ? 'text-xs' : 'text-lg'}`}>{ROCKET_LINES.trips[trip].vi}</small>
               </div>
-              <div className="flex gap-3">
+              <div className="flex flex-wrap justify-center gap-3">
+                <button
+                  data-testid="fly-it"
+                  onClick={() => {
+                    playPop()
+                    setPhase('game')
+                  }}
+                  className={`rounded-full bg-gradient-to-r from-cyan-400 to-blue-600 font-black shadow-xl active:scale-95 ${c ? 'px-4 py-2.5 text-lg' : 'px-8 py-4 text-2xl'}`}
+                >
+                  🕹️ FLY IT!
+                </button>
                 <button data-testid="rocket-again" onClick={again} className={`rounded-full bg-gradient-to-r from-amber-400 to-orange-600 font-black shadow-xl active:scale-95 ${c ? 'px-5 py-2.5 text-lg' : 'px-8 py-4 text-2xl'}`}>
                   🚀 AGAIN
                 </button>
@@ -233,6 +246,16 @@ export function RocketLab({ stars, onBack, onStar, onSay }: { stars: number; onB
             className={`animate-breathe mt-1 rounded-full bg-gradient-to-r from-amber-300 via-orange-500 to-rose-500 font-black text-white shadow-[0_0_40px_rgba(251,146,60,0.6)] active:scale-95 ${c ? 'px-6 py-2.5 text-xl' : 'px-12 py-5 text-4xl'}`}
           >
             3·2·1 LAUNCH! 🚀
+          </button>
+          <button
+            data-testid="fly-from-lab"
+            onClick={() => {
+              playPop()
+              setPhase('game')
+            }}
+            className={`rounded-full border-2 border-white/30 bg-gradient-to-r from-cyan-500 to-blue-700 font-black shadow-lg active:scale-95 ${c ? 'px-5 py-2 text-base' : 'px-8 py-3 text-2xl'}`}
+          >
+            🕹️ FLY & CATCH STARS
           </button>
         </div>
       </div>
