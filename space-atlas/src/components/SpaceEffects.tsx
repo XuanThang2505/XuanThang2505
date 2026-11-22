@@ -147,7 +147,7 @@ export function Swarm({ kind, level, baseline = 0 }: { kind: SwarmKind; level: G
           x = Math.cos(a[i]) * r[i]
           y = b[i]
           z = Math.sin(a[i]) * r[i]
-          const tw = Math.max(0, Math.sin(t * (2 + s[i] * 20) + ph[i]))
+          const tw = 0.35 + 0.65 * Math.max(0, Math.sin(t * (1.2 + s[i] * 2.5) + ph[i]))
           bright *= 0.15 + 1.6 * tw ** 6
           break
         }
@@ -227,8 +227,8 @@ export function Rocket({ level, time }: { level: Getter; time: Getter }) {
     g.lookAt(tmp)
     g.scale.setScalar(0.22 * L)
     if (flame.current) {
-      const f = 0.8 + Math.sin(state.clock.elapsedTime * 40) * 0.2
-      flame.current.scale.set(f, f * (1 + Math.random() * 0.3), f)
+      const f = 0.85 + Math.sin(state.clock.elapsedTime * 9) * 0.1
+      flame.current.scale.set(f, f * 1.1, f)
     }
   })
 

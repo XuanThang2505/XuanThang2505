@@ -260,7 +260,7 @@ function SunBody({ level, onTap, spin }: { level: (n: EffectName) => number; onT
     uniforms.uTime.value = t
     uniforms.uHeat.value = heat
     if (body.current) body.current.rotation.y += dt * spin() * (1 + heat * 4)
-    if (group.current) group.current.scale.setScalar(1 - star * 0.45 + Math.sin(t * 6) * heat * 0.015)
+    if (group.current) group.current.scale.setScalar(1 - star * 0.45 + Math.sin(t * 3) * heat * 0.015)
     const pulse = 1 + Math.sin(t * 1.5) * 0.03
     if (corona.current) corona.current.scale.setScalar((2.9 + rays * 1.4 + heat * 0.6) * pulse)
     if (outer.current) {
@@ -463,7 +463,7 @@ function SaturnRings({ level }: { level: (n: EffectName) => number }) {
     const t = state.clock.elapsedTime
     mats.current.forEach((m, i) => {
       if (!m) return
-      m.emissiveIntensity = 0.18 + shine * (0.9 + Math.sin(t * 6 + i) * 0.3)
+      m.emissiveIntensity = 0.18 + shine * (0.9 + Math.sin(t * 2.5 + i) * 0.15)
     })
     if (group.current) {
       // RING: tilt the rings towards the viewer so they are easy to see
@@ -514,7 +514,7 @@ function UranusRings({ level }: { level: Getter }) {
     const t = state.clock.elapsedTime
     mats.current.forEach((m, i) => {
       if (!m) return
-      m.opacity = 0.18 + L * (0.7 + Math.sin(t * 6 + i) * 0.2)
+      m.opacity = 0.18 + L * (0.7 + Math.sin(t * 2.5 + i) * 0.1)
       m.color.setRGB(0.75 + L * 0.25, 0.85 + L * 0.15, 0.9 + L * 0.1)
     })
   })

@@ -65,7 +65,7 @@ function WordCard({
   const longName = planet.englishName.length > 9
   return (
     <div
-      className={`pointer-events-auto border border-white/10 bg-slate-900/75 shadow-2xl backdrop-blur-md transition-all duration-500 ${
+      className={`pointer-events-auto border border-white/10 bg-slate-900/90 shadow-2xl transition-all duration-500 ${
         c ? 'rounded-2xl px-3 py-2' : 'rounded-3xl p-5'
       } ${L.portrait ? 'w-full' : c ? 'max-w-[44vw]' : 'max-w-[44vw]'} ${flying ? 'translate-y-[-8px] opacity-0' : 'opacity-100'}`}
     >
@@ -164,8 +164,8 @@ function FactsPanel({ planet, flying, L, onFact }: Pick<Props, 'planet' | 'flyin
             setCurrent(i)
             onFact(en, vi)
           }}
-          className={`animate-word-pop flex items-center gap-2 rounded-2xl border px-2.5 py-2 text-left shadow-lg backdrop-blur-md active:scale-95 ${
-            current === i ? 'border-amber-300 bg-amber-400/30 ring-2 ring-amber-300/60' : 'border-white/10 bg-slate-900/80'
+          className={`animate-word-pop flex items-center gap-2 rounded-2xl border px-2.5 py-2 text-left shadow-lg active:scale-95 ${
+            current === i ? 'border-amber-300 bg-amber-400/30 ring-2 ring-amber-300/60' : 'border-white/10 bg-slate-900/90'
           }`}
         >
           <span className={c ? 'text-xl' : 'text-2xl'}>{icon}</span>
@@ -186,8 +186,8 @@ function FactsPanel({ planet, flying, L, onFact }: Pick<Props, 'planet' | 'flyin
           onClick={toggle}
           aria-label="Fun facts"
           style={c ? { minHeight: TAP, minWidth: TAP } : undefined}
-          className={`flex items-center justify-center gap-2 rounded-2xl border shadow-lg backdrop-blur-md active:scale-95 ${c ? 'px-2' : 'px-3 py-2'} ${
-            open ? 'border-sky-300 bg-sky-500/40' : 'border-white/10 bg-slate-900/75'
+          className={`flex items-center justify-center gap-2 rounded-2xl border shadow-lg active:scale-95 ${c ? 'px-2' : 'px-3 py-2'} ${
+            open ? 'border-sky-300 bg-sky-500/40' : 'border-white/10 bg-slate-900/90'
           }`}
         >
           <span className="text-2xl">🔍</span>
@@ -200,7 +200,7 @@ function FactsPanel({ planet, flying, L, onFact }: Pick<Props, 'planet' | 'flyin
           <button
             data-testid="facts-readall"
             onClick={() => void readAll()}
-            className="flex items-center gap-2 rounded-2xl border border-white/10 bg-slate-900/75 px-3 py-2 shadow-lg backdrop-blur-md active:scale-95"
+            className="flex items-center gap-2 rounded-2xl border border-white/10 bg-slate-900/90 px-3 py-2 shadow-lg active:scale-95"
           >
             <span className="text-2xl">▶️</span>
             <span className="text-left leading-tight">
@@ -216,7 +216,7 @@ function FactsPanel({ planet, flying, L, onFact }: Pick<Props, 'planet' | 'flyin
 
       {/* phones: facts open as a centred panel so they never cover the planet's controls */}
       {open && c && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/55 p-3 backdrop-blur-sm" onClick={toggle}>
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/55 p-3" onClick={toggle}>
           <div
             data-testid="facts-modal"
             className="max-h-full w-full max-w-[560px] overflow-y-auto rounded-3xl border border-white/10 bg-slate-900/95 p-3 shadow-2xl"
@@ -265,8 +265,8 @@ function VocabCards({
   const hasCompare = planet.id !== 'system'
   const wordCard = (w: VocabWord) => {
     const active = activeWord === w.word
-    const base = `border text-left shadow-xl backdrop-blur-md transition-all active:scale-95 ${
-      active ? 'scale-105 border-amber-300 bg-amber-400/30 shadow-amber-400/40 ring-4 ring-amber-300/60' : 'border-white/10 bg-slate-900/70'
+    const base = `border text-left shadow-xl transition-all active:scale-95 ${
+      active ? 'scale-105 border-amber-300 bg-amber-400/30 shadow-amber-400/40 ring-4 ring-amber-300/60' : 'border-white/10 bg-slate-900/90'
     }`
     if (L.portrait) {
       // a row of cards: icon on top, word below
@@ -308,7 +308,7 @@ function VocabCards({
       onClick={onToggleCompare}
       aria-label="Size compare"
       style={L.portrait ? { minHeight: c ? 64 : 88 } : c ? { height: 46 } : undefined}
-      className={`border shadow-xl backdrop-blur-md transition-all active:scale-95 ${
+      className={`border shadow-xl transition-all active:scale-95 ${
         compareOn ? 'border-sky-300 bg-sky-500/40 ring-4 ring-sky-300/50' : 'border-white/10 bg-indigo-900/70'
       } ${
         L.portrait
@@ -412,7 +412,7 @@ function PlanetDock({ currentId, onSelectPlanet, onOpenGames, stars, L }: Pick<P
     <div
       ref={scroller}
       data-testid="dock"
-      className={`no-scrollbar pointer-events-auto flex max-w-full items-end overflow-x-auto overflow-y-hidden border border-white/10 bg-slate-900/60 shadow-2xl backdrop-blur-md ${
+      className={`no-scrollbar pointer-events-auto flex max-w-full items-end overflow-x-auto overflow-y-hidden border border-white/10 bg-slate-900/85 shadow-2xl ${
         c ? 'gap-1 rounded-[1.5rem] px-2 pb-1 pt-1.5' : 'gap-1 rounded-[2rem] px-3 pb-2 pt-3 lg:gap-2'
       }`}
     >
@@ -551,7 +551,7 @@ function ParentPanel({
     setSoundMsg(ok ? 'Đã phát. Nếu vẫn không nghe: tắt công tắc im lặng bên cạnh iPad, tăng âm lượng, rồi thử lại.' : 'Âm thanh chưa sẵn sàng: chạm màn hình một lần rồi bấm lại.')
   }
   return (
-    <div data-testid="parent-panel" className="pointer-events-auto fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 backdrop-blur-sm" onClick={onClose}>
+    <div data-testid="parent-panel" className="pointer-events-auto fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3" onClick={onClose}>
       <div className="max-h-full w-[min(94vw,460px)] overflow-y-auto rounded-3xl border border-white/10 bg-slate-900 p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-2xl font-extrabold text-white">👨‍👩‍👧 Cài đặt phụ huynh</h2>
         <div className="mt-4 space-y-3">
@@ -619,7 +619,7 @@ export function IPadHUD(props: Props) {
     compareOn && !flying && 'compare' in planet ? (
       <div
         data-testid="compare-caption"
-        className={`animate-word-pop rounded-2xl bg-sky-600/85 text-center shadow-xl backdrop-blur ${c ? 'px-3 py-1' : 'px-5 py-2'} ${
+        className={`animate-word-pop rounded-2xl bg-sky-600/85 text-center shadow-xl ${c ? 'px-3 py-1' : 'px-5 py-2'} ${
           L.portrait ? 'mx-auto w-fit' : `absolute left-1/2 -translate-x-1/2 ${c ? 'bottom-[76px]' : 'bottom-32'}`
         }`}
       >
