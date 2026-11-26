@@ -20,3 +20,9 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
     navigator.serviceWorker.register('./sw.js').catch(() => {})
   })
 }
+
+// Self-test hook (only with ?selftest): lets the automated tests check the AR model export.
+if (location.search.includes('selftest')) {
+  ;(window as unknown as { __arTest: (id: string) => Promise<number> }).__arTest = (id) =>
+    import('./worlds/ar').then((m) => m.makePlanetUSDZ(id as 'saturn')).then((b) => b.size)
+}
