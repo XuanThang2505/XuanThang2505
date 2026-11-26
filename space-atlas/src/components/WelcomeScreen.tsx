@@ -3,6 +3,8 @@
  * The big button is the user gesture iOS Safari needs to unlock audio + speech.
  */
 import { Cosmo, Splash } from '../story/Cosmo'
+import { MeAstronaut } from '../me/MeAstronaut'
+import { meStore } from '../me/meStore'
 import { useLayout } from '../utils/useLayout'
 
 const WAVE = 'M0 30 ' + Array.from({ length: 8 }, (_, i) => `Q ${i * 150 + 75} ${i % 2 ? 58 : 2} ${(i + 1) * 150} 30`).join(' ') + ' V60 H0 Z'
@@ -10,6 +12,7 @@ const WAVE = 'M0 30 ' + Array.from({ length: 8 }, (_, i) => `Q ${i * 150 + 75} $
 export function WelcomeScreen({ onStart, leaving }: { onStart: () => void; leaving: boolean }) {
   const L = useLayout()
   const c = L.compact
+  const me = meStore.use()
   return (
     <div
       className={`absolute inset-0 z-40 flex flex-col items-center justify-center overflow-hidden bg-[radial-gradient(ellipse_at_center,rgba(20,60,140,0.6),rgba(5,8,24,0.9))] font-nunito transition-opacity duration-700 ${
@@ -31,7 +34,14 @@ export function WelcomeScreen({ onStart, leaving }: { onStart: () => void; leavi
         <Cosmo size={c ? 80 : 150} />
         <div className="flex flex-col items-center">
           <h1 className={`text-center font-black tracking-wide text-white drop-shadow-[0_0_24px_rgba(56,189,248,0.9)] ${c ? 'text-4xl' : 'text-6xl md:text-7xl'}`}>Space Atlas</h1>
-          <p className={`mt-1 text-center font-bold text-sky-200 ${c ? 'text-sm' : 'text-xl'}`}>with Cosmo &amp; Splash · Cùng khám phá vũ trụ</p>
+          <p className={`mt-1 text-center font-bold text-sky-200 ${c ? 'text-sm' : 'text-xl'}`}>
+            {me.photo ? `Hi, ${me.name || 'astronaut'}! · Chào phi hành gia nhỏ!` : 'with Cosmo & Splash · Cùng khám phá vũ trụ'}
+          </p>
+          {me.photo && (
+            <div className="mt-2" data-testid="welcome-me">
+              <MeAstronaut size={c ? 110 : 170} />
+            </div>
+          )}
         </div>
         <Splash size={c ? 90 : 170} />
       </div>

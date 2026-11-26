@@ -323,7 +323,15 @@ export function SurfaceWorld({ id, onBack, onStar, onSay }: { id: WorldId; onBac
 
       {photo !== null && photos[photo] && (
         <div data-testid="real-photo" className="absolute inset-0 z-50 overflow-hidden bg-black" onClick={() => setPhoto(null)}>
-          <img src={photos[photo].file} alt={photos[photo].en} className="animate-kenburns absolute inset-0 h-full w-full object-cover" />
+          {photos[photo].fit === 'pano' ? (
+            <img src={photos[photo].file} alt={photos[photo].en} className="animate-pano absolute left-0 top-0 h-full w-auto max-w-none" />
+          ) : (
+            <img
+              src={photos[photo].file}
+              alt={photos[photo].en}
+              className={`absolute inset-0 h-full w-full ${photos[photo].fit === 'contain' ? 'animate-breathe object-contain p-6 pb-28' : 'animate-kenburns object-cover'}`}
+            />
+          )}
           <div className={`absolute inset-x-3 bottom-3 mx-auto max-w-2xl rounded-3xl bg-black/70 text-left ${c ? 'p-2' : 'p-4'}`}>
             <div className={`font-black ${c ? 'text-base' : 'text-2xl'}`}>📷 {photos[photo].en}</div>
             <div className={`font-semibold text-sky-200 ${c ? 'text-xs' : 'text-lg'}`}>{photos[photo].vi}</div>
