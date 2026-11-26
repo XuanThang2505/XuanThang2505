@@ -33,6 +33,8 @@ interface Props {
   onToggleCompare: () => void
   onSelectPlanet: (id: ViewId) => void
   onOpenGames: () => void
+  /** explore row (time machine, land, …) – rendered under the facts */
+  explore?: React.ReactNode
   /** fly back to the previous planet (undefined when there is nowhere to go back to) */
   onBack?: () => void
   /** stars earned in the games */
@@ -671,6 +673,7 @@ export function IPadHUD(props: Props) {
             onSpeakPhrase={props.onSpeakPhrase}
           />
           <FactsPanel planet={planet} flying={flying} L={L} onFact={props.onFact} />
+          {props.explore}
         </div>
 
         <div className="absolute right-0 top-0 flex items-start gap-2">

@@ -91,6 +91,25 @@ App tự co giãn theo mọi màn hình, nằm ngang hay dọc, không cần cà
 
 Mã nguồn: `src/utils/useLayout.ts` (nhận diện kiểu màn hình), `src/index.css` (cỡ gốc), `IPadHUD.tsx`, `src/games/*`.
 
+## 🌌 Khám phá Hệ Mặt Trời (bản 5)
+
+Dưới thẻ tên trên màn hình chính có hàng nút **khám phá**:
+
+**Ở toàn cảnh Hệ Mặt Trời**
+- **⏩ TIME** – cỗ máy thời gian ×1 / ×5 / ×25, kèm bộ đếm "🌍 N years" (1 năm = Trái Đất đi đủ 1 vòng).
+- **🎂 MY AGE** – tuổi của bé trên từng hành tinh (theo độ dài năm thật: 5 tuổi = 21 tuổi Sao Thủy, 0,03 tuổi Sao Hải Vương).
+- **🛠️ MY PLANET** – tự tạo hành tinh (biển, núi lửa, băng, kẹo, rừng; to/nhỏ; vành đai; 0–3 mặt trăng; đặt tên) rồi "PUT IT IN SPACE" → hành tinh bay trên quỹ đạo thật giữa Sao Thiên Vương và Sao Hải Vương.
+- **🔭 TONIGHT** – bầu trời tối nay ở Hà Nội / Đà Nẵng / TP.HCM (20:00 hoặc 05:00): hành tinh nào đang ở trên trời, nhìn hướng nào, cao hay thấp. Tính bằng thư viện thiên văn `astronomy-engine` chạy offline.
+- **🌙 BEDTIME** – chuyến tham quan êm dịu qua Mặt Trời và 8 hành tinh với lời kể chậm, màn hình tối bớt; xong thì app tự ngủ.
+- **🛂 PASSPORT** – hộ chiếu vũ trụ, mỗi hành tinh đã đáp xuống được đóng dấu.
+- Trên toàn cảnh còn có **mặt trăng thật** (Mặt Trăng, Phobos & Deimos, 4 mặt trăng lớn của Sao Mộc, Titan) và **sao chổi** bay theo quỹ đạo elip (định luật Kepler: gần Mặt Trời bay nhanh), đuôi luôn hướng ra xa Mặt Trời và dài ra khi lại gần.
+
+**Ở một hành tinh**
+- **🚀 LAND!** – đáp xuống bề mặt: bầu trời đúng màu, Mặt Trời to/nhỏ theo khoảng cách, thời tiết (bụi, mưa, tuyết băng, mưa kim cương…), đồ vật để chạm (miệng hố, núi lửa, xe tự hành, hoàng hôn xanh…), nhiệt kế, độ dài 1 ngày và 1 năm, **🦘 thử nhảy theo trọng lực thật**. Hành tinh khí khổng lồ không có mặt đất → Cosmo đứng trên trạm bay. Có **📺 bản tin thời tiết vũ trụ** của Captain Star và **📮 bưu thiếp** (lưu ảnh hoặc chia sẻ).
+- **🥽 MY ROOM** (chỉ hiện trên iPhone/iPad) – mở hành tinh bằng AR Quick Look để đặt nó giữa phòng.
+
+Kỹ thuật: cảnh bề mặt vẽ bằng SVG/CSS và cảnh 3D tạm dừng khi đang ở bề mặt hay màn khám phá; phần 3D mới chỉ là vài khối cầu ít đa giác + 1 đám hạt; mọi màn mới tải theo nhu cầu (gói riêng).
+
 ## 🛡️ Captain Star & the Space Guardians (bản 4)
 
 Siêu anh hùng vũ trụ **riêng của app** (mang tinh thần dũng cảm, bảo vệ mọi người, có khiên – nhưng thiết kế riêng, không dùng nhân vật có bản quyền như Captain America vì app đăng công khai). Anh hùng ở đây chỉ **bảo vệ và giúp đỡ**, không đánh nhau. Câu cửa miệng: *"Heroes help! Heroes are kind!"*

@@ -47,6 +47,10 @@ export interface SolarSceneProps {
   paused?: boolean
   /** Battery saver (parent setting) */
   saver?: boolean
+  /** cosmic time machine speed for the overview */
+  timeScale?: number
+  /** comet / my planet tapped in the overview */
+  onExtra?: (what: 'comet' | 'myplanet') => void
 }
 
 const FRONT = new THREE.Vector3(0, 0.22, 1).normalize()
@@ -73,7 +77,7 @@ function cameraFor(view: ViewId, aspect: number) {
   return { distance: base.distance * k, min: base.min * k, max: base.max * k, dir: FRONT }
 }
 
-function SceneContent({ viewId, started, effect, compareOn, autoRotate, onArrive, onPlanetTap, onSelectPlanet }: SolarSceneProps) {
+function SceneContent({ viewId, started, effect, compareOn, autoRotate, onArrive, onPlanetTap, onSelectPlanet, timeScale, onExtra }: SolarSceneProps) {
   const planetId = viewId
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera
   const size = useThree((s) => s.size)
@@ -258,7 +262,7 @@ function SceneContent({ viewId, started, effect, compareOn, autoRotate, onArrive
 
       <group ref={stage} scale={0.001}>
         {isSystem ? (
-          <SolarSystem effect={effect} autoRotate={autoRotate} labelsOn={!flying} onSelect={onSelectPlanet} fit={fit} minHit={minHit} />
+          <SolarSystem effect={effect} autoRotate={autoRotate} labelsOn={!flying} onSelect={onSelectPlanet} fit={fit} minHit={minHit} timeScale={timeScale} onExtra={onExtra} />
         ) : (
         <group ref={layout}>
           <group ref={planetSlot}>

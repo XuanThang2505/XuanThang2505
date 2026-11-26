@@ -7,6 +7,7 @@ import { FACTS, GAME_LINES, PLANETS, PUZZLE_LINES, QUIZ, STICKERS, SYSTEM_LESSON
 import { OCEAN_WORDS, ROCKET_COLORS, ROCKET_LINES, ROCKET_PILOTS, SPLASH_LINES, STATION_LINES, STORY, WISH_LINES } from '../src/data/storyData'
 import { catchLine, COSMO_EYES, COSMO_HATS, COUNT_WORDS, CREATURES, DIVE_LINES, DOLPHIN_LEVEL_LINES, FLY_LINES, WORKSHOP_LINES, ZONES } from '../src/data/moreData'
 import { heroTexts } from '../src/data/heroData'
+import { worldTexts } from '../src/data/worldsData'
 import { slugify } from '../src/utils/slug'
 
 const texts = new Set<string>()
@@ -36,6 +37,7 @@ OCEAN_WORDS.forEach((w) => texts.add(catchLine(w.en).en))
 texts.add('TREASURE!')
 
 heroTexts().forEach((t) => texts.add(t))
+worldTexts().en.forEach((t) => texts.add(t))
 
 const seen = new Map<string, string>()
 for (const t of texts) if (!seen.has(slugify(t))) seen.set(slugify(t), t)

@@ -19,6 +19,12 @@ import {
   type SpeechRate,
 } from './utils/speech'
 import { AmbientStars } from './story/AmbientStars'
+import { ExploreBar } from './worlds/ExploreBar'
+import { useLayout } from './utils/useLayout'
+import type { Explore, ExploreKind } from './worlds/ExploreHost'
+import { BEDTIME, OVERVIEW_LINES, type WorldId } from './data/worldsData'
+import { myPlanet } from './worlds/stores'
+const ExploreHost = lazy(() => import('./worlds/ExploreHost'))
 import { setAudioSleeping, ensureAudio, playArrive, playBoing, playPop, playSparkle, playWhoosh, setAudioRebuiltHandler, startMusic, stopMusic, unlockAudio } from './utils/soundEffects'
 
 export interface Settings {
@@ -51,6 +57,10 @@ export default function App() {
   const [activeWord, setActiveWord] = useState<string | null>(null)
   const [compareOn, setCompareOn] = useState(false)
   const [gamesOpen, setGamesOpen] = useState(false)
+  const [explore, setExplore] = useState<Explore | null>(null)
+  const layout = useLayout()
+  const [timeScale, setTimeScale] = useState(1)
+  const [bedtime, setBedtime] = useState(false)
   const [stars, setStars] = useState(loadStars)
   const addStar = useCallback(() => setStars((n) => n + 1), [])
   useEffect(() => saveStars(stars), [stars])
@@ -240,6 +250,87 @@ export default function App() {
     [handleSelectPlanet],
   )
 
+  // ---- explore: land on planets, my age, my planet, tonight's sky, passport
+  const openExplore = useCallback((e: Explore) => {
+    playPop()
+    stopSpeaking()
+    setEffect(null)
+    setActiveWord(null)
+    setCompareOn(false)
+    setExplore(e)
+  }, [])
+  const closeExplore = useCallback(() => {
+    stopSpeaking()
+    setExplore(null)
+  }, [])
+  const cycleTime = useCallback(() => {
+    setTimeScale((t) => {
+      const n = t === 1 ? 5 : t === 5 ? 25 : 1
+      if (n > 1) say(OVERVIEW_LINES.time.en, OVERVIEW_LINES.time.vi)
+      return n
+    })
+  }, [say])
+  const onExtra = useCallback(
+    (what: 'comet' | 'myplanet') => {
+      playSparkle()
+      if (what === 'comet') say(OVERVIEW_LINES.comet.en, OVERVIEW_LINES.comet.vi)
+      else say(OVERVIEW_LINES.myPlanet.en, myPlanet.get().name)
+    },
+    [say],
+  )
+  const openAR = useCallback(() => {
+    if (planetId === 'system' || planetId === 'sun') return
+    playSparkle()
+    void import('./worlds/ar').then((m) => m.openAR(planetId as WorldId)).catch(() => {})
+  }, [planetId])
+
+  // ---- bedtime planetarium: a calm guided trip, then the app goes to sleep
+  const selectRef = useRef(handleSelectPlanet)
+  selectRef.current = handleSelectPlanet
+  const viewRef = useRef(planetId)
+  viewRef.current = planetId
+  useEffect(() => {
+    if (!bedtime) return
+    let stop = false
+    stopMusic()
+    void (async () => {
+      for (const step of BEDTIME) {
+        if (stop) return
+        if (step.id !== viewRef.current) {
+          selectRef.current(step.id)
+          await new Promise((r) => setTimeout(r, 3400))
+        } else await new Promise((r) => setTimeout(r, 600))
+        if (stop) return
+        await say(step.line.en, step.line.vi)
+        await new Promise((r) => setTimeout(r, 1800))
+      }
+      if (stop) return
+      setBedtime(false)
+      setSleeping(true)
+    })()
+    return () => {
+      stop = true
+      stopSpeaking()
+    }
+  }, [bedtime, say])
+
+  const exploreBar = (
+    <ExploreBar
+      view={planetId}
+      flying={flying}
+      timeScale={timeScale}
+      L={layout}
+      onTime={cycleTime}
+      onOpen={(k: ExploreKind) => openExplore({ kind: k })}
+      onLand={() => planetId !== 'system' && planetId !== 'sun' && openExplore({ kind: 'land', id: planetId as WorldId })}
+      onBedtime={() => {
+        setTimeScale(1)
+        setBedtime(true)
+      }}
+      onAR={openAR}
+    />
+  )
+
   return (
     <div className="relative h-[100dvh] w-screen touch-none select-none overflow-hidden bg-[#050818] font-nunito">
       <Suspense fallback={null}>
@@ -252,7 +343,9 @@ export default function App() {
         onArrive={handleArrive}
         onPlanetTap={handlePlanetTap}
         onSelectPlanet={handleSelectPlanet}
-        paused={gamesOpen || sleeping}
+        paused={gamesOpen || sleeping || !!explore}
+        timeScale={timeScale}
+        onExtra={onExtra}
         saver={settings.saver}
       />
       </Suspense>
@@ -265,7 +358,27 @@ export default function App() {
         </Suspense>
       )}
 
-      {started && !gamesOpen && (
+      {started && explore && (
+        <Suspense fallback={<div className="absolute inset-0 z-30 flex items-center justify-center bg-[#0a0d2c] text-6xl"><span className="animate-float">🚀</span></div>}>
+          <ExploreHost explore={explore} stars={stars} onClose={closeExplore} onStar={addStar} onSay={say} />
+        </Suspense>
+      )}
+
+      {started && bedtime && (
+        <div className="pointer-events-none absolute inset-0 z-20 bg-[#020617]/40 font-nunito">
+          <div className="absolute left-1/2 top-4 -translate-x-1/2 rounded-full bg-slate-900/80 px-4 py-1 text-lg font-black text-sky-100">🌙 Bedtime · Giờ đi ngủ</div>
+          <button
+            data-testid="bedtime-stop"
+            onClick={() => setBedtime(false)}
+            className="pointer-events-auto absolute right-4 top-4 rounded-full bg-slate-800/90 px-4 py-2 text-lg font-black text-white"
+            style={{ minHeight: 44 }}
+          >
+            ✕ STOP
+          </button>
+        </div>
+      )}
+
+      {started && !gamesOpen && !explore && !bedtime && (
         <IPadHUD
           planet={planet}
           currentId={planetId}
@@ -282,6 +395,7 @@ export default function App() {
           onSelectPlanet={handleSelectPlanet}
           onBack={trail.length ? handleBack : undefined}
           onOpenGames={openGames}
+          explore={exploreBar}
           stars={stars}
           onFact={say}
           onSettingsChange={setSettings}

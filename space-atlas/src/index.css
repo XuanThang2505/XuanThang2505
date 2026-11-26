@@ -217,6 +217,34 @@ button {
   }
   .animate-screen-shake { animation: screen-shake 0.35s linear; }
 
+  @keyframes fall {
+    from { transform: translateY(-5vh); }
+    to { transform: translateY(105vh); }
+  }
+  .animate-fall { animation: fall 3.2s linear infinite; }
+
+  @keyframes blow {
+    from { transform: translate(-10vw, 20vh); }
+    to { transform: translate(110vw, 70vh); }
+  }
+  .animate-blow { animation: blow 4s linear infinite; }
+
+  /* soft lightning glow (no full-screen flash) */
+  @keyframes lightning {
+    0%, 86%, 100% { box-shadow: 0 0 0 0 rgba(254, 249, 195, 0); }
+    90% { box-shadow: 0 0 80px 40px rgba(254, 249, 195, 0.45); }
+    94% { box-shadow: 0 0 40px 20px rgba(254, 249, 195, 0.2); }
+  }
+  .animate-lightning { animation: lightning 5s ease-out infinite; }
+
+  @keyframes rover {
+    0% { transform: translateX(10vw); }
+    50% { transform: translateX(58vw) scaleX(-1); }
+    51% { transform: translateX(58vw) scaleX(1); }
+    100% { transform: translateX(10vw); }
+  }
+  .animate-rover { animation: rover 18s ease-in-out infinite; }
+
   @keyframes glow-ring {
     0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.8); }
     50% { box-shadow: 0 0 0 14px rgba(251, 191, 36, 0); }
