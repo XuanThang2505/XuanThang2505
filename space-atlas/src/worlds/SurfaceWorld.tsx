@@ -324,7 +324,12 @@ export function SurfaceWorld({ id, onBack, onStar, onSay }: { id: WorldId; onBac
       {photo !== null && photos[photo] && (
         <div data-testid="real-photo" className="absolute inset-0 z-50 overflow-hidden bg-black" onClick={() => setPhoto(null)}>
           {photos[photo].fit === 'pano' ? (
-            <img src={photos[photo].file} alt={photos[photo].en} className="animate-pano absolute left-0 top-0 h-full w-auto max-w-none" />
+            <img
+              src={photos[photo].file}
+              alt={photos[photo].en}
+              className="animate-pano absolute left-0 w-auto max-w-none"
+              style={L.portrait ? { height: '48%', top: '22%' } : { height: '100%', top: 0 }}
+            />
           ) : (
             <img
               src={photos[photo].file}
