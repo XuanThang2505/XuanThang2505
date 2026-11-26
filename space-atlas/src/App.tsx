@@ -22,7 +22,7 @@ import { AmbientStars } from './story/AmbientStars'
 import { ExploreBar } from './worlds/ExploreBar'
 import { useLayout } from './utils/useLayout'
 import type { Explore, ExploreKind } from './worlds/ExploreHost'
-import { BEDTIME, OVERVIEW_LINES, type WorldId } from './data/worldsData'
+import { BEDTIME, OVERVIEW_LINES, type PlanetWorldId, type WorldId } from './data/worldsData'
 import { myPlanet } from './worlds/stores'
 const ExploreHost = lazy(() => import('./worlds/ExploreHost'))
 import { setAudioSleeping, ensureAudio, playArrive, playBoing, playPop, playSparkle, playWhoosh, setAudioRebuiltHandler, startMusic, stopMusic, unlockAudio } from './utils/soundEffects'
@@ -281,7 +281,7 @@ export default function App() {
   const openAR = useCallback(() => {
     if (planetId === 'system' || planetId === 'sun') return
     playSparkle()
-    void import('./worlds/ar').then((m) => m.openAR(planetId as WorldId)).catch(() => {})
+    void import('./worlds/ar').then((m) => m.openAR(planetId as PlanetWorldId)).catch(() => {})
   }, [planetId])
 
   // ---- bedtime planetarium: a calm guided trip, then the app goes to sleep
@@ -323,6 +323,7 @@ export default function App() {
       onTime={cycleTime}
       onOpen={(k: ExploreKind) => openExplore({ kind: k })}
       onLand={() => planetId !== 'system' && planetId !== 'sun' && openExplore({ kind: 'land', id: planetId as WorldId })}
+      onMoon={() => openExplore({ kind: 'land', id: 'moon' })}
       onBedtime={() => {
         setTimeScale(1)
         setBedtime(true)

@@ -7,6 +7,8 @@ import { playBoing, playHeroTheme, playPop, playPow, playSparkle } from '../util
 import { speak, stopSpeaking } from '../utils/speech'
 import { useLayout } from '../utils/useLayout'
 import { CaptainStar, ComicBurst } from './CaptainStar'
+import { MeAstronaut } from '../me/MeAstronaut'
+import { meStore } from '../me/meStore'
 import { HERO_COLORS, setHeroStyle, useHeroStyle, type HeroStyle } from './heroStyle'
 import { HeroBar, HeroScreen, useShieldThrow } from './shared'
 
@@ -81,7 +83,7 @@ export function Graduation({ stars, onBack, onSay, onComplete }: P & { onComplet
         {/* the hero card, like a comic-book cover */}
         <div data-testid="hero-card" className={`animate-word-pop relative flex items-center rounded-[2rem] border-8 border-amber-300 bg-gradient-to-br from-sky-500 via-blue-700 to-indigo-900 shadow-[0_0_60px_rgba(251,191,36,0.45)] ${c ? 'gap-2 p-3' : 'gap-6 p-6'}`}>
           <div className="absolute -top-5 left-1/2 -translate-x-1/2 rounded-full bg-rose-600 px-4 py-1 font-black tracking-widest text-white shadow-lg">SPACE GUARDIANS</div>
-          <CaptainStar size={c ? 140 : 260} cheer />
+          {meStore.get().photo ? <MeAstronaut size={c ? 150 : 280} suit="hero" cheer /> : <CaptainStar size={c ? 140 : 260} cheer />}
           <div className="flex flex-col items-center gap-2 text-center">
             <div className={`font-black text-amber-200 ${c ? 'text-sm' : 'text-xl'}`}>HERO</div>
             {editing ? (

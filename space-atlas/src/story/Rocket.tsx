@@ -1,3 +1,5 @@
+import { useId } from 'react'
+import { meStore } from '../me/meStore'
 /** The child's own rocket (colour, fins, pilot), drawn in SVG. */
 import { ROCKET_COLORS, type RocketDesign } from '../data/storyData'
 
@@ -6,9 +8,11 @@ const FINS = [
   ['M32 110 C 6 124, 4 156, 10 172 C 18 160, 26 156, 33 154 Z', 'M68 110 C 94 124, 96 156, 90 172 C 82 160, 74 156, 67 154 Z'],
   ['M32 92 L2 146 L2 166 L33 150 Z', 'M68 92 L98 146 L98 166 L67 150 Z'],
 ]
-const PILOT_EMOJI = { robot: '🤖', dolphin: '🐬', astronaut: '🧑‍🚀' } as const
+const PILOT_EMOJI = { robot: '🤖', dolphin: '🐬', astronaut: '🧑‍🚀', me: '🧒' } as const
 
 export function RocketArt({ design, size = 200, flame = 0 }: { design: RocketDesign; size?: number; flame?: number }) {
+  const photo = meStore.use().photo
+  const uid = useId().replace(/:/g, '')
   const col = ROCKET_COLORS[design.color] ?? ROCKET_COLORS[0]
   const [l, r] = FINS[design.fins] ?? FINS[0]
   const id = `rk-${design.color}`
@@ -42,9 +46,18 @@ export function RocketArt({ design, size = 200, flame = 0 }: { design: RocketDes
       <rect x="47" y="110" width="6" height="38" rx="3" fill={col.dark} />
       <circle cx="50" cy="74" r="17" fill="#e2e8f0" />
       <circle cx="50" cy="74" r="13.5" fill="#0c4a6e" />
-      <text x="50" y="81" textAnchor="middle" fontSize="18">
-        {PILOT_EMOJI[design.pilot]}
-      </text>
+      {design.pilot === 'me' && photo ? (
+        <>
+          <clipPath id={`win-${uid}`}>
+            <circle cx="50" cy="74" r="13" />
+          </clipPath>
+          <image href={photo} x="37" y="61" width="26" height="26" preserveAspectRatio="xMidYMid slice" clipPath={`url(#win-${uid})`} />
+        </>
+      ) : (
+        <text x="50" y="81" textAnchor="middle" fontSize="18">
+          {PILOT_EMOJI[design.pilot]}
+        </text>
+      )}
       <path d="M41 66 A 11 11 0 0 1 50 61" stroke="#fff" strokeWidth="2.5" fill="none" strokeLinecap="round" opacity="0.7" />
     </svg>
   )

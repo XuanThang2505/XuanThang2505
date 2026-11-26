@@ -23,6 +23,7 @@ export function ExploreBar({
   onLand,
   onBedtime,
   onAR,
+  onMoon,
 }: {
   view: ViewId
   flying: boolean
@@ -33,6 +34,7 @@ export function ExploreBar({
   onLand: () => void
   onBedtime: () => void
   onAR: () => void
+  onMoon: () => void
 }) {
   const c = L.compact
   const [years, setYears] = useState(0)
@@ -78,6 +80,7 @@ export function ExploreBar({
       ]
     : [
         ...(view !== 'sun' ? [btn('ex-land', '🚀', 'LAND!', onLand, true)] : []),
+        ...(view === 'earth' ? [btn('ex-moon', '🌙', 'MOON!', onMoon, true)] : []),
         ...(view !== 'sun' && arSupported() ? [btn('ex-ar', '🥽', 'MY ROOM', onAR)] : []),
         btn('ex-passport', '🛂', 'PASSPORT', () => onOpen('passport')),
       ]

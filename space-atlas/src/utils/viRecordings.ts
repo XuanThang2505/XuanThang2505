@@ -8,6 +8,7 @@ import { OCEAN_WORDS, ROCKET_COLORS, ROCKET_LINES, SPLASH_LINES, STATION_LINES, 
 import { CREATURES, DIVE_LINES, DOLPHIN_LEVEL_LINES, FLY_LINES, WORKSHOP_LINES, ZONES } from '../data/moreData'
 import { heroViTexts } from '../data/heroData'
 import { worldTexts } from '../data/worldsData'
+import { ME_LINES } from '../data/meData'
 import { slugify } from './slug'
 
 const DB = 'space-atlas-vi'
@@ -51,7 +52,7 @@ export function allViLines(): string[] {
   ;[STORY.hello, STORY.tapWord, STORY.finale, ...Object.values(STORY.intro), ...STORY.crystal, ...Object.values(WISH_LINES), STATION_LINES.title].forEach((l) => out.push(l.vi))
   ;[...Object.values(SPLASH_LINES), ROCKET_LINES.build, ...ROCKET_LINES.count, ...ROCKET_LINES.trips, ...OCEAN_WORDS, ...ROCKET_COLORS].forEach((l) => out.push(l.vi))
   ;[...Object.values(DIVE_LINES), ...Object.values(WORKSHOP_LINES), ...Object.values(DOLPHIN_LEVEL_LINES), ...Object.values(FLY_LINES), ...ZONES, ...CREATURES].forEach((l) => out.push(l.vi))
-  out.push(...heroViTexts(), ...worldTexts().vi)
+  out.push(...heroViTexts(), ...worldTexts().vi, ...Object.values(ME_LINES).map((l) => l.vi))
   PLANETS.forEach((p) => out.push(p.vietnameseSub, p.compare.vi))
   out.push(SYSTEM_LESSON.vietnameseSub)
   Object.values(FACTS).forEach((list) => list.forEach((f) => out.push(f[2])))

@@ -25,6 +25,8 @@ import { isGeminids, loadRocket, loadStory } from '../data/storyData'
 import { RocketLab } from '../story/RocketLab'
 import { DeepSea } from '../story/DeepSea'
 import { HeroHQ } from '../hero/HeroHQ'
+import { MeScreen } from '../me/MeScreen'
+import { MeAstronaut } from '../me/MeAstronaut'
 import { CaptainStar, StarShield } from '../hero/CaptainStar'
 import { loadHero } from '../data/heroData'
 import { RobotWorkshop } from '../story/RobotWorkshop'
@@ -34,9 +36,9 @@ import { Cosmo, Splash } from '../story/Cosmo'
 import { Done, QuestionButton, Screen, shuffle, TopBar, wait } from './ui'
 
 import type { Say } from './ui'
-type Game = 'menu' | 'home' | 'quiz' | 'order' | 'jigsaw' | 'memory' | 'stickers' | 'story' | 'station' | 'wish' | 'rocket' | 'dolphin' | 'sea' | 'workshop' | 'hero'
+type Game = 'menu' | 'home' | 'quiz' | 'order' | 'jigsaw' | 'memory' | 'stickers' | 'story' | 'station' | 'wish' | 'rocket' | 'dolphin' | 'sea' | 'workshop' | 'hero' | 'me'
 /** Games with their own big celebrations: a new-sticker popup waits until the child is back in the menu. */
-const CALM: Game[] = ['story', 'station', 'wish', 'rocket', 'dolphin', 'sea', 'workshop', 'hero']
+const CALM: Game[] = ['story', 'station', 'wish', 'rocket', 'dolphin', 'sea', 'workshop', 'hero', 'me']
 
 import { loadStars, saveStars } from './stars'
 export { loadStars, saveStars }
@@ -51,6 +53,7 @@ function Menu({ stars, onPick, onClose, onSay }: { stars: number; onPick: (g: Ga
   }, [onSay])
   const story = loadStory()
   const featured: { g: Game; art: React.ReactNode; en: string; vi: string; tag: string; cls: string }[] = [
+    { g: 'me', art: <MeAstronaut size={c0 ? 74 : 120} float={false} />, en: 'Me in space', vi: 'Con là phi hành gia!', tag: 'NEW', cls: 'from-slate-300 via-sky-600 to-indigo-800' },
     {
       g: 'story',
       art: <Cosmo size={c0 ? 56 : 80} />,
@@ -139,7 +142,7 @@ function Menu({ stars, onPick, onClose, onSay }: { stars: number; onPick: (g: Ga
                   onPick(f.g)
                 }}
                 className={`relative flex items-center overflow-hidden rounded-[2rem] border-2 border-white/25 bg-gradient-to-br ${f.cls} text-left shadow-[0_10px_40px_rgba(14,165,233,0.35)] active:scale-95 ${
-                  c0 ? (L.portrait ? 'h-[84px] w-[340px] gap-2 px-3' : 'h-[96px] w-[calc(25vw-14px)] max-w-[200px] gap-1 px-2') : (L.portrait ? 'h-36 w-[26rem] gap-3 px-5' : 'h-40 w-[min(22.5vw,20rem)] gap-1 px-3')
+                  c0 ? (L.portrait ? 'h-[84px] w-[340px] gap-2 px-3' : 'h-[96px] w-[calc(20vw-10px)] max-w-[180px] gap-1 px-1') : (L.portrait ? 'h-36 w-[26rem] gap-3 px-5' : 'h-40 w-[min(18.4vw,17rem)] gap-1 px-2')
                 }`}
               >
                 <span className={`absolute rounded-full bg-black/25 font-extrabold ${c0 ? 'right-2.5 top-2 px-1.5 text-[10px]' : 'right-4 top-3 px-2 text-sm'}`}>{f.tag}</span>
@@ -462,6 +465,7 @@ export function GamesHub({
   else if (game === 'station') screen = <Station stars={stars} onBack={back} onSay={onSay} />
   else if (game === 'rocket') screen = <RocketLab stars={stars} onBack={back} onStar={onStar} onSay={onSay} />
   else if (game === 'dolphin') screen = <DolphinGame stars={stars} onBack={back} onStar={onStar} onSay={onSay} />
+  else if (game === 'me') screen = <MeScreen stars={stars} onBack={back} onSay={onSay} />
   else if (game === 'hero') screen = <HeroHQ stars={stars} onBack={back} onStar={onStar} onSay={onSay} />
   else if (game === 'sea') screen = <DeepSea stars={stars} onBack={back} onStar={onStar} onSay={onSay} />
   else if (game === 'workshop') screen = <RobotWorkshop stars={stars} onBack={back} onStar={onStar} onSay={onSay} />

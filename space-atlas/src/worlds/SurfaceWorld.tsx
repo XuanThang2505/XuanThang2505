@@ -4,13 +4,13 @@
  * Pure SVG/CSS (the 3D scene is paused meanwhile) – smooth and cool on iPad.
  */
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
-import { WORLD_LINES, WORLDS, type WorldId } from '../data/worldsData'
-import { PLANET_MAP } from '../data/planetsData'
+import { PHOTOS, WORLD_LINES, WORLDS, worldInfo, type WorldId } from '../data/worldsData'
 import { BackButton, wait, type Say } from '../games/ui'
 import { playBoing, playBubble, playPop, playSparkle, playWhoosh } from '../utils/soundEffects'
 import { speak, stopSpeaking } from '../utils/speech'
 import { useLayout } from '../utils/useLayout'
 import { Cosmo } from '../story/Cosmo'
+import { MeAstronaut } from '../me/MeAstronaut'
 import { CaptainStar } from '../hero/CaptainStar'
 import { passport } from './stores'
 
@@ -63,7 +63,9 @@ export function SurfaceWorld({ id, onBack, onStar, onSay }: { id: WorldId; onBac
   const L = useLayout()
   const c = L.compact
   const w = WORLDS[id]
-  const planet = PLANET_MAP[id]
+  const planet = worldInfo(id)
+  const photos = PHOTOS[id] ?? []
+  const [photo, setPhoto] = useState<number | null>(null)
   const cosmo = useRef<HTMLDivElement>(null)
   const [card, setCard] = useState<(typeof w.features)[number] | null>(null)
   const [stamp, setStamp] = useState(false)
@@ -222,14 +224,18 @@ export function SurfaceWorld({ id, onBack, onStar, onSay }: { id: WorldId; onBac
       <button
         data-testid="jump"
         onClick={() => void jump()}
-        className="absolute left-[38%] -translate-x-1/2"
+        className="absolute left-[34%] -translate-x-1/2"
         style={{ bottom: giant ? 'calc(8% + 22px)' : '20%' }}
         aria-label="Jump"
       >
         <div ref={cosmo}>
-          <Cosmo size={c ? 80 : 130} fly={false} wave={!jumping} />
+          <MeAstronaut size={c ? 110 : 180} float={false} />
         </div>
       </button>
+      {/* Cosmo keeps the child company */}
+      <div className="pointer-events-none absolute left-[52%]" style={{ bottom: giant ? 'calc(8% + 22px)' : '20%' }}>
+        <Cosmo size={c ? 56 : 90} fly={giant} />
+      </div>
 
       {/* top bar */}
       <div className={`absolute inset-x-0 top-0 flex items-start ${c ? 'gap-2 p-2' : 'gap-3 p-3'}`} style={{ paddingTop: `max(${c ? 8 : 12}px, env(safe-area-inset-top))`, paddingLeft: 'max(8px, env(safe-area-inset-left))' }}>
@@ -268,6 +274,7 @@ export function SurfaceWorld({ id, onBack, onStar, onSay }: { id: WorldId; onBac
           { k: 'jump', icon: '🦘', en: 'JUMP', on: () => void jump() },
           { k: 'tv', icon: '📺', en: 'WEATHER', on: () => { playPop(); setTv(true); void onSay(w.report.en, w.report.vi) } },
           { k: 'post', icon: '📮', en: 'POSTCARD', on: () => { playPop(); setPost(true) } },
+          ...(photos.length ? [{ k: 'photo', icon: '📷', en: 'REAL PHOTO', on: () => { playSparkle(); setPhoto(0); void onSay(WORLD_LINES.realPhoto.en, WORLD_LINES.realPhoto.vi) } }] : []),
         ].map((b) => (
           <button key={b.k} data-testid={`world-${b.k}`} onClick={b.on} className={`flex items-center gap-1.5 rounded-full bg-slate-900/85 font-black shadow-lg active:scale-90 ${c ? 'px-3 text-xs' : 'px-4 py-1 text-base'}`} style={{ minHeight: 44 }}>
             <span className={c ? 'text-xl' : 'text-2xl'}>{b.icon}</span>
@@ -312,6 +319,36 @@ export function SurfaceWorld({ id, onBack, onStar, onSay }: { id: WorldId; onBac
             </div>
           </div>
         </button>
+      )}
+
+      {photo !== null && photos[photo] && (
+        <div data-testid="real-photo" className="absolute inset-0 z-50 overflow-hidden bg-black" onClick={() => setPhoto(null)}>
+          <img src={photos[photo].file} alt={photos[photo].en} className="animate-kenburns absolute inset-0 h-full w-full object-cover" />
+          <div className={`absolute inset-x-3 bottom-3 mx-auto max-w-2xl rounded-3xl bg-black/70 text-left ${c ? 'p-2' : 'p-4'}`}>
+            <div className={`font-black ${c ? 'text-base' : 'text-2xl'}`}>📷 {photos[photo].en}</div>
+            <div className={`font-semibold text-sky-200 ${c ? 'text-xs' : 'text-lg'}`}>{photos[photo].vi}</div>
+            <div className="mt-1 text-[10px] font-semibold text-white/60">{photos[photo].credit}</div>
+          </div>
+          <div className="absolute right-3 top-3 flex gap-2" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+            {photos.length > 1 && (
+              <button
+                data-testid="photo-next"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  playPop()
+                  setPhoto((photo + 1) % photos.length)
+                }}
+                className="rounded-full bg-white/90 px-4 font-black text-slate-900"
+                style={{ minHeight: 48 }}
+              >
+                ▶ NEXT
+              </button>
+            )}
+            <button className="rounded-full bg-slate-800/90 px-4 font-black" style={{ minHeight: 48 }}>
+              ✕
+            </button>
+          </div>
+        </div>
       )}
 
       {post && (

@@ -8,6 +8,7 @@ import { OCEAN_WORDS, ROCKET_COLORS, ROCKET_LINES, ROCKET_PILOTS, SPLASH_LINES, 
 import { catchLine, COSMO_EYES, COSMO_HATS, COUNT_WORDS, CREATURES, DIVE_LINES, DOLPHIN_LEVEL_LINES, FLY_LINES, WORKSHOP_LINES, ZONES } from '../src/data/moreData'
 import { heroTexts } from '../src/data/heroData'
 import { worldTexts } from '../src/data/worldsData'
+import { ME_LINES, ME_WORDS } from '../src/data/meData'
 import { slugify } from '../src/utils/slug'
 
 const texts = new Set<string>()
@@ -38,6 +39,8 @@ texts.add('TREASURE!')
 
 heroTexts().forEach((t) => texts.add(t))
 worldTexts().en.forEach((t) => texts.add(t))
+Object.values(ME_LINES).forEach((l) => texts.add(l.en))
+ME_WORDS.forEach((w) => texts.add(w + '!'))
 
 const seen = new Map<string, string>()
 for (const t of texts) if (!seen.has(slugify(t))) seen.set(slugify(t), t)

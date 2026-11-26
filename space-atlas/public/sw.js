@@ -6,7 +6,7 @@
  *   cache first, saved the first time it is used. After one full run the app works offline.
  */
 // bump on every release so old caches are dropped
-const CACHE = 'space-atlas-v10'
+const CACHE = 'space-atlas-v11'
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './audio/en/manifest.json']
 
 self.addEventListener('install', (e) => {
