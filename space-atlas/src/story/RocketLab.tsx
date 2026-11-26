@@ -235,7 +235,7 @@ export function RocketLab({ stars, onBack, onStar, onSay }: { stars: number; onB
                 className={`flex flex-col items-center justify-center rounded-2xl border-4 bg-white/5 font-extrabold active:scale-90 ${design.pilot === p.id ? 'border-white bg-white/15' : 'border-white/20'} ${c ? 'text-[10px]' : 'text-sm'}`}
                 style={{ width: chip * 1.35, height: chip * 1.2 }}
               >
-                <span className={c ? 'text-2xl' : 'text-4xl'}>{p.id === 'robot' ? '🤖' : p.id === 'dolphin' ? '🐬' : '🧑‍🚀'}</span>
+                <span className={c ? 'text-2xl' : 'text-4xl'}>{p.id === 'robot' ? '🤖' : p.id === 'dolphin' ? '🐬' : p.id === 'me' ? '🧒' : '🧑‍🚀'}</span>
                 {p.en}
               </button>
             )),

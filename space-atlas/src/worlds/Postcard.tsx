@@ -1,8 +1,8 @@
 /** "A postcard from space": draws a picture card on a canvas that can be saved or shared. */
 import { useEffect, useState } from 'react'
-import { WORLD_LINES, WORLDS, type WorldId } from '../data/worldsData'
-import { PLANET_MAP } from '../data/planetsData'
+import { WORLD_LINES, WORLDS, worldInfo, type WorldId } from '../data/worldsData'
 import { loadHero } from '../data/heroData'
+import { meStore } from '../me/meStore'
 import type { Say } from '../games/ui'
 import { playPop, playSparkle } from '../utils/soundEffects'
 import { useLayout } from '../utils/useLayout'
@@ -18,7 +18,7 @@ function loadImg(src: string) {
 
 async function draw(id: WorldId) {
   const w = WORLDS[id]
-  const p = PLANET_MAP[id]
+  const p = worldInfo(id)
   const W = 1200
   const H = 800
   const cv = document.createElement('canvas')
@@ -54,7 +54,7 @@ async function draw(id: WorldId) {
     g.fill()
   }
   // the planet seen from space, in the corner
-  const tex = await loadImg(p.textureUrl ? p.textureUrl.replace('./textures/', './textures/md/') : '')
+  const tex = await loadImg(p.textureUrl.replace('./textures/', './textures/md/'))
   if (tex) {
     g.save()
     g.beginPath()
@@ -71,22 +71,66 @@ async function draw(id: WorldId) {
   // the crew + features
   g.font = '150px system-ui, "Apple Color Emoji"'
   g.textAlign = 'center'
-  g.fillText('🚀', 820, 560)
-  g.fillText('🤖', 520, 610)
+  g.fillText('🚀', 860, 560)
+  // the child, as an astronaut (their photo stays on the device; it is drawn only into this picture)
+  const me = meStore.get()
+  const suitCol = me.suit === 'launch' ? '#f97316' : me.suit === 'hero' ? '#2563eb' : '#f8fafc'
+  g.fillStyle = suitCol
+  g.beginPath()
+  g.roundRect(455, 560, 130, 150, 40)
+  g.fill()
+  g.fillStyle = '#f8fafc'
+  g.beginPath()
+  g.arc(520, 500, 82, 0, Math.PI * 2)
+  g.fill()
+  g.strokeStyle = '#cbd5e1'
+  g.lineWidth = 6
+  g.stroke()
+  g.fillStyle = '#0b1220'
+  g.beginPath()
+  g.arc(520, 505, 62, 0, Math.PI * 2)
+  g.fill()
+  const face = me.photo ? await loadImg(me.photo) : null
+  if (face) {
+    g.save()
+    g.beginPath()
+    g.arc(520, 505, 60, 0, Math.PI * 2)
+    g.clip()
+    g.drawImage(face, 460, 445, 120, 120)
+    g.restore()
+  } else {
+    g.font = '96px system-ui, "Apple Color Emoji"'
+    g.fillText('🧒', 520, 540)
+  }
+  g.strokeStyle = 'rgba(255,255,255,0.6)'
+  g.lineWidth = 7
+  g.beginPath()
+  g.arc(520, 505, 48, Math.PI * 1.1, Math.PI * 1.45)
+  g.stroke()
+  g.font = '150px system-ui, "Apple Color Emoji"'
+  g.fillText('🤖', 300, 640)
   g.font = '110px system-ui, "Apple Color Emoji"'
-  w.features.slice(0, 2).forEach((f, i) => g.fillText(f.emoji, 260 + i * 700, 700 - i * 40))
+  w.features.slice(0, 2).forEach((f, i) => g.fillText(f.emoji, 140 + i * 900, 720 - i * 40))
   // stamp + text
+  const place = id === 'moon' ? 'the Moon' : p.englishName[0] + p.englishName.slice(1).toLowerCase()
+  const name = meStore.get().name || loadHero().name
+  const line1 = `Greetings from ${place}!`
+  const line2 = `Chào từ ${p.vietnameseName}! ${name ? '– ' + name : ''} 💙`
+  g.font = '900 60px Nunito, system-ui'
+  const w1 = g.measureText(line1).width
+  g.font = '700 34px Nunito, system-ui'
+  const w2 = g.measureText(line2).width
+  const bw = Math.min(W - 80, Math.max(w1, w2) + 80)
   g.fillStyle = 'rgba(255,255,255,0.92)'
   g.beginPath()
-  g.roundRect(300, 300, 600, 170, 30)
+  g.roundRect(W / 2 - bw / 2, 240, bw, 160, 30)
   g.fill()
   g.fillStyle = '#0f172a'
-  g.font = '900 64px Nunito, system-ui'
-  g.fillText(`Greetings from ${p.englishName[0] + p.englishName.slice(1).toLowerCase()}!`, 600, 380)
+  g.font = '900 60px Nunito, system-ui'
+  g.fillText(line1, 600, 315)
   g.fillStyle = '#0369a1'
-  g.font = '700 36px Nunito, system-ui'
-  const name = loadHero().name
-  g.fillText(`Chào từ ${p.vietnameseName}! ${name ? '– ' + name : ''} 💙`, 600, 440)
+  g.font = '700 34px Nunito, system-ui'
+  g.fillText(line2, 600, 372)
   g.strokeStyle = '#f43f5e'
   g.lineWidth = 10
   g.strokeRect(14, 14, W - 28, H - 28)

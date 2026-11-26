@@ -138,6 +138,7 @@ export const ROCKET_PILOTS = [
   { id: 'robot', en: 'ROBOT', vi: 'Người máy' },
   { id: 'dolphin', en: 'DOLPHIN', vi: 'Cá heo' },
   { id: 'astronaut', en: 'ASTRONAUT', vi: 'Phi hành gia' },
+  { id: 'me', en: 'ME', vi: 'Con' },
 ] as const
 export type PilotId = (typeof ROCKET_PILOTS)[number]['id']
 export interface RocketDesign {

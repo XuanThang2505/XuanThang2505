@@ -91,6 +91,29 @@ App tự co giãn theo mọi màn hình, nằm ngang hay dọc, không cần cà
 
 Mã nguồn: `src/utils/useLayout.ts` (nhận diện kiểu màn hình), `src/index.css` (cỡ gốc), `IPadHUD.tsx`, `src/games/*`.
 
+## 🧑‍🚀 Me in space + ảnh thật (bản 6)
+
+- **Me in space** (thẻ lớn đầu tiên trong PLAY): phi hành gia mang **mặt thật của bé**. Bố mẹ **giữ nút 2 giây** → chọn/chụp ảnh → kéo và phóng to cho khuôn mặt vào vòng tròn. Ảnh được thu nhỏ (~384 px, ~10–40 KB) và **chỉ lưu trong iPad (localStorage)**, không gửi đi đâu; có nút xóa ảnh.
+- 3 bộ đồ kiểu thật: **đồ đi bộ ngoài không gian** (trắng, ba lô dưỡng sinh, bảng điều khiển ngực, khớp gối/khuỷu), **đồ phóng tàu** (cam), **đồ siêu anh hùng** (màu từ Hero suit, áo choàng). Cờ Việt Nam trên vai, huy hiệu nhiệm vụ, bảng tên, kính mũ vàng (kéo xuống nửa).
+- Bé xuất hiện ở: màn hình chào ("Hi, Bin!"), phi công **ME** trong Rocket lab (mặt trong cửa sổ tên lửa), người đứng và **nhảy** trên bề mặt hành tinh, **bưu thiếp**, thẻ tốt nghiệp anh hùng.
+- **🌙 Mặt Trăng** là điểm đáp mới (nút **MOON!** khi đang xem Trái Đất): trọng lực 1/6, trời đen, Trái Đất trên trời, dấu chân, miệng hố.
+- **📷 REAL PHOTO** khi đứng trên một thế giới: ảnh thật, toàn cảnh lướt chậm, có chú thích song ngữ và nguồn.
+
+### Nguồn ảnh thật (`public/photos/`, từ images.nasa.gov)
+| Ảnh | Nguồn / ghi công |
+|---|---|
+| Sao Hỏa – toàn cảnh 360° (Perseverance, 2021) | NASA/JPL-Caltech/MSSS/ASU – PIA24264 |
+| Sao Hỏa – hoàng hôn xanh (Curiosity, 2015) | NASA/JPL-Caltech/MSSS/Texas A&M Univ. – PIA19400 |
+| Mặt Trăng – Buzz Aldrin, dấu chân (Apollo 11) | NASA – AS11-40-5903, AS11-40-5878 |
+| Trái Đất – "Blue Marble" (Apollo 17) | NASA – AS17-148-22727 |
+| Sao Kim – radar Magellan (màu tô thêm) | NASA/JPL – S91-50687 |
+| Sao Thủy – MESSENGER | NASA/Johns Hopkins University APL/Carnegie Institution of Washington |
+| Sao Mộc – mây (Juno, 2018) | NASA/JPL-Caltech/SwRI/MSSS, xử lý ảnh Kevin M. Gill (**CC BY**) – PIA21984 |
+| Sao Thổ (Cassini) | NASA/JPL/Space Science Institute – PIA06193 |
+| Sao Thiên Vương, Sao Hải Vương (Voyager 2) | NASA/JPL-Caltech – PIA18182; NASA/JPL – PIA01492 |
+
+Ảnh NASA thuộc phạm vi công cộng (không dùng logo NASA, không ngụ ý NASA xác nhận); ảnh Juno ghi công theo giấy phép CC BY.
+
 ## 🌌 Khám phá Hệ Mặt Trời (bản 5)
 
 Dưới thẻ tên trên màn hình chính có hàng nút **khám phá**:

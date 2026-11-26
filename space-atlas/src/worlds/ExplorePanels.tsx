@@ -1,6 +1,6 @@
 /** Overview "explore" screens: my age on other planets, space passport, build my planet. */
 import { useEffect, useState } from 'react'
-import { MY_PLANET_SURFACES, OVERVIEW_LINES, WORLD_LINES, YEAR_DAYS, type WorldId } from '../data/worldsData'
+import { MY_PLANET_SURFACES, OVERVIEW_LINES, WORLD_LINES, YEAR_DAYS, type PlanetWorldId as WorldId } from '../data/worldsData'
 import { PLANET_MAP, PLANET_ORDER } from '../data/planetsData'
 import { PlanetBall2D } from '../games/PlanetBall2D'
 import { Screen, TopBar, type Say } from '../games/ui'
@@ -85,7 +85,7 @@ export function Passport({ stars, onBack, onSay }: { stars: number; onBack: () =
       <TopBar onBack={onBack} stars={stars} middle={<div className={`font-black ${c ? 'text-lg' : 'text-4xl'}`}>Space passport 🛂</div>} />
       <div className="flex flex-1 items-center justify-center overflow-y-auto px-3 pb-3">
         <div className={`rounded-[2rem] border-4 border-amber-200/70 bg-gradient-to-br from-indigo-900 to-blue-950 shadow-2xl ${c ? 'p-3' : 'p-8'}`}>
-          <div className={`mb-3 text-center font-black tracking-widest text-amber-200 ${c ? 'text-sm' : 'text-2xl'}`}>🌌 SPACE PASSPORT · {stamps.length}/8</div>
+          <div className={`mb-3 text-center font-black tracking-widest text-amber-200 ${c ? 'text-sm' : 'text-2xl'}`}>🌌 SPACE PASSPORT · {stamps.length}/9</div>
           <div className={`grid ${c ? 'grid-cols-4 gap-2' : 'grid-cols-4 gap-5'}`}>
             {WORLD_IDS.map((id, i) => {
               const has = stamps.includes(id)
@@ -98,6 +98,15 @@ export function Passport({ stars, onBack, onSay }: { stars: number; onBack: () =
                 </div>
               )
             })}
+            {(() => {
+              const has = stamps.includes('moon')
+              return (
+                <div className={`flex flex-col items-center justify-center rounded-2xl border-4 ${has ? 'border-rose-400 bg-white/10' : 'border-dashed border-white/20'} ${c ? 'h-20 w-20' : 'h-36 w-36'}`}>
+                  <div className={`rounded-full bg-[radial-gradient(circle_at_35%_35%,#f5f5f4,#a8a29e_55%,#57534e)] ${has ? '' : 'opacity-25'}`} style={{ width: c ? 30 : 56, height: c ? 30 : 56 }} />
+                  <span className={`mt-1 font-black ${has ? 'text-rose-300' : 'text-white/40'} ${c ? 'text-[9px]' : 'text-sm'}`}>{has ? '✓ MOON' : 'MOON'}</span>
+                </div>
+              )
+            })()}
           </div>
           <div className={`mt-3 text-center font-semibold text-sky-200 ${c ? 'text-xs' : 'text-base'}`}>Bay tới hành tinh và bấm 🚀 LAND để được đóng dấu!</div>
         </div>

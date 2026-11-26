@@ -4,8 +4,10 @@
  * Giant planets have no ground – Cosmo stands on a floating station in the clouds.
  */
 import type { PlanetId } from './planetsData'
+export { PHOTOS } from './photosData'
 
-export type WorldId = Exclude<PlanetId, 'sun'>
+export type WorldId = Exclude<PlanetId, 'sun'> | 'moon'
+export type PlanetWorldId = Exclude<PlanetId, 'sun'>
 export type L = { en: string; vi: string }
 
 export interface World {
@@ -25,6 +27,25 @@ export interface World {
 }
 
 export const WORLDS: Record<WorldId, World> = {
+  moon: {
+    id: 'moon',
+    sky: ['#000000', '#0b1020'],
+    ground: ['#a8a29e', '#57534e'],
+    sunScale: 1,
+    gravity: 0.17,
+    tempC: 120,
+    day: { en: 'About 29 Earth days', vi: 'Một ngày dài khoảng 29 ngày Trái Đất' },
+    year: { en: '27 days around Earth', vi: 'Đi một vòng quanh Trái Đất mất 27 ngày' },
+    weather: 'none',
+    skyThings: [{ emoji: '🌍', x: 0.5, y: 0.14, size: 1.3 }],
+    features: [
+      { emoji: '👣', en: 'FOOTPRINT', vi: 'Dấu chân', fact: 'Trên Mặt Trăng không có gió, nên dấu chân phi hành gia vẫn còn đó!', x: 0.25, y: 0.82 },
+      { emoji: '🧑‍🚀', en: 'ASTRONAUT', vi: 'Phi hành gia', fact: 'Năm 1969, con người lần đầu tiên bước lên Mặt Trăng.', x: 0.72, y: 0.74 },
+      { emoji: '🕳️', en: 'CRATER', vi: 'Miệng hố', fact: 'Mặt Trăng có rất nhiều miệng hố. Ban ngày nóng 120°C, ban đêm lạnh -170°C!', x: 0.5, y: 0.88 },
+    ],
+    hello: { en: 'Welcome to the Moon! You can jump so high!', vi: 'Chào mừng đến Mặt Trăng! Con nhảy được rất cao!' },
+    report: { en: 'Today on the Moon: no wind, no rain, and a black sky!', vi: 'Hôm nay trên Mặt Trăng: không gió, không mưa, bầu trời màu đen!' },
+  },
   mercury: {
     id: 'mercury',
     sky: ['#020617', '#1e1b4b'],
@@ -179,6 +200,23 @@ export const WORLDS: Record<WorldId, World> = {
   },
 }
 
+/** Name + picture for every place you can land on (the Moon is not one of the eight planets). */
+export function worldInfo(id: WorldId): { englishName: string; vietnameseName: string; textureUrl: string } {
+  if (id === 'moon') return { englishName: 'MOON', vietnameseName: 'Mặt Trăng', textureUrl: './textures/moon.jpg' }
+  const p = PLANET_INFO[id]
+  return p
+}
+const PLANET_INFO: Record<PlanetWorldId, { englishName: string; vietnameseName: string; textureUrl: string }> = {
+  mercury: { englishName: 'MERCURY', vietnameseName: 'Sao Thủy', textureUrl: './textures/mercury.jpg' },
+  venus: { englishName: 'VENUS', vietnameseName: 'Sao Kim', textureUrl: './textures/venus.jpg' },
+  earth: { englishName: 'EARTH', vietnameseName: 'Trái Đất', textureUrl: './textures/earth_atmos_2048.jpg' },
+  mars: { englishName: 'MARS', vietnameseName: 'Sao Hỏa', textureUrl: './textures/mars.jpg' },
+  jupiter: { englishName: 'JUPITER', vietnameseName: 'Sao Mộc', textureUrl: './textures/jupiter.jpg' },
+  saturn: { englishName: 'SATURN', vietnameseName: 'Sao Thổ', textureUrl: './textures/saturn.jpg' },
+  uranus: { englishName: 'URANUS', vietnameseName: 'Sao Thiên Vương', textureUrl: './textures/uranus.jpg' },
+  neptune: { englishName: 'NEPTUNE', vietnameseName: 'Sao Hải Vương', textureUrl: './textures/neptune.jpg' },
+}
+
 export const WORLD_LINES = {
   land: { en: 'Landing!', vi: 'Hạ cánh!' },
   jump: { en: 'Jump!', vi: 'Nhảy nào!' },
@@ -187,6 +225,8 @@ export const WORLD_LINES = {
   stamp: { en: 'New stamp in your passport!', vi: 'Con có con dấu mới trong hộ chiếu!' },
   noGround: { en: 'No ground! Cosmo stands on a floating station.', vi: 'Không có mặt đất! Cosmo đứng trên trạm bay lơ lửng.' },
   passport: { en: 'My space passport!', vi: 'Hộ chiếu vũ trụ của con!' },
+  realPhoto: { en: 'This is a real photo!', vi: 'Đây là ảnh thật đó!' },
+  toMoon: { en: 'To the Moon!', vi: 'Bay tới Mặt Trăng!' },
   postcard: { en: 'A postcard from space!', vi: 'Bưu thiếp từ vũ trụ!' },
 }
 
@@ -200,7 +240,7 @@ export const OVERVIEW_LINES = {
   buildPlanet: { en: 'Make your own planet!', vi: 'Tự tạo hành tinh của con!' },
 }
 /** Real year lengths in Earth days (for "your age on other planets"). */
-export const YEAR_DAYS: Record<WorldId, number> = {
+export const YEAR_DAYS: Record<PlanetWorldId, number> = {
   mercury: 88,
   venus: 224.7,
   earth: 365.25,
@@ -212,7 +252,7 @@ export const YEAR_DAYS: Record<WorldId, number> = {
 }
 
 // ---------------------------------------------------------------- bedtime planetarium
-export const BEDTIME: { id: WorldId | 'sun' | 'system'; line: L }[] = [
+export const BEDTIME: { id: PlanetWorldId | 'sun' | 'system'; line: L }[] = [
   { id: 'system', line: { en: "Let's take a quiet trip through space.", vi: 'Cùng đi một chuyến nhẹ nhàng qua vũ trụ nhé.' } },
   { id: 'sun', line: { en: 'The Sun keeps us warm and bright.', vi: 'Mặt Trời sưởi ấm và chiếu sáng cho chúng ta.' } },
   { id: 'mercury', line: { en: 'Little Mercury runs fast around the Sun.', vi: 'Sao Thủy bé nhỏ chạy thật nhanh quanh Mặt Trời.' } },

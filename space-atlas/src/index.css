@@ -245,6 +245,19 @@ button {
   }
   .animate-rover { animation: rover 18s ease-in-out infinite; }
 
+  @keyframes kenburns {
+    from { transform: scale(1.08) translate(-2%, 0); }
+    to { transform: scale(1.18) translate(2%, -2%); }
+  }
+  .animate-kenburns { animation: kenburns 22s ease-in-out infinite alternate; }
+
+  /* pan slowly across a wide panorama: from its left edge to its right edge */
+  @keyframes pano {
+    from { transform: translateX(0); }
+    to { transform: translateX(calc(-100% + 100vw)); }
+  }
+  .animate-pano { animation: pano 40s ease-in-out infinite alternate; }
+
   @keyframes glow-ring {
     0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.8); }
     50% { box-shadow: 0 0 0 14px rgba(251, 191, 36, 0); }
