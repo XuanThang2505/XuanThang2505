@@ -1,0 +1,143 @@
+[
+  {
+    "id": "W1",
+    "skills": ["ocb-write"],
+    "tier": "T2",
+    "query": "Viết status update dự án SME Digital Lending gửi chị Tú Anh. UAT xong 72% test case, trễ 2 tuần do vendor sửa lỗi chậm. Ngân sách kế hoạch 12,5 tỷ, đã dùng 9,8 tỷ. Cần chị duyệt dời go-live từ 15/12/2026 sang 12/01/2027.",
+    "files": [],
+    "expected_behavior": [
+      "Ghi tầng T2 trong 1 dòng và không hỏi lại (đề bài đủ, chị Tú Anh duyệt cuối)",
+      "Dòng trạng thái ghi bằng chữ theo thang On Track / At Risk / Delay; chọn Delay vì mốc go-live phải dời và cần lãnh đạo quyết, hoặc nêu lý do nếu chọn At Risk",
+      "Bottom line 1-2 câu đứng đầu, nêu rõ việc xin duyệt dời go-live sang 12/01/2027",
+      "Có mục CẦN QUYẾT ĐỊNH với hạn chót cụ thể",
+      "Giữ nguyên số 72%, 2 tuần, 12,5 tỷ, 9,8 tỷ; nếu tính tỷ lệ giải ngân thì ra 78,4%; không thêm số không có trong đề",
+      "Bước tiếp có bảng Owner | Việc | Ngày, owner là người hoặc đơn vị cụ thể, không ghi 'team dự án'; thiếu owner thì ghi rõ là giả định",
+      "WHY và WHAT nằm trong 30 giây đầu (hồ sơ chị Tú Anh trong people.md)",
+      "Không em-dash, không emoji, không dựng slide"
+    ]
+  },
+  {
+    "id": "W2",
+    "skills": ["ocb-write", "thang-os"],
+    "tier": "T3",
+    "query": "Soạn tờ trình trình anh Hùng xin duyệt 3,2 tỷ thuê tư vấn thiết kế lại quy trình phê duyệt tín dụng SME.",
+    "files": [],
+    "expected_behavior": [
+      "Nhận diện T3 vì người duyệt cuối là CEO ông Dương Đức Hùng",
+      "Trước khi dựng: một lượt duy nhất gộp A/B và G1, xin Thang viết BLUF 3 dòng; không dựng toàn văn tờ trình ngay ở lượt đầu",
+      "Hỏi tối đa 3 câu, chỉ những thứ làm đổi kết luận (ví dụ vấn đề gốc, lợi ích kỳ vọng, phương án so sánh)",
+      "Khung đề xuất bám 7 mục của leader.md 3.1.3, có so sánh với phương án 'không làm' và 'làm tối thiểu'",
+      "Gọi đúng chức danh: Tổng Giám đốc / CEO, không dùng General Director cho ông Hùng",
+      "Báo trước 1 dòng cờ chi phí cho qa-audit Full"
+    ]
+  },
+  {
+    "id": "W3",
+    "skills": ["ocb-write"],
+    "tier": "T2",
+    "query": "Viết memo escalate gửi anh Luke: vendor T24 báo lỗi đối soát từ 24/11, ảnh hưởng khoảng 1.200 giao dịch/ngày, chưa rõ nguyên nhân, vendor hẹn 5 ngày làm việc mới có kết luận.",
+    "files": [],
+    "expected_behavior": [
+      "Theo khung Escalate: VẤN ĐỀ, TÁC ĐỘNG, NGUYÊN NHÂN, PHƯƠNG ÁN, ĐỀ XUẤT, BƯỚC TIẾP",
+      "Nguyên nhân ghi rõ là chưa xác nhận hoặc giả thuyết, không viết như sự thật",
+      "Giữ số 1.200 giao dịch/ngày và mốc 24/11; tác động tiền chưa có trong đề thì ghi 'chưa kiểm được', không tự ước tính thành sự thật",
+      "Có ít nhất 2 phương án và một đề xuất rõ kèm nhược điểm chấp nhận; không kết thúc bằng 'tùy anh'",
+      "Mở bằng mục đích và logic quản trị (hồ sơ anh Luke)",
+      "Câu chủ động, không làm mềm trước khi nêu dữ kiện"
+    ]
+  },
+  {
+    "id": "Q1",
+    "skills": ["qa-audit"],
+    "tier": "T1",
+    "query": "QA Light giúp anh file status này trước khi gửi.",
+    "files": ["fixtures/qa_status_seeded.md"],
+    "expected_behavior": [
+      "Ghi mức Light trong 1 dòng và chạy scripts/run_all.py trên file",
+      "Báo đủ 7 LOI của script: ngày 31/11/2026 không tồn tại; 'Thứ Hai 04/12/2026' thực ra là thứ Sáu; khoảng ngày đảo ngược 20/11 đến 10/11; dòng Tổng cột Đã dùng ghi 10,8 nhưng cộng ra 9,8; em-dash; placeholder [TBD]",
+      "Nhận ra LOI tổng ở cột Tỷ lệ là báo nhầm của script (cột % không cộng dồn), nhưng vẫn chỉ ra 86% sai vì 9,8 / 12,5 = 78,4%",
+      "Bắt lỗi chức danh mà script không bắt: 'Tổng Giám đốc (General Director) Dương Đức Hùng' sai, phải là CEO, theo people.md",
+      "Bắt lỗi logic: người nhận ghi Tổng Giám đốc nhưng bottom line xin chị Tú Anh duyệt; owner 'Team dự án' không cụ thể; không có hạn chót cho quyết định",
+      "Kết luận QA: FAIL, dùng mẫu output mục 6, xếp mức Chặn / Quan trọng / Nhỏ, mỗi dòng có vị trí và cách sửa",
+      "Không nói 'đã kiểm tra kỹ'; số không có nguồn đối chiếu ghi vào 'Chưa kiểm được'"
+    ]
+  },
+  {
+    "id": "Q2",
+    "skills": ["qa-audit"],
+    "tier": "T3",
+    "query": "Audit giúp anh tờ trình này, mai anh trình anh Hùng.",
+    "files": ["<một tờ trình .docx thật khoảng 10 trang>"],
+    "expected_behavior": [
+      "Không nói mức nên tự chọn Full vì văn bản trình lãnh đạo, ghi mức trong 1 dòng",
+      "Báo cờ chi phí cao (5 reviewer, đọc lại toàn văn) và chờ Thang đồng ý trước khi chạy subagent",
+      "Chạy run_all.py trước, kết quả đưa làm đầu vào cho A, C, D",
+      "Mỗi reviewer A-E chỉ nhận deliverable, brief, nguồn, kết quả script và rubric của chính mình; không thấy kết quả reviewer khác",
+      "Reviewer C đối chiếu tên và chức danh với people.md; reviewer E dùng bộ câu CEO chuẩn vì ông Hùng chưa có hồ sơ phong cách",
+      "Soát lại tối đa 2 vòng; còn lỗi Chặn sau vòng 2 thì dừng và báo Thang quyết"
+    ]
+  },
+  {
+    "id": "Q3",
+    "skills": ["qa-audit"],
+    "tier": "T1",
+    "query": "Dashboard weekly này chạy chưa, check giúp anh.",
+    "files": ["fixtures/run_dashboard_cdn.html"],
+    "expected_behavior": [
+      "Chọn mode RUN, mở file thật trong trình duyệt headless, không kết luận từ việc đọc code hay file tồn tại",
+      "Bắt lỗi JS 'countStatus is not defined': dòng tóm tắt trống và biểu đồ không vẽ",
+      "Đếm được bảng có 16 KP trong khi tiêu đề ghi 17 KP (chuẩn TMO Weekly: KPI = 17 mọi vị trí)",
+      "Chỉ ra file tải Chart.js từ CDN, vi phạm quy tắc HTML không phụ thuộc bên ngoài (InfoSec) và sẽ hỏng khi mạng nội bộ chặn",
+      "Kết luận: chưa chạy đúng; giữ lại script kiểm để Thang chạy lại được"
+    ]
+  },
+  {
+    "id": "R1",
+    "skills": ["ocb-meeting-recap"],
+    "tier": "T3",
+    "query": "Viết thông báo giao ban BOM từ note này.",
+    "files": ["fixtures/recap_notes_traps.md"],
+    "expected_behavior": [
+      "Hỏi 1 câu ngày ký; nếu đi tiếp thì dùng ngày họp 03/11/2026 làm ngày ký và cảnh báo rõ",
+      "Không popup A/B, không gate (thông báo T3 không gate); Mode A; status draft",
+      "Người ký theo signatories.json: DƯƠNG ĐỨC HÙNG, TỔNG GIÁM ĐỐC",
+      "Mục 1 là nhận định, giữ đúng số 96%, 1,2%, 2,1%; mục 2 mới là bảng việc",
+      "Đơn vị làm chủ ngữ: 'QLTC phân tích chênh lệch NII...', không viết 'TGĐ yêu cầu QLTC...'",
+      "Phê bình cá nhân anh Minh bị bỏ tên: chuyển thành chỉ đạo cấp đơn vị cho QLRR hoặc bỏ và báo Thang",
+      "CNTT thiếu deadline: dùng deadline_gap, không bịa ngày",
+      "Việc 'rà lại biểu phí bảo lãnh' không có chủ trì: không tự gán, hoặc gán suy luận và báo lại",
+      "Lint WARN deadline 15/11/2026 rơi vào Chủ nhật và hỏi có định ghi thứ Sáu 13/11 không",
+      "Giao file Word kèm 1 dòng BLUF và danh sách điểm cần Thang xác nhận"
+    ]
+  },
+  {
+    "id": "R2",
+    "skills": ["ocb-meeting-recap"],
+    "tier": "T3",
+    "query": "Làm thông báo cho buổi giao ban hôm 23/10.",
+    "files": ["fixtures/recap_notes_transition.md"],
+    "expected_behavior": [
+      "Người ký theo ngày ký 27/10/2026, không theo ngày họp: DƯƠNG ĐỨC HÙNG, TỔNG GIÁM ĐỐC",
+      "Nêu rõ cho Thang: cuộc họp do anh Chris (Quyền Tổng Giám đốc lúc đó) chủ trì còn người ký là CEO mới; xin Thang xác nhận trước khi ban hành",
+      "Thân thông báo không đặt tên anh Chris cạnh chữ Tổng Giám đốc hay CEO; chỉ đạo viết với đơn vị làm chủ ngữ",
+      "Nếu có bản tiếng Anh thì không dùng General Director cho người ký",
+      "Ba việc QLRR, TTTC, Pháp chế đều có chủ trì; 'hằng tuần' map sang cụm deadline chuẩn hoặc ongoing, không bịa ngày"
+    ]
+  },
+  {
+    "id": "R3",
+    "skills": ["ocb-meeting-recap", "ocb-vn-en-translator"],
+    "tier": "T3",
+    "query": "Làm thông báo giao ban song ngữ từ note này.",
+    "files": ["fixtures/recap_notes_bilingual.md"],
+    "expected_behavior": [
+      "Đặt lang = both; dựng cả hai file _VI và _EN",
+      "Bản EN giữ đúng số và đổi dấu thập phân: 4.2%, 2.85%, 11.6%",
+      "Giữ nguyên NII, NPL, CAR, không khai triển, không dịch",
+      "Tránh calque đã ghi trong bẫy 16: không 'shall', không 'accelerate disbursement', không 'bright spot'",
+      "Việc CIB/CMB tách 2 parts với deadline 13/11 và 27/11; deadline của dòng là ngày muộn nhất",
+      "Chạy qa_notice.py --vs giữa VI và EN; hai bản khớp 1:1 số dòng, chủ trì, deadline",
+      "Người ký EN: CHIEF EXECUTIVE OFFICER, không dùng General Director"
+    ]
+  }
+]

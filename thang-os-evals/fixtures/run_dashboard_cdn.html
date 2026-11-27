@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>TMO Weekly: 17 KP</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+<style>body{font-family:Arial,sans-serif;margin:24px}td,th{border:1px solid #ccc;padding:4px 8px}</style>
+</head>
+<body>
+<h1>TMO Weekly Progress Update: 17 KP</h1>
+<p id="summary"></p>
+<canvas id="chart" width="600" height="240"></canvas>
+<table id="kp"><thead><tr><th>#</th><th>Key Project</th><th>Trạng thái</th></tr></thead><tbody></tbody></table>
+<script>
+const kps = [
+  ["SME Digital Lending","At Risk"],["Core Banking Upgrade","On Track"],["Basel III","On Track"],
+  ["Collection","Delay"],["Data Platform","On Track"],["CRM","On Track"],["Open API","At Risk"],
+  ["Thẻ tín dụng mới","On Track"],["eKYC","On Track"],["Treasury","On Track"],["LOS","At Risk"],
+  ["DWH","On Track"],["ESG Reporting","On Track"],["HR Core","On Track"],["Văn thư số","On Track"],
+  ["AML nâng cấp","Delay"]
+];
+const tbody = document.querySelector("#kp tbody");
+kps.forEach((k, i) => { tbody.insertAdjacentHTML("beforeend", `<tr><td>${i+1}</td><td>${k[0]}</td><td>${k[1]}</td></tr>`); });
+document.getElementById("summary").textContent = `Tổng ${kps.length} KP, ${countStatus("Delay")} Delay`;
+new Chart(document.getElementById("chart"), {type:"bar", data:{labels:["On Track","At Risk","Delay"],
+  datasets:[{data:["On Track","At Risk","Delay"].map(s => kps.filter(k => k[1]===s).length)}]}});
+</script>
+</body>
+</html>
